@@ -7,7 +7,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("lexicon", "0003_entry_etymology_definitionvote_and_more"),
+        ("lexicon", "0004_rename_lexicon_def_hot_sco_e6e4ce_idx_lexicon_def_hot_sco_c485e6_idx_and_more"),
     ]
 
     operations = [

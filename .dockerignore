@@ -1,0 +1,7 @@
+docker/volumes/
+docker/volumes/**
+docker/data/
+docker/data/**
+**/__pycache__/
+**/*.pyc
+.git

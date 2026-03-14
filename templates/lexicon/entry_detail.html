@@ -43,9 +43,15 @@
                 {% if definition.archive_records.all %}
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         {% for archive in definition.archive_records.all %}
-                            <a class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" href="{{ archive.s3_path }}" target="_blank" rel="noreferrer">
-                                مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
-                            </a>
+                            {% if archive.artifact_url %}
+                                <a class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" href="{{ archive.artifact_url }}" target="_blank" rel="noreferrer">
+                                    مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
+                                </a>
+                            {% else %}
+                                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+                                    مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 {% endif %}

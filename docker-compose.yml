@@ -26,7 +26,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-porfacan}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-porfacan}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./docker/data/postgres:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
 
@@ -86,6 +86,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   redis_data:
   rabbitmq_data:

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.files.storage import default_storage
 from django.utils.translation import gettext_lazy as _
 
 
@@ -33,6 +34,12 @@ class ArchiveRecord(models.Model):
             models.Index(fields=["status", "-created_at"]),
             models.Index(fields=["source_url"]),
         ]
+
+    @property
+    def artifact_url(self) -> str:
+        if not self.s3_path:
+            return ""
+        return default_storage.url(self.s3_path)
 
     def __str__(self) -> str:
         return f"{self.definition_id}:{self.snapshot_type}:{self.status}"
