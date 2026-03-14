@@ -52,7 +52,6 @@ def test_definition_create_saves_link_and_image_attachments(client, contributor,
         reverse("lexicon:definition-create", kwargs={"slug": entry.slug}),
         data={
             "content": "این یک تعریف است",
-            "context_annotation": "توضیح زمینه",
             "attachments-TOTAL_FORMS": "5",
             "attachments-INITIAL_FORMS": "0",
             "attachments-MIN_NUM_FORMS": "0",
@@ -81,7 +80,6 @@ def test_definition_create_rejects_more_than_five_attachments(client, contributo
         reverse("lexicon:definition-create", kwargs={"slug": entry.slug}),
         data={
             "content": "تعریف با مثال زیاد",
-            "context_annotation": "زمینه",
             "attachments-TOTAL_FORMS": "6",
             "attachments-INITIAL_FORMS": "0",
             "attachments-MIN_NUM_FORMS": "0",
@@ -98,3 +96,29 @@ def test_definition_create_rejects_more_than_five_attachments(client, contributo
     assert response.status_code == 200
     assert Definition.objects.filter(entry=entry).count() == 0
     assert DefinitionAttachment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_user_cannot_add_second_definition_for_same_entry(client, contributor, entry):
+    client.force_login(contributor)
+    create_url = reverse("lexicon:definition-create", kwargs={"slug": entry.slug})
+
+    first_response = client.post(
+        create_url,
+        data={
+            "content": "تعریف اول",
+            "attachments-TOTAL_FORMS": "1",
+            "attachments-INITIAL_FORMS": "0",
+            "attachments-MIN_NUM_FORMS": "0",
+            "attachments-MAX_NUM_FORMS": "5",
+            "attachments-0-link": "",
+        },
+    )
+    assert first_response.status_code == 302
+
+    second_response = client.get(create_url, follow=True)
+    assert second_response.status_code == 200
+    assert Definition.objects.filter(entry=entry, author=contributor).count() == 1
+    response_html = second_response.content.decode()
+    assert "شما قبلا برای این مدخل تعریف ثبت کرده\u200cاید." in response_html
+    assert "افزودن تعریف" not in response_html

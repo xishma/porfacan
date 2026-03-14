@@ -33,6 +33,15 @@
         </div>
     </header>
     <main class="mx-auto max-w-5xl ps-4 pe-4 py-8">
+        {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <div class="rounded-lg border border-amber-300 bg-amber-50 ps-3 pe-3 py-2 text-sm text-amber-800">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% block content %}{% endblock content %}
     </main>
 </body>

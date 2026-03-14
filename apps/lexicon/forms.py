@@ -49,20 +49,16 @@ class EntryForm(forms.ModelForm):
 class DefinitionForm(forms.ModelForm):
     class Meta:
         model = Definition
-        fields = ("content", "context_annotation")
+        fields = ("content",)
         widgets = {
             "content": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 5}
-            ),
-            "context_annotation": forms.Textarea(
-                attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 3}
             ),
         }
 
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["content"] = normalize_persian(cleaned_data.get("content", ""))
-        cleaned_data["context_annotation"] = normalize_persian(cleaned_data.get("context_annotation", ""))
         return cleaned_data
 
     def save(self, author, entry, attachment_formset=None, commit=True):
@@ -127,7 +123,7 @@ class DefinitionAttachmentBaseFormSet(forms.BaseFormSet):
 DefinitionAttachmentFormSet = forms.formset_factory(
     DefinitionAttachmentForm,
     formset=DefinitionAttachmentBaseFormSet,
-    extra=5,
+    extra=1,
     max_num=5,
     validate_max=True,
 )

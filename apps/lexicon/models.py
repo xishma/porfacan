@@ -143,6 +143,9 @@ class Definition(models.Model):
             models.Index(fields=["upvotes", "downvotes"]),
             models.Index(fields=["hot_score_value"]),
         ]
+        constraints = [
+            models.UniqueConstraint(fields=["entry", "author"], name="lexicon_one_definition_per_user_entry"),
+        ]
 
     def clean(self):
         super().clean()

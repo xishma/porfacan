@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -59,7 +60,12 @@ class EntryDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["can_add_definition"] = False
         if self.request.user.is_authenticated:
+            context["can_add_definition"] = not Definition.objects.filter(
+                entry=context["entry"],
+                author=self.request.user,
+            ).exists()
             definition_ids = [definition.id for definition in context["entry"].definitions.all()]
             vote_map = {
                 vote.definition_id: vote.value
@@ -113,6 +119,9 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.entry = get_object_or_404(Entry, slug=kwargs["slug"])
+        if request.user.is_authenticated and Definition.objects.filter(entry=self.entry, author=request.user).exists():
+            messages.error(request, "شما قبلا برای این مدخل تعریف ثبت کرده‌اید.")
+            return HttpResponseRedirect(reverse("lexicon:entry-detail", kwargs={"slug": self.entry.slug}))
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

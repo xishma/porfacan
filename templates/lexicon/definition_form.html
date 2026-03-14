@@ -14,18 +14,17 @@
             {{ form.content }}
             {{ form.content.errors }}
         </div>
-        <div>
-            <label class="mb-2 block text-sm text-slate-600" for="{{ form.context_annotation.id_for_label }}">{{ form.context_annotation.label }}</label>
-            {{ form.context_annotation }}
-            {{ form.context_annotation.errors }}
-        </div>
 
         <div class="space-y-3 rounded-lg border border-slate-200 p-4">
-            <h2 class="text-sm font-semibold text-slate-800">مثال‌ها (اختیاری، حداکثر ۵ مورد)</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-slate-800">مثال‌ها (اختیاری، حداکثر ۵ مورد)</h2>
+                <button id="add-example-btn" type="button" class="rounded-md border border-slate-300 ps-3 pe-3 py-1 text-sm text-slate-700">+</button>
+            </div>
             {{ attachment_formset.management_form }}
             {{ attachment_formset.non_form_errors }}
-            {% for attachment_form in attachment_formset %}
-                <div class="grid gap-2 rounded-lg border border-slate-100 p-3">
+            <div id="example-forms" class="space-y-3">
+            {% for attachment_form in attachment_formset.forms %}
+                <div class="grid gap-2 rounded-lg border border-slate-100 p-3 example-form-row">
                     <div>
                         <label class="mb-1 block text-xs text-slate-600" for="{{ attachment_form.link.id_for_label }}">لینک مثال</label>
                         {{ attachment_form.link }}
@@ -39,8 +38,47 @@
                     {{ attachment_form.non_field_errors }}
                 </div>
             {% endfor %}
+            </div>
+            <template id="empty-example-form-template">
+                <div class="grid gap-2 rounded-lg border border-slate-100 p-3 example-form-row">
+                    <div>
+                        <label class="mb-1 block text-xs text-slate-600" for="id_attachments-__prefix__-link">لینک مثال</label>
+                        <input type="url" name="attachments-__prefix__-link" class="w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2" id="id_attachments-__prefix__-link">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs text-slate-600" for="id_attachments-__prefix__-image">تصویر مثال</label>
+                        <input type="file" name="attachments-__prefix__-image" accept="image/*" class="w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2" id="id_attachments-__prefix__-image">
+                    </div>
+                </div>
+            </template>
         </div>
         <button type="submit" class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">ثبت تعریف</button>
     </form>
 </section>
+<script>
+    const addExampleButton = document.getElementById("add-example-btn");
+    const exampleFormsContainer = document.getElementById("example-forms");
+    const totalFormsInput = document.getElementById("id_attachments-TOTAL_FORMS");
+    const maxFormsInput = document.getElementById("id_attachments-MAX_NUM_FORMS");
+    const emptyTemplate = document.getElementById("empty-example-form-template");
+
+    if (addExampleButton && exampleFormsContainer && totalFormsInput && maxFormsInput && emptyTemplate) {
+        const maxForms = Number(maxFormsInput.value || 5);
+        const updateAddButtonState = () => {
+            addExampleButton.disabled = Number(totalFormsInput.value) >= maxForms;
+            addExampleButton.classList.toggle("opacity-50", addExampleButton.disabled);
+            addExampleButton.classList.toggle("cursor-not-allowed", addExampleButton.disabled);
+        };
+
+        updateAddButtonState();
+        addExampleButton.addEventListener("click", () => {
+            const currentCount = Number(totalFormsInput.value || 0);
+            if (currentCount >= maxForms) return;
+            const html = emptyTemplate.innerHTML.replaceAll("__prefix__", String(currentCount));
+            exampleFormsContainer.insertAdjacentHTML("beforeend", html);
+            totalFormsInput.value = String(currentCount + 1);
+            updateAddButtonState();
+        });
+    }
+</script>
 {% endblock content %}
