@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entry.headword }} | پرفکان{% endblock title %}
+
+{% block content %}
+<article class="space-y-6">
+    <header class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 class="text-3xl font-bold">{{ entry.headword }}</h1>
+        <p class="mt-2 text-sm text-slate-500">
+            دوره: {{ entry.epoch.name }} | ایجاد: {{ entry.created_at|date:"Y-m-d" }}
+        </p>
+        {% if entry.etymology %}
+            <div class="mt-4 rounded-lg bg-slate-50 p-4 text-slate-700">
+                <h2 class="mb-2 text-sm font-semibold text-slate-800">ریشه‌شناسی</h2>
+                <p>{{ entry.etymology }}</p>
+            </div>
+        {% endif %}
+    </header>
+
+    <section class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold">تعریف‌ها</h2>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'lexicon:definition-create' entry.slug %}" class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-sm text-white">افزودن تعریف</a>
+            {% endif %}
+        </div>
+
+        {% for definition in entry.definitions.all %}
+            <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-definition-id="{{ definition.id }}" data-user-vote="{{ definition.current_user_vote|default:0 }}">
+                <p class="leading-7 text-slate-900">{{ definition.content }}</p>
+                {% if definition.context_annotation %}
+                    <p class="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{{ definition.context_annotation }}</p>
+                {% endif %}
+                <p class="mt-3 text-xs text-slate-500">
+                    نویسنده: {{ definition.author.email }} | امتیاز IQ: <span class="reputation-score">{{ definition.reputation_score }}</span> | Hot: <span class="hot-score">{{ definition.hot_score|floatformat:2 }}</span>
+                </p>
+                <div class="mt-4 flex items-center gap-2 text-sm">
+                    <button type="button" class="vote-btn upvote-btn rounded-lg border border-slate-300 ps-3 pe-3 py-1 {% if definition.current_user_vote == 1 %}bg-emerald-600 text-white border-emerald-600{% endif %}" data-value="1">▲</button>
+                    <span class="upvotes text-slate-700">{{ definition.upvotes }}</span>
+                    <button type="button" class="vote-btn downvote-btn rounded-lg border border-slate-300 ps-3 pe-3 py-1 {% if definition.current_user_vote == -1 %}bg-rose-600 text-white border-rose-600{% endif %}" data-value="-1">▼</button>
+                    <span class="downvotes text-slate-700">{{ definition.downvotes }}</span>
+                </div>
+                {% if definition.archive_records.all %}
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                        {% for archive in definition.archive_records.all %}
+                            <a class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" href="{{ archive.s3_path }}" target="_blank" rel="noreferrer">
+                                مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </article>
+        {% empty %}
+            <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">
+                هنوز تعریفی برای این مدخل ثبت نشده است.
+            </p>
+        {% endfor %}
+    </section>
+</article>
+
+<script>
+    const csrfToken = "{{ csrf_token }}";
+    const upvoteActiveClasses = ["bg-emerald-600", "text-white", "border-emerald-600"];
+    const downvoteActiveClasses = ["bg-rose-600", "text-white", "border-rose-600"];
+
+    function applyVoteState(definitionCard, userVote) {
+        const upvoteButton = definitionCard.querySelector(".upvote-btn");
+        const downvoteButton = definitionCard.querySelector(".downvote-btn");
+
+        upvoteActiveClasses.forEach((cssClass) => upvoteButton.classList.remove(cssClass));
+        downvoteActiveClasses.forEach((cssClass) => downvoteButton.classList.remove(cssClass));
+
+        if (Number(userVote) === 1) {
+            upvoteActiveClasses.forEach((cssClass) => upvoteButton.classList.add(cssClass));
+        }
+        if (Number(userVote) === -1) {
+            downvoteActiveClasses.forEach((cssClass) => downvoteButton.classList.add(cssClass));
+        }
+    }
+
+    document.querySelectorAll("[data-definition-id]").forEach((definitionCard) => {
+        applyVoteState(definitionCard, Number(definitionCard.dataset.userVote || 0));
+    });
+
+    document.querySelectorAll(".vote-btn").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+            const definitionCard = event.target.closest("[data-definition-id]");
+            const definitionId = definitionCard.dataset.definitionId;
+            const formData = new URLSearchParams();
+            formData.append("value", event.target.dataset.value);
+            const response = await fetch(`/definitions/${definitionId}/vote/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: formData.toString(),
+            });
+            if (response.status === 401) {
+                window.location.href = "{% url 'users:login' %}";
+                return;
+            }
+            if (!response.ok) return;
+            if (!(response.headers.get("content-type") || "").includes("application/json")) return;
+            const payload = await response.json();
+            definitionCard.querySelector(".upvotes").textContent = payload.upvotes;
+            definitionCard.querySelector(".downvotes").textContent = payload.downvotes;
+            definitionCard.querySelector(".reputation-score").textContent = payload.reputation_score;
+            definitionCard.querySelector(".hot-score").textContent = Number(payload.hot_score).toFixed(2);
+            definitionCard.dataset.userVote = payload.user_vote;
+            applyVoteState(definitionCard, payload.user_vote);
+        });
+    });
+</script>
+{% endblock content %}

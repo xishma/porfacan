@@ -22,5 +22,22 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    _ROLE_LEVELS = {
+        Roles.VISITOR: 0,
+        Roles.CONTRIBUTOR: 1,
+        Roles.EDITOR: 2,
+        Roles.MODERATOR: 3,
+        Roles.ADMIN: 4,
+    }
+
+    @property
+    def role_level(self) -> int:
+        if self.is_superuser:
+            return self._ROLE_LEVELS[self.Roles.ADMIN]
+        return self._ROLE_LEVELS.get(self.role, 0)
+
+    def has_minimum_role(self, minimum_level: int) -> bool:
+        return self.is_authenticated and self.role_level >= minimum_level
+
     def __str__(self) -> str:
         return self.email

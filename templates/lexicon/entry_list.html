@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}واژگان | پورفکن{% endblock title %}
+{% block title %}واژگان | پرفکان{% endblock title %}
 
 {% block content %}
 <section class="space-y-6">
@@ -9,12 +9,23 @@
         <p class="mt-2 text-slate-600">فرهنگ جمع‌سپاری‌شده واژگان اعتراض (۲۰۰۹ تا ۲۰۲۶)</p>
     </header>
 
+    <form method="get" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label class="mb-2 block text-sm text-slate-600" for="q">جستجوی سریع</label>
+        <div class="relative flex items-center gap-3">
+            <input id="q" name="q" value="{{ query }}" class="w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2" placeholder="واژه، ریشه یا کاربرد..." />
+            <button class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white" type="submit">جستجو</button>
+            <div id="search-suggestions" class="absolute inset-x-0 top-full z-10 mt-1 hidden rounded-lg border border-slate-200 bg-white shadow-lg"></div>
+        </div>
+    </form>
+
     <div class="grid gap-4">
         {% for entry in entries %}
             <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <h2 class="text-lg font-semibold">{{ entry.headword }}</h2>
+                <h2 class="text-lg font-semibold">
+                    <a href="{% url 'lexicon:entry-detail' entry.slug %}" class="hover:underline">{{ entry.headword }}</a>
+                </h2>
                 <p class="text-sm text-slate-500">
-                    دوره: {{ entry.epoch.name }} | {{ entry.created_at|date:"Y-m-d" }}
+                    دوره: {{ entry.epoch.name }} | {{ entry.created_at|date:"Y-m-d" }} | رتبه داغ: {{ entry.hot_rank|default:0|floatformat:2 }}
                 </p>
             </article>
         {% empty %}
@@ -24,4 +35,43 @@
         {% endfor %}
     </div>
 </section>
+<script>
+    const searchInput = document.getElementById("q");
+    const suggestionBox = document.getElementById("search-suggestions");
+
+    const renderSuggestions = (results) => {
+        if (!results.length) {
+            suggestionBox.classList.add("hidden");
+            suggestionBox.innerHTML = "";
+            return;
+        }
+        suggestionBox.innerHTML = results
+            .map((item) => `<a href="/entries/${encodeURIComponent(item.slug)}/" class="block border-b border-slate-100 ps-3 pe-3 py-2 text-sm hover:bg-slate-50">${item.headword}</a>`)
+            .join("");
+        suggestionBox.classList.remove("hidden");
+    };
+
+    let debounceTimer = null;
+    searchInput.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        const q = searchInput.value.trim();
+        if (q.length < 2) {
+            suggestionBox.classList.add("hidden");
+            suggestionBox.innerHTML = "";
+            return;
+        }
+        debounceTimer = setTimeout(async () => {
+            const response = await fetch(`/entries/suggest/?q=${encodeURIComponent(q)}`);
+            if (!response.ok) return;
+            const payload = await response.json();
+            renderSuggestions(payload.results || []);
+        }, 220);
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!suggestionBox.contains(event.target) && event.target !== searchInput) {
+            suggestionBox.classList.add("hidden");
+        }
+    });
+</script>
 {% endblock content %}
