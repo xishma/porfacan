@@ -13,15 +13,20 @@ Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition sla
 
 ## Quickstart (Docker Compose)
 
+- Development compose file: `docker-compose.dev.yml`
+- Production compose file: `docker-compose.yml`
+
 1. Copy environment variables:
    - `cp .env.example .env`
-2. Build and start services:
-   - `docker compose up --build`
-3. Run migrations:
-   - `docker compose exec web python manage.py migrate`
-4. Create admin user:
-   - `docker compose exec web python manage.py createsuperuser`
-5. Open:
+2. Bootstrap development dependencies (creates databases and RabbitMQ user/vhost idempotently):
+   - `./scripts/dev/bootstrap.sh`
+3. Build and start services:
+   - `docker compose -f docker-compose.dev.yml up --build`
+4. Run migrations:
+   - `docker compose -f docker-compose.dev.yml exec web python manage.py migrate`
+5. Create admin user:
+   - `docker compose -f docker-compose.dev.yml exec web python manage.py createsuperuser`
+6. Open:
    - `http://localhost:8000`
 
 ## Local Development (without Docker)

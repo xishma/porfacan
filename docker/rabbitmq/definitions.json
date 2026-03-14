@@ -1,0 +1,23 @@
+{
+  "vhosts": [
+    {
+      "name": "porfacan"
+    }
+  ],
+  "users": [
+    {
+      "name": "porfacan",
+      "password": "porfacan",
+      "tags": "administrator"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "porfacan",
+      "vhost": "porfacan",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ]
+}
