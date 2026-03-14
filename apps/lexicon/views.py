@@ -8,7 +8,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
-from .forms import DefinitionForm, EntryForm
+from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm
 from .models import Definition, DefinitionVote, Entry
 
 
@@ -19,7 +19,12 @@ class EntryListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Entry.objects.select_related("epoch").prefetch_related("definitions").with_hot_rank()
+        queryset = (
+            Entry.objects.filter(is_verified=True)
+            .select_related("epoch")
+            .prefetch_related("definitions")
+            .with_hot_rank()
+        )
         query = self.request.GET.get("q", "")
         if query:
             queryset = queryset.search(query)
@@ -34,7 +39,7 @@ class EntryListView(ListView):
 class EntrySuggestionView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "")
-        suggestions = list(Entry.objects.suggestions(query=query, limit=8))
+        suggestions = list(Entry.objects.filter(is_verified=True).suggestions(query=query, limit=8))
         return JsonResponse({"results": suggestions})
 
 
@@ -46,9 +51,9 @@ class EntryDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        return Entry.objects.select_related("epoch").prefetch_related(
+        return Entry.objects.filter(is_verified=True).select_related("epoch").prefetch_related(
             "definitions__author",
-            "definitions__archive_records",
+            "definitions__attachments",
             "definitions__votes",
         )
 
@@ -76,6 +81,11 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
     form_class = EntryForm
     template_name = "lexicon/entry_form.html"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def get_success_url(self):
         return reverse("lexicon:entry-detail", kwargs={"slug": self.object.slug})
 
@@ -86,6 +96,11 @@ class EntryUpdateView(EditorRequiredMixin, UpdateView):
     template_name = "lexicon/entry_form.html"
     slug_field = "slug"
     slug_url_kwarg = "slug"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def get_success_url(self):
         return reverse("lexicon:entry-detail", kwargs={"slug": self.object.slug})
@@ -101,8 +116,25 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        self.object = form.save(author=self.request.user, entry=self.entry)
+        attachment_formset = self.get_attachment_formset()
+        if not attachment_formset.is_valid():
+            return self.form_invalid(form, attachment_formset=attachment_formset)
+        self.object = form.save(author=self.request.user, entry=self.entry, attachment_formset=attachment_formset)
         return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form, attachment_formset=None):
+        if attachment_formset is None:
+            attachment_formset = self.get_attachment_formset()
+        return self.render_to_response(self.get_context_data(form=form, attachment_formset=attachment_formset))
+
+    def get_attachment_formset(self):
+        if self.request.method == "POST":
+            return DefinitionAttachmentFormSet(
+                self.request.POST,
+                self.request.FILES,
+                prefix="attachments",
+            )
+        return DefinitionAttachmentFormSet(prefix="attachments")
 
     def get_success_url(self):
         return reverse("lexicon:entry-detail", kwargs={"slug": self.entry.slug})
@@ -110,6 +142,7 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["entry"] = self.entry
+        context.setdefault("attachment_formset", self.get_attachment_formset())
         return context
 
 

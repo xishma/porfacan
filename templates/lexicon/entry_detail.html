@@ -40,18 +40,19 @@
                     <button type="button" class="vote-btn downvote-btn rounded-lg border border-slate-300 ps-3 pe-3 py-1 {% if definition.current_user_vote == -1 %}bg-rose-600 text-white border-rose-600{% endif %}" data-value="-1">▼</button>
                     <span class="downvotes text-slate-700">{{ definition.downvotes }}</span>
                 </div>
-                {% if definition.archive_records.all %}
+                {% if definition.attachments.all %}
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                        {% for archive in definition.archive_records.all %}
-                            {% if archive.artifact_url %}
-                                <a class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" href="{{ archive.artifact_url }}" target="_blank" rel="noreferrer">
-                                    مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
-                                </a>
-                            {% else %}
-                                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
-                                    مدرک تصویری | {{ archive.created_at|date:"Y-m-d H:i" }} | {{ archive.status }}
-                                </div>
-                            {% endif %}
+                        {% for attachment in definition.attachments.all %}
+                            <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                                {% if attachment.link %}
+                                    <a class="text-blue-700 hover:underline" href="{{ attachment.link }}" target="_blank" rel="noreferrer">لینک مثال</a>
+                                {% endif %}
+                                {% if attachment.image %}
+                                    <a href="{{ attachment.image.url }}" target="_blank" rel="noreferrer">
+                                        <img src="{{ attachment.image.url }}" alt="مثال تصویری" class="max-h-64 w-full rounded-md object-cover">
+                                    </a>
+                                {% endif %}
+                            </div>
                         {% endfor %}
                     </div>
                 {% endif %}

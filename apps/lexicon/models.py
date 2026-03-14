@@ -95,7 +95,7 @@ class Epoch(models.Model):
 
 class Entry(models.Model):
     headword = models.CharField(max_length=255, db_index=True)
-    slug = models.SlugField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True)
     epoch = models.ForeignKey(Epoch, on_delete=models.PROTECT, related_name="entries")
     etymology = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -193,6 +193,30 @@ class Definition(models.Model):
 
     def __str__(self) -> str:
         return f"{self.entry.headword} ({self.author})"
+
+
+class DefinitionAttachment(models.Model):
+    definition = models.ForeignKey(Definition, on_delete=models.CASCADE, related_name="attachments")
+    link = models.URLField(blank=True)
+    image = models.ImageField(upload_to="lexicon/definition_attachments/%Y/%m/%d", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=~(Q(link="") & Q(image="")),
+                name="lexicon_attachment_link_or_image_required",
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.link and not self.image:
+            raise ValidationError(_("At least one of link or image is required."))
+
+    def __str__(self) -> str:
+        return f"{self.definition_id}:{self.pk}"
 
 
 class DefinitionVote(models.Model):

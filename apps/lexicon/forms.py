@@ -2,9 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from apps.archiver.models import ArchiveRecord
-
-from .models import Definition, Entry, Epoch
+from .models import Definition, DefinitionAttachment, Entry, Epoch
 from .normalization import normalize_persian
 
 
@@ -21,9 +19,19 @@ class EntryForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields["epoch"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
         self.fields["epoch"].empty_label = _("انتخاب دوره")
+        if not self._can_manage_verification():
+            self.fields.pop("is_verified", None)
+
+    def _can_manage_verification(self) -> bool:
+        user = self.user
+        if not user or not getattr(user, "is_authenticated", False):
+            return False
+        role = getattr(user, "role", None)
+        return bool(user.is_superuser or role == "admin")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -39,12 +47,6 @@ class EntryForm(forms.ModelForm):
 
 
 class DefinitionForm(forms.ModelForm):
-    source_url = forms.URLField(
-        required=False,
-        label=_("لینک منبع"),
-        widget=forms.URLInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
-    )
-
     class Meta:
         model = Definition
         fields = ("content", "context_annotation")
@@ -63,13 +65,69 @@ class DefinitionForm(forms.ModelForm):
         cleaned_data["context_annotation"] = normalize_persian(cleaned_data.get("context_annotation", ""))
         return cleaned_data
 
-    def save(self, author, entry, commit=True):
+    def save(self, author, entry, attachment_formset=None, commit=True):
         definition = super().save(commit=False)
         definition.author = author
         definition.entry = entry
         if commit:
             definition.save()
-            source_url = self.cleaned_data.get("source_url")
-            if source_url:
-                ArchiveRecord.objects.create(definition=definition, source_url=source_url)
+            if attachment_formset is not None:
+                attachment_formset.save(definition=definition)
         return definition
+
+
+class DefinitionAttachmentForm(forms.ModelForm):
+    class Meta:
+        model = DefinitionAttachment
+        fields = ("link", "image")
+        widgets = {
+            "link": forms.URLInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "image": forms.ClearableFileInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        link = cleaned_data.get("link")
+        image = cleaned_data.get("image")
+        if self.has_changed() and not link and not image:
+            raise ValidationError(_("هر مثال باید حداقل لینک یا تصویر داشته باشد."))
+        return cleaned_data
+
+
+class DefinitionAttachmentBaseFormSet(forms.BaseFormSet):
+    max_attachments = 5
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        used_forms = 0
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data"):
+                continue
+            if form.cleaned_data.get("link") or form.cleaned_data.get("image"):
+                used_forms += 1
+        if used_forms > self.max_attachments:
+            raise ValidationError(_("حداکثر %(max)d مثال مجاز است."), params={"max": self.max_attachments})
+
+    def save(self, definition):
+        attachments = []
+        for form in self.forms:
+            if not form.cleaned_data:
+                continue
+            if not (form.cleaned_data.get("link") or form.cleaned_data.get("image")):
+                continue
+            attachment = form.save(commit=False)
+            attachment.definition = definition
+            attachment.save()
+            attachments.append(attachment)
+        return attachments
+
+
+DefinitionAttachmentFormSet = forms.formset_factory(
+    DefinitionAttachmentForm,
+    formset=DefinitionAttachmentBaseFormSet,
+    extra=5,
+    max_num=5,
+    validate_max=True,
+)

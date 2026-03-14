@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Definition, DefinitionVote, Entry, Epoch
+from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch
 
 
 @admin.register(Epoch)
@@ -28,3 +28,10 @@ class DefinitionVoteAdmin(admin.ModelAdmin):
     list_display = ("definition", "user", "value", "created_at", "updated_at")
     list_filter = ("value", "created_at")
     search_fields = ("definition__entry__headword", "user__email")
+
+
+@admin.register(DefinitionAttachment)
+class DefinitionAttachmentAdmin(admin.ModelAdmin):
+    list_display = ("definition", "link", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("definition__entry__headword", "link")
