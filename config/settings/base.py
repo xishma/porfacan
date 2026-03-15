@@ -2,6 +2,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 import os
+from django.utils.translation import gettext_lazy as _
 
 load_dotenv()
 
@@ -76,10 +77,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "fa-ir"
+LANGUAGE_CODE = "fa"
+LANGUAGES = [
+    ("fa", _("Farsi")),
+]
 TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "Asia/Tehran")
 USE_I18N = True
 USE_TZ = True
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]

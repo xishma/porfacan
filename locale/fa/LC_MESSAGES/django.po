@@ -1,0 +1,329 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: porfacan\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-16 00:33+0330\n"
+"PO-Revision-Date: 2026-03-15 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: apps/archiver/models.py:8
+msgid "Screenshot"
+msgstr "اسکرین‌شات"
+
+#: apps/archiver/models.py:9
+msgid "HTML"
+msgstr "HTML"
+
+#: apps/archiver/models.py:12
+msgid "Pending"
+msgstr "در انتظار"
+
+#: apps/archiver/models.py:13
+msgid "Processing"
+msgstr "در حال پردازش"
+
+#: apps/archiver/models.py:14
+msgid "Success"
+msgstr "موفق"
+
+#: apps/archiver/models.py:15
+msgid "Failed"
+msgstr "ناموفق"
+
+#: apps/archiver/models.py:33
+msgid "Archive record"
+msgstr "رکورد آرشیو"
+
+#: apps/archiver/models.py:34
+msgid "Archive records"
+msgstr "رکوردهای آرشیو"
+
+#: apps/lexicon/forms.py:14
+msgid "Headword"
+msgstr "سرواژه"
+
+#: apps/lexicon/forms.py:15 apps/lexicon/models.py:86
+msgid "Epoch"
+msgstr "دوره"
+
+#: apps/lexicon/forms.py:16 templates/lexicon/entry_detail.html:15
+msgid "Etymology"
+msgstr "ریشه‌شناسی"
+
+#: apps/lexicon/forms.py:17
+msgid "Verified"
+msgstr "تاییدشده"
+
+#: apps/lexicon/forms.py:31
+msgid "Select epoch"
+msgstr "انتخاب دوره"
+
+#: apps/lexicon/forms.py:51
+msgid "Epoch must be between 2009 and 2026."
+msgstr "دوره باید بین سال‌های ۲۰۰۹ تا ۲۰۲۶ باشد."
+
+#: apps/lexicon/forms.py:60
+msgid "Definition text"
+msgstr "متن تعریف"
+
+#: apps/lexicon/forms.py:89 templates/lexicon/definition_form.html:30
+#: templates/lexicon/definition_form.html:46
+#: templates/lexicon/entry_detail.html:64
+msgid "Example link"
+msgstr "لینک مثال"
+
+#: apps/lexicon/forms.py:90 templates/lexicon/definition_form.html:35
+#: templates/lexicon/definition_form.html:50
+msgid "Example image"
+msgstr "تصویر مثال"
+
+#: apps/lexicon/forms.py:102
+msgid "Each example must include at least a link or an image."
+msgstr "هر مثال باید حداقل لینک یا تصویر داشته باشد."
+
+#: apps/lexicon/forms.py:120
+#, python-format
+msgid "A maximum of %(max)d examples is allowed."
+msgstr "حداکثر %(max)d مثال مجاز است."
+
+#: apps/lexicon/models.py:87
+msgid "Epochs"
+msgstr "دوره‌ها"
+
+#: apps/lexicon/models.py:92
+msgid "End date cannot be before start date."
+msgstr "تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد."
+
+#: apps/lexicon/models.py:111
+msgid "Entry"
+msgstr "مدخل"
+
+#: apps/lexicon/models.py:112
+msgid "Entries"
+msgstr "مدخل‌ها"
+
+#: apps/lexicon/models.py:145
+msgid "Definition"
+msgstr "تعریف"
+
+#: apps/lexicon/models.py:146 templates/lexicon/entry_detail.html:23
+msgid "Definitions"
+msgstr "تعریف‌ها"
+
+#: apps/lexicon/models.py:212
+msgid "Definition attachment"
+msgstr "پیوست تعریف"
+
+#: apps/lexicon/models.py:213
+msgid "Definition attachments"
+msgstr "پیوست‌های تعریف"
+
+#: apps/lexicon/models.py:224
+msgid "At least one of link or image is required."
+msgstr "حداقل یکی از لینک یا تصویر لازم است."
+
+#: apps/lexicon/models.py:232
+msgid "Downvote"
+msgstr "رای منفی"
+
+#: apps/lexicon/models.py:233
+msgid "Upvote"
+msgstr "رای مثبت"
+
+#: apps/lexicon/models.py:243
+msgid "Definition vote"
+msgstr "رای تعریف"
+
+#: apps/lexicon/models.py:244
+msgid "Definition votes"
+msgstr "رای‌های تعریف"
+
+#: apps/lexicon/views.py:124
+msgid "You have already submitted a definition for this entry."
+msgstr "شما قبلا برای این مدخل تعریف ثبت کرده‌اید."
+
+#: apps/lexicon/views.py:164
+msgid "Authentication required."
+msgstr "احراز هویت لازم است."
+
+#: apps/lexicon/views.py:172 apps/lexicon/views.py:174
+msgid "Invalid vote value."
+msgstr "مقدار رای نامعتبر است."
+
+#: apps/users/models.py:10
+msgid "Visitor"
+msgstr "بازدیدکننده"
+
+#: apps/users/models.py:11
+msgid "Contributor"
+msgstr "مشارکت‌کننده"
+
+#: apps/users/models.py:12
+msgid "Editor"
+msgstr "ویرایشگر"
+
+#: apps/users/models.py:13
+msgid "Moderator"
+msgstr "ناظر"
+
+#: apps/users/models.py:14
+msgid "Admin"
+msgstr "مدیر"
+
+#: apps/users/models.py:47
+msgid "User"
+msgstr "کاربر"
+
+#: apps/users/models.py:48
+msgid "Users"
+msgstr "کاربران"
+
+#: templates/base.html:7 templates/base.html:17
+#: templates/lexicon/definition_form.html:4
+#: templates/lexicon/entry_detail.html:4 templates/lexicon/entry_form.html:4
+#: templates/lexicon/entry_list.html:4 templates/users/login.html:4
+#: templates/users/register.html:4
+msgid "Porfacan"
+msgstr "پرفکان"
+
+#: templates/base.html:21
+#, python-format
+msgid "%(email)s | IQ: %(iq)s"
+msgstr ""
+
+#: templates/base.html:23
+msgid "Add entry"
+msgstr "ثبت مدخل"
+
+#: templates/base.html:26
+msgid "Logout"
+msgstr "خروج"
+
+#: templates/base.html:29 templates/users/login.html:4
+#: templates/users/login.html:8 templates/users/login.html:12
+msgid "Login"
+msgstr "ورود"
+
+#: templates/base.html:30 templates/users/register.html:4
+#: templates/users/register.html:8
+msgid "Register"
+msgstr "ثبت نام"
+
+#: templates/lexicon/definition_form.html:4
+msgid "New definition"
+msgstr "تعریف جدید"
+
+#: templates/lexicon/definition_form.html:8
+#, python-format
+msgid "Add definition for \"%(headword)s\""
+msgstr "افزودن تعریف برای «%(headword)s»"
+
+#: templates/lexicon/definition_form.html:9
+msgid ""
+"Content is normalized with Hazm before saving. You can add up to 5 examples "
+"per definition, each with a link, image, or both."
+msgstr ""
+"محتوا پیش از ذخیره با Hazm نرمال‌سازی می‌شود. برای هر تعریف تا ۵ مثال با لینک "
+"یا تصویر یا هر دو می‌توانید اضافه کنید."
+
+#: templates/lexicon/definition_form.html:21
+msgid "Examples (optional, maximum 5)"
+msgstr "مثال‌ها (اختیاری، حداکثر ۵ مورد)"
+
+#: templates/lexicon/definition_form.html:56
+msgid "Submit definition"
+msgstr "ثبت تعریف"
+
+#: templates/lexicon/entry_detail.html:11
+#, python-format
+msgid "Epoch: %(epoch)s | Created: %(created)s"
+msgstr "دوره: %(epoch)s | ایجاد: %(created)s"
+
+#: templates/lexicon/entry_detail.html:25
+msgid "Add definition"
+msgstr "افزودن تعریف"
+
+#: templates/lexicon/entry_detail.html:28
+msgid "You have already submitted your definition for this entry."
+msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
+
+#: templates/lexicon/entry_detail.html:40
+#, python-format
+msgid "Author: %(author)s | Score: %(score)s | Hot: %(hot)s"
+msgstr "نویسنده: %(author)s | امتیاز: %(score)s | رتبه داغ: %(hot)s"
+
+#: templates/lexicon/entry_detail.html:53
+#: templates/lexicon/entry_detail.html:63
+#, python-format
+msgid "Example %(number)s"
+msgstr "مثال %(number)s"
+
+#: templates/lexicon/entry_detail.html:55
+msgid "Image example"
+msgstr "مثال تصویری"
+
+#: templates/lexicon/entry_detail.html:58
+msgid "Example source"
+msgstr "منبع مثال"
+
+#: templates/lexicon/entry_detail.html:73
+msgid "No definitions have been submitted for this entry yet."
+msgstr "هنوز تعریفی برای این مدخل ثبت نشده است."
+
+#: templates/lexicon/entry_form.html:4
+msgid "Create or edit entry"
+msgstr "ثبت/ویرایش مدخل"
+
+#: templates/lexicon/entry_form.html:8
+msgid "Entry form"
+msgstr "فرم مدخل"
+
+#: templates/lexicon/entry_form.html:12
+msgid "Save"
+msgstr "ذخیره"
+
+#: templates/lexicon/entry_list.html:4
+msgid "Lexicon"
+msgstr "واژگان"
+
+#: templates/lexicon/entry_list.html:9
+msgid "Resistance Lexicon Archive"
+msgstr "آرشیو واژگان مقاومت"
+
+#: templates/lexicon/entry_list.html:10
+msgid "Crowdsourced dictionary of protest vocabulary (2009 to 2026)"
+msgstr "فرهنگ جمع‌سپاری‌شده واژگان اعتراض (۲۰۰۹ تا ۲۰۲۶)"
+
+#: templates/lexicon/entry_list.html:14
+msgid "Quick search"
+msgstr "جستجوی سریع"
+
+#: templates/lexicon/entry_list.html:16
+msgid "Word, etymology, or usage..."
+msgstr "واژه، ریشه یا کاربرد..."
+
+#: templates/lexicon/entry_list.html:17
+msgid "Search"
+msgstr "جستجو"
+
+#: templates/lexicon/entry_list.html:29
+#, python-format
+msgid "Epoch: %(epoch)s | %(created)s | Hot rank: %(hot)s"
+msgstr "دوره: %(epoch)s | %(created)s | رتبه داغ: %(hot)s"
+
+#: templates/lexicon/entry_list.html:34
+msgid "No entries have been registered yet."
+msgstr "هنوز مدخلی ثبت نشده است."
+
+#: templates/users/register.html:12
+msgid "Create account"
+msgstr "ایجاد حساب"
+
+#~ msgid "{{ email }} | IQ: {{ iq }}"
+#~ msgstr "{{ email }} | IQ: {{ iq }}"

@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}واژگان | پرفکان{% endblock title %}
+{% block title %}{% trans "Lexicon" %} | {% trans "Porfacan" %}{% endblock title %}
 
 {% block content %}
 <section class="space-y-6">
     <header>
-        <h1 class="text-2xl font-bold">آرشیو واژگان مقاومت</h1>
-        <p class="mt-2 text-slate-600">فرهنگ جمع‌سپاری‌شده واژگان اعتراض (۲۰۰۹ تا ۲۰۲۶)</p>
+        <h1 class="text-2xl font-bold">{% trans "Resistance Lexicon Archive" %}</h1>
+        <p class="mt-2 text-slate-600">{% trans "Crowdsourced dictionary of protest vocabulary (2009 to 2026)" %}</p>
     </header>
 
     <form method="get" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <label class="mb-2 block text-sm text-slate-600" for="q">جستجوی سریع</label>
+        <label class="mb-2 block text-sm text-slate-600" for="q">{% trans "Quick search" %}</label>
         <div class="relative flex items-center gap-3">
-            <input id="q" name="q" value="{{ query }}" class="w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2" placeholder="واژه، ریشه یا کاربرد..." />
-            <button class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white" type="submit">جستجو</button>
+            <input id="q" name="q" value="{{ query }}" class="w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2" placeholder="{% trans 'Word, etymology, or usage...' %}" />
+            <button class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white" type="submit">{% trans "Search" %}</button>
             <div id="search-suggestions" class="absolute inset-x-0 top-full z-10 mt-1 hidden rounded-lg border border-slate-200 bg-white shadow-lg"></div>
         </div>
     </form>
@@ -25,12 +26,12 @@
                     <a href="{% url 'lexicon:entry-detail' entry.slug %}" class="hover:underline">{{ entry.headword }}</a>
                 </h2>
                 <p class="text-sm text-slate-500">
-                    دوره: {{ entry.epoch.name }} | {{ entry.created_at|date:"Y-m-d" }} | رتبه داغ: {{ entry.hot_rank|default:0|floatformat:2 }}
+                    {% blocktrans with epoch=entry.epoch.name created=entry.created_at|date:"Y-m-d" hot=entry.hot_rank|default:0|floatformat:2 %}Epoch: {{ epoch }} | {{ created }} | Hot rank: {{ hot }}{% endblocktrans %}
                 </p>
             </article>
         {% empty %}
             <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">
-                هنوز مدخلی ثبت نشده است.
+                {% trans "No entries have been registered yet." %}
             </p>
         {% endfor %}
     </div>

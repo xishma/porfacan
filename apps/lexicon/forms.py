@@ -10,6 +10,12 @@ class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
         fields = ("headword", "epoch", "etymology", "is_verified")
+        labels = {
+            "headword": _("Headword"),
+            "epoch": _("Epoch"),
+            "etymology": _("Etymology"),
+            "is_verified": _("Verified"),
+        }
         widgets = {
             "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
             "epoch": forms.Select(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
@@ -22,7 +28,7 @@ class EntryForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields["epoch"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
-        self.fields["epoch"].empty_label = _("انتخاب دوره")
+        self.fields["epoch"].empty_label = _("Select epoch")
         if not self._can_manage_verification():
             self.fields.pop("is_verified", None)
 
@@ -42,7 +48,7 @@ class EntryForm(forms.ModelForm):
     def clean_epoch(self):
         epoch = self.cleaned_data["epoch"]
         if not (2009 <= epoch.start_date.year <= 2026):
-            raise ValidationError(_("دوره باید بین سال‌های ۲۰۰۹ تا ۲۰۲۶ باشد."))
+            raise ValidationError(_("Epoch must be between 2009 and 2026."))
         return epoch
 
 
@@ -50,6 +56,9 @@ class DefinitionForm(forms.ModelForm):
     class Meta:
         model = Definition
         fields = ("content",)
+        labels = {
+            "content": _("Definition text"),
+        }
         widgets = {
             "content": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 5}
@@ -76,6 +85,10 @@ class DefinitionAttachmentForm(forms.ModelForm):
     class Meta:
         model = DefinitionAttachment
         fields = ("link", "image")
+        labels = {
+            "link": _("Example link"),
+            "image": _("Example image"),
+        }
         widgets = {
             "link": forms.URLInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
             "image": forms.ClearableFileInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
@@ -86,7 +99,7 @@ class DefinitionAttachmentForm(forms.ModelForm):
         link = cleaned_data.get("link")
         image = cleaned_data.get("image")
         if self.has_changed() and not link and not image:
-            raise ValidationError(_("هر مثال باید حداقل لینک یا تصویر داشته باشد."))
+            raise ValidationError(_("Each example must include at least a link or an image."))
         return cleaned_data
 
 
@@ -104,7 +117,7 @@ class DefinitionAttachmentBaseFormSet(forms.BaseFormSet):
             if form.cleaned_data.get("link") or form.cleaned_data.get("image"):
                 used_forms += 1
         if used_forms > self.max_attachments:
-            raise ValidationError(_("حداکثر %(max)d مثال مجاز است."), params={"max": self.max_attachments})
+            raise ValidationError(_("A maximum of %(max)d examples is allowed."), params={"max": self.max_attachments})
 
     def save(self, definition):
         attachments = []

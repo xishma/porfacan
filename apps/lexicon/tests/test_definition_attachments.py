@@ -120,5 +120,5 @@ def test_user_cannot_add_second_definition_for_same_entry(client, contributor, e
     assert second_response.status_code == 200
     assert Definition.objects.filter(entry=entry, author=contributor).count() == 1
     response_html = second_response.content.decode()
-    assert "شما قبلا برای این مدخل تعریف ثبت کرده\u200cاید." in response_html
-    assert "افزودن تعریف" not in response_html
+    assert "You have already submitted a definition for this entry." in response_html
+    assert "Add definition" not in response_html

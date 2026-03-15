@@ -1,10 +1,10 @@
-{% load static %}
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}پرفکان{% endblock title %}</title>
+    <title>{% block title %}{% trans "Porfacan" %}{% endblock title %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -14,20 +14,20 @@
 <body class="bg-slate-50 text-slate-900">
     <header class="border-b border-slate-200 bg-white">
         <div class="mx-auto flex max-w-5xl items-center justify-between ps-4 pe-4 py-4">
-            <a href="{% url 'lexicon:entry-list' %}" class="text-lg font-bold text-slate-900">پرفکان</a>
+            <a href="{% url 'lexicon:entry-list' %}" class="text-lg font-bold text-slate-900">{% trans "Porfacan" %}</a>
             <nav class="flex items-center gap-3 text-sm">
                 {% if request.user.is_authenticated %}
                     <span class="rounded-lg bg-slate-100 ps-3 pe-3 py-1 text-slate-700">
-                        {{ request.user.email }} | IQ: {{ request.user.reputation_iq }}
+                        {% blocktrans with email=request.user.email iq=request.user.reputation_iq %}{{ email }} | IQ: {{ iq }}{% endblocktrans %}
                     </span>
-                    <a href="{% url 'lexicon:entry-create' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">ثبت مدخل</a>
+                    <a href="{% url 'lexicon:entry-create' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Add entry" %}</a>
                     <form method="post" action="{% url 'users:logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">خروج</button>
+                        <button type="submit" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Logout" %}</button>
                     </form>
                 {% else %}
-                    <a href="{% url 'users:login' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">ورود</a>
-                    <a href="{% url 'users:register' %}" class="rounded-lg bg-slate-900 ps-3 pe-3 py-1 text-white">ثبت نام</a>
+                    <a href="{% url 'users:login' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Login" %}</a>
+                    <a href="{% url 'users:register' %}" class="rounded-lg bg-slate-900 ps-3 pe-3 py-1 text-white">{% trans "Register" %}</a>
                 {% endif %}
             </nav>
         </div>

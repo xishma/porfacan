@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.utils.translation import gettext as _
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
@@ -120,7 +121,7 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         self.entry = get_object_or_404(Entry, slug=kwargs["slug"])
         if request.user.is_authenticated and Definition.objects.filter(entry=self.entry, author=request.user).exists():
-            messages.error(request, "شما قبلا برای این مدخل تعریف ثبت کرده‌اید.")
+            messages.error(request, _("You have already submitted a definition for this entry."))
             return HttpResponseRedirect(reverse("lexicon:entry-detail", kwargs={"slug": self.entry.slug}))
         return super().dispatch(request, *args, **kwargs)
 
@@ -160,7 +161,7 @@ class DefinitionVoteView(LoginRequiredMixin, View):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return JsonResponse({"error": "Authentication required."}, status=401)
+            return JsonResponse({"error": _("Authentication required.")}, status=401)
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -168,9 +169,9 @@ class DefinitionVoteView(LoginRequiredMixin, View):
         try:
             vote_value = int(request.POST.get("value", 0))
         except (TypeError, ValueError):
-            return JsonResponse({"error": "Invalid vote value."}, status=400)
+            return JsonResponse({"error": _("Invalid vote value.")}, status=400)
         if vote_value not in (DefinitionVote.VoteValue.UPVOTE, DefinitionVote.VoteValue.DOWNVOTE):
-            return JsonResponse({"error": "Invalid vote value."}, status=400)
+            return JsonResponse({"error": _("Invalid vote value.")}, status=400)
 
         vote, created = DefinitionVote.objects.get_or_create(
             definition=definition,

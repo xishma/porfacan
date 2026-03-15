@@ -30,6 +30,8 @@ class ArchiveRecord(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = _("Archive record")
+        verbose_name_plural = _("Archive records")
         indexes = [
             models.Index(fields=["status", "-created_at"]),
             models.Index(fields=["source_url"]),

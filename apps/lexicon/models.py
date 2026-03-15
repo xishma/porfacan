@@ -83,6 +83,8 @@ class Epoch(models.Model):
 
     class Meta:
         ordering = ["start_date"]
+        verbose_name = _("Epoch")
+        verbose_name_plural = _("Epochs")
 
     def clean(self):
         super().clean()
@@ -106,6 +108,8 @@ class Entry(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = _("Entry")
+        verbose_name_plural = _("Entries")
         indexes = [
             GinIndex(fields=["search_vector"]),
             GinIndex(fields=["headword"], opclasses=["gin_trgm_ops"], name="lexicon_ent_headword_trgm"),
@@ -138,13 +142,12 @@ class Definition(models.Model):
 
     class Meta:
         ordering = ["-hot_score_value", "-created_at"]
+        verbose_name = _("Definition")
+        verbose_name_plural = _("Definitions")
         indexes = [
             models.Index(fields=["entry", "-created_at"]),
             models.Index(fields=["upvotes", "downvotes"]),
             models.Index(fields=["hot_score_value"]),
-        ]
-        constraints = [
-            models.UniqueConstraint(fields=["entry", "author"], name="lexicon_one_definition_per_user_entry"),
         ]
 
     def clean(self):
@@ -206,6 +209,8 @@ class DefinitionAttachment(models.Model):
 
     class Meta:
         ordering = ["created_at"]
+        verbose_name = _("Definition attachment")
+        verbose_name_plural = _("Definition attachments")
         constraints = [
             models.CheckConstraint(
                 condition=~(Q(link="") & Q(image="")),
@@ -235,6 +240,8 @@ class DefinitionVote(models.Model):
 
     class Meta:
         unique_together = ("definition", "user")
+        verbose_name = _("Definition vote")
+        verbose_name_plural = _("Definition votes")
         indexes = [models.Index(fields=["definition", "value"])]
 
     def __str__(self) -> str:
