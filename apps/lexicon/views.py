@@ -188,6 +188,7 @@ class DefinitionVoteView(LoginRequiredMixin, View):
                 vote.save(update_fields=["value", "updated_at"])
                 current_user_vote = vote_value
 
+        definition.refresh_vote_metrics()
         definition.refresh_from_db(fields=["upvotes", "downvotes", "reputation_score", "hot_score_value"])
         return JsonResponse(
             {

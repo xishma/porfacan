@@ -79,7 +79,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "fa"
 LANGUAGES = [
-    ("fa", _("Farsi")),
+    ("fa", _("Persian")),
 ]
 TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "Asia/Tehran")
 USE_I18N = True

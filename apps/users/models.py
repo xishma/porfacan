@@ -14,9 +14,23 @@ class User(AbstractUser):
         ADMIN = "admin", _("Admin")
 
     username = None
-    email = models.EmailField(unique=True)
-    reputation_iq = models.IntegerField(default=0)
-    role = models.CharField(max_length=20, choices=Roles.choices, default=Roles.VISITOR)
+    email = models.EmailField(
+        unique=True,
+        verbose_name=_("Email"),
+        db_index=True,
+    )
+    reputation_iq = models.IntegerField(
+        default=0,
+        verbose_name=_("Reputation IQ"),
+        db_index=True,
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Roles.choices,
+        default=Roles.VISITOR,
+        verbose_name=_("Role"),
+        db_index=True,
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

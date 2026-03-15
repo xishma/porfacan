@@ -37,7 +37,9 @@
                     <p class="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{{ definition.context_annotation }}</p>
                 {% endif %}
                 <p class="mt-3 text-xs text-slate-500">
-                    {% blocktrans with author=definition.author.get_full_name score=definition.reputation_score hot=definition.hot_score|floatformat:2 %}Author: {{ author }} | Score: {{ score }} | Hot: {{ hot }}{% endblocktrans %}
+                    {% trans "Author" %}: {{ definition.author.get_full_name }}
+                    | {% trans "Score" %}: <span class="reputation-score">{{ definition.reputation_score }}</span>
+                    | {% trans "Hot" %}: <span class="hot-score">{{ definition.hot_score|floatformat:2 }}</span>
                 </p>
                 <div class="mt-4 flex items-center gap-2 text-sm">
                     <button type="button" class="vote-btn upvote-btn rounded-lg border border-slate-300 ps-3 pe-3 py-1 {% if definition.current_user_vote == 1 %}bg-emerald-600 text-white border-emerald-600{% endif %}" data-value="1">▲</button>
@@ -102,10 +104,11 @@
 
     document.querySelectorAll(".vote-btn").forEach((button) => {
         button.addEventListener("click", async (event) => {
-            const definitionCard = event.target.closest("[data-definition-id]");
+            const clickedButton = event.currentTarget;
+            const definitionCard = clickedButton.closest("[data-definition-id]");
             const definitionId = definitionCard.dataset.definitionId;
             const formData = new URLSearchParams();
-            formData.append("value", event.target.dataset.value);
+            formData.append("value", clickedButton.dataset.value);
             const response = await fetch(`/definitions/${definitionId}/vote/`, {
                 method: "POST",
                 headers: {
@@ -123,8 +126,10 @@
             const payload = await response.json();
             definitionCard.querySelector(".upvotes").textContent = payload.upvotes;
             definitionCard.querySelector(".downvotes").textContent = payload.downvotes;
-            definitionCard.querySelector(".reputation-score").textContent = payload.reputation_score;
-            definitionCard.querySelector(".hot-score").textContent = Number(payload.hot_score).toFixed(2);
+            const reputationScoreElement = definitionCard.querySelector(".reputation-score");
+            const hotScoreElement = definitionCard.querySelector(".hot-score");
+            if (reputationScoreElement) reputationScoreElement.textContent = payload.reputation_score;
+            if (hotScoreElement) hotScoreElement.textContent = Number(payload.hot_score).toFixed(2);
             definitionCard.dataset.userVote = payload.user_vote;
             applyVoteState(definitionCard, payload.user_vote);
         });

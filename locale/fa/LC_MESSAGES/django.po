@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 00:33+0330\n"
+"POT-Creation-Date: 2026-03-16 01:01+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -74,7 +74,7 @@ msgstr "متن تعریف"
 
 #: apps/lexicon/forms.py:89 templates/lexicon/definition_form.html:30
 #: templates/lexicon/definition_form.html:46
-#: templates/lexicon/entry_detail.html:64
+#: templates/lexicon/entry_detail.html:66
 msgid "Example link"
 msgstr "لینک مثال"
 
@@ -176,13 +176,29 @@ msgstr "ناظر"
 msgid "Admin"
 msgstr "مدیر"
 
-#: apps/users/models.py:47
+#: apps/users/models.py:19
+msgid "Email"
+msgstr "ایمیل"
+
+#: apps/users/models.py:24
+msgid "Reputation IQ"
+msgstr "امتیاز شناسایی"
+
+#: apps/users/models.py:31
+msgid "Role"
+msgstr "نقش"
+
+#: apps/users/models.py:61
 msgid "User"
 msgstr "کاربر"
 
-#: apps/users/models.py:48
+#: apps/users/models.py:62
 msgid "Users"
 msgstr "کاربران"
+
+#: config/settings/base.py:82
+msgid "Persian"
+msgstr "فارسی"
 
 #: templates/base.html:7 templates/base.html:17
 #: templates/lexicon/definition_form.html:4
@@ -195,7 +211,7 @@ msgstr "پرفکان"
 #: templates/base.html:21
 #, python-format
 msgid "%(email)s | IQ: %(iq)s"
-msgstr ""
+msgstr "%(email)s | امتیاز: %(iq)s"
 
 #: templates/base.html:23
 msgid "Add entry"
@@ -254,25 +270,32 @@ msgid "You have already submitted your definition for this entry."
 msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
 
 #: templates/lexicon/entry_detail.html:40
-#, python-format
-msgid "Author: %(author)s | Score: %(score)s | Hot: %(hot)s"
-msgstr "نویسنده: %(author)s | امتیاز: %(score)s | رتبه داغ: %(hot)s"
+msgid "Author"
+msgstr "نویسنده"
 
-#: templates/lexicon/entry_detail.html:53
-#: templates/lexicon/entry_detail.html:63
+#: templates/lexicon/entry_detail.html:41
+msgid "Score"
+msgstr "امتیاز"
+
+#: templates/lexicon/entry_detail.html:42
+msgid "Hot"
+msgstr "رتبه داغ"
+
+#: templates/lexicon/entry_detail.html:55
+#: templates/lexicon/entry_detail.html:65
 #, python-format
 msgid "Example %(number)s"
 msgstr "مثال %(number)s"
 
-#: templates/lexicon/entry_detail.html:55
+#: templates/lexicon/entry_detail.html:57
 msgid "Image example"
 msgstr "مثال تصویری"
 
-#: templates/lexicon/entry_detail.html:58
+#: templates/lexicon/entry_detail.html:60
 msgid "Example source"
 msgstr "منبع مثال"
 
-#: templates/lexicon/entry_detail.html:73
+#: templates/lexicon/entry_detail.html:75
 msgid "No definitions have been submitted for this entry yet."
 msgstr "هنوز تعریفی برای این مدخل ثبت نشده است."
 
@@ -324,6 +347,3 @@ msgstr "هنوز مدخلی ثبت نشده است."
 #: templates/users/register.html:12
 msgid "Create account"
 msgstr "ایجاد حساب"
-
-#~ msgid "{{ email }} | IQ: {{ iq }}"
-#~ msgstr "{{ email }} | IQ: {{ iq }}"
