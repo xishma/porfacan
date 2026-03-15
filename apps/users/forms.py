@@ -8,13 +8,24 @@ User = get_user_model()
 class TailwindAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
         label="ایمیل",
-        widget=forms.EmailInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+        widget=forms.EmailInput(
+            attrs={
+                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                "autocomplete": "email",
+                "autofocus": True,
+            }
+        ),
     )
 
     password = forms.CharField(
         label="رمز عبور",
         strip=False,
-        widget=forms.PasswordInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                "autocomplete": "current-password",
+            }
+        ),
     )
 
 
@@ -26,8 +37,16 @@ class UserRegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         base_class = "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"
-        self.fields["email"].widget = forms.EmailInput(attrs={"class": base_class})
-        self.fields["first_name"].widget = forms.TextInput(attrs={"class": base_class})
-        self.fields["last_name"].widget = forms.TextInput(attrs={"class": base_class})
+        self.fields["email"].widget = forms.EmailInput(
+            attrs={"class": base_class, "autocomplete": "email", "autofocus": True}
+        )
+        self.fields["first_name"].widget = forms.TextInput(
+            attrs={"class": base_class, "autocomplete": "given-name"}
+        )
+        self.fields["last_name"].widget = forms.TextInput(
+            attrs={"class": base_class, "autocomplete": "family-name"}
+        )
         self.fields["password1"].widget.attrs["class"] = base_class
+        self.fields["password1"].widget.attrs["autocomplete"] = "new-password"
         self.fields["password2"].widget.attrs["class"] = base_class
+        self.fields["password2"].widget.attrs["autocomplete"] = "new-password"

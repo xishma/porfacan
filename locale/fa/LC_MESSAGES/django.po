@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 01:10+0330\n"
+"POT-Creation-Date: 2026-03-16 01:30+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -317,7 +317,7 @@ msgstr "نقش"
 msgid "Users"
 msgstr "کاربران"
 
-#: config/settings/base.py:82
+#: config/settings/base.py:89
 msgid "Persian"
 msgstr "فارسی"
 
@@ -343,7 +343,8 @@ msgid "Logout"
 msgstr "خروج"
 
 #: templates/base.html:29 templates/users/login.html:4
-#: templates/users/login.html:8 templates/users/login.html:12
+#: templates/users/login.html:8 templates/users/login.html:49
+#: templates/users/register.html:57
 msgid "Login"
 msgstr "ورود"
 
@@ -461,6 +462,46 @@ msgstr "دوره: %(epoch)s | %(created)s | رتبه داغ: %(hot)s"
 msgid "No entries have been registered yet."
 msgstr "هنوز مدخلی ثبت نشده است."
 
-#: templates/users/register.html:12
+#: templates/users/login.html:9
+msgid "Access your account to continue."
+msgstr "برای ادامه ورود به حساب کاربری خود وارد شوید."
+
+#: templates/users/login.html:15
+msgid "Continue with Google"
+msgstr "ادامه با Google"
+
+#: templates/users/login.html:20
+msgid "Continue with X"
+msgstr "ادامه با X"
+
+#: templates/users/login.html:26 templates/users/register.html:26
+msgid "or"
+msgstr "یا"
+
+#: templates/users/login.html:53
+msgid "Don't have an account?"
+msgstr "حساب کاربری ندارید؟"
+
+#: templates/users/login.html:54
+msgid "Sign up"
+msgstr "ثبت نام"
+
+#: templates/users/register.html:9
+msgid "Create your account to start contributing."
+msgstr "برای شروع مشارکت حساب کاربری خود را ایجاد کنید."
+
+#: templates/users/register.html:15
+msgid "Sign up with Google"
+msgstr "ثبت نام با Google"
+
+#: templates/users/register.html:20
+msgid "Sign up with X"
+msgstr "ثبت نام با X"
+
+#: templates/users/register.html:52
 msgid "Create account"
 msgstr "ایجاد حساب"
+
+#: templates/users/register.html:56
+msgid "Already have an account?"
+msgstr "حساب کاربری دارید؟"
