@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 01:01+0330\n"
+"POT-Creation-Date: 2026-03-16 01:10+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -36,23 +36,80 @@ msgstr "موفق"
 msgid "Failed"
 msgstr "ناموفق"
 
+#: apps/archiver/models.py:21 apps/lexicon/models.py:160
+#: apps/lexicon/models.py:224 apps/lexicon/models.py:263
+msgid "Definition"
+msgstr "تعریف"
+
+#: apps/archiver/models.py:23
+msgid "Source URL"
+msgstr "نشانی منبع"
+
+#: apps/archiver/models.py:24
+msgid "S3 path"
+msgstr "مسیر S3"
+
+#: apps/archiver/models.py:25
+msgid "File hash"
+msgstr "هش فایل"
+
+#: apps/archiver/models.py:26
+msgid "Arweave hash"
+msgstr "هش Arweave"
+
+#: apps/archiver/models.py:31
+msgid "Snapshot type"
+msgstr "نوع اسنپ‌شات"
+
 #: apps/archiver/models.py:33
+msgid "Status"
+msgstr "وضعیت"
+
+#: apps/archiver/models.py:34
+msgid "Is source available"
+msgstr "منبع در دسترس است"
+
+#: apps/archiver/models.py:35
+msgid "Link rot flagged at"
+msgstr "زمان علامت‌گذاری پوسیدگی پیوند"
+
+#: apps/archiver/models.py:36
+msgid "Last verified at"
+msgstr "آخرین زمان راستی‌آزمایی"
+
+#: apps/archiver/models.py:37
+msgid "Verification error"
+msgstr "خطای راستی‌آزمایی"
+
+#: apps/archiver/models.py:38 apps/lexicon/models.py:108
+#: apps/lexicon/models.py:156 apps/lexicon/models.py:232
+#: apps/lexicon/models.py:272
+msgid "Created at"
+msgstr "زمان ایجاد"
+
+#: apps/archiver/models.py:39 apps/lexicon/models.py:273
+msgid "Updated at"
+msgstr "زمان به‌روزرسانی"
+
+#: apps/archiver/models.py:43
 msgid "Archive record"
 msgstr "رکورد آرشیو"
 
-#: apps/archiver/models.py:34
+#: apps/archiver/models.py:44
 msgid "Archive records"
 msgstr "رکوردهای آرشیو"
 
-#: apps/lexicon/forms.py:14
+#: apps/lexicon/forms.py:14 apps/lexicon/models.py:99
 msgid "Headword"
 msgstr "سرواژه"
 
 #: apps/lexicon/forms.py:15 apps/lexicon/models.py:86
+#: apps/lexicon/models.py:105
 msgid "Epoch"
 msgstr "دوره"
 
-#: apps/lexicon/forms.py:16 templates/lexicon/entry_detail.html:15
+#: apps/lexicon/forms.py:16 apps/lexicon/models.py:107
+#: templates/lexicon/entry_detail.html:15
 msgid "Etymology"
 msgstr "ریشه‌شناسی"
 
@@ -92,6 +149,22 @@ msgstr "هر مثال باید حداقل لینک یا تصویر داشته ب
 msgid "A maximum of %(max)d examples is allowed."
 msgstr "حداکثر %(max)d مثال مجاز است."
 
+#: apps/lexicon/models.py:79
+msgid "Name"
+msgstr "نام"
+
+#: apps/lexicon/models.py:80
+msgid "Start date"
+msgstr "تاریخ شروع"
+
+#: apps/lexicon/models.py:81
+msgid "End date"
+msgstr "تاریخ پایان"
+
+#: apps/lexicon/models.py:82
+msgid "Description"
+msgstr "توضیحات"
+
 #: apps/lexicon/models.py:87
 msgid "Epochs"
 msgstr "دوره‌ها"
@@ -100,47 +173,99 @@ msgstr "دوره‌ها"
 msgid "End date cannot be before start date."
 msgstr "تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد."
 
-#: apps/lexicon/models.py:111
+#: apps/lexicon/models.py:100
+msgid "Slug"
+msgstr "نامک"
+
+#: apps/lexicon/models.py:109
+msgid "Is verified"
+msgstr "تایید شده است"
+
+#: apps/lexicon/models.py:110
+msgid "Search vector"
+msgstr "بردار جستجو"
+
+#: apps/lexicon/models.py:116 apps/lexicon/models.py:142
 msgid "Entry"
 msgstr "مدخل"
 
-#: apps/lexicon/models.py:112
+#: apps/lexicon/models.py:117
 msgid "Entries"
 msgstr "مدخل‌ها"
 
-#: apps/lexicon/models.py:145
-msgid "Definition"
-msgstr "تعریف"
+#: apps/lexicon/models.py:144
+msgid "Content"
+msgstr "محتوا"
 
-#: apps/lexicon/models.py:146 templates/lexicon/entry_detail.html:23
+#: apps/lexicon/models.py:145
+msgid "Context annotation"
+msgstr "توضیح بافت"
+
+#: apps/lexicon/models.py:150 templates/lexicon/entry_detail.html:40
+msgid "Author"
+msgstr "نویسنده"
+
+#: apps/lexicon/models.py:152
+msgid "Reputation score"
+msgstr "امتیاز اعتبار"
+
+#: apps/lexicon/models.py:153
+msgid "Upvotes"
+msgstr "رای‌های مثبت"
+
+#: apps/lexicon/models.py:154
+msgid "Downvotes"
+msgstr "رای‌های منفی"
+
+#: apps/lexicon/models.py:155
+msgid "Hot score value"
+msgstr "مقدار امتیاز داغ"
+
+#: apps/lexicon/models.py:161 templates/lexicon/entry_detail.html:23
 msgid "Definitions"
 msgstr "تعریف‌ها"
 
-#: apps/lexicon/models.py:212
+#: apps/lexicon/models.py:226
+msgid "Link"
+msgstr "پیوند"
+
+#: apps/lexicon/models.py:230
+msgid "Image"
+msgstr "تصویر"
+
+#: apps/lexicon/models.py:236
 msgid "Definition attachment"
 msgstr "پیوست تعریف"
 
-#: apps/lexicon/models.py:213
+#: apps/lexicon/models.py:237
 msgid "Definition attachments"
 msgstr "پیوست‌های تعریف"
 
-#: apps/lexicon/models.py:224
+#: apps/lexicon/models.py:248
 msgid "At least one of link or image is required."
 msgstr "حداقل یکی از لینک یا تصویر لازم است."
 
-#: apps/lexicon/models.py:232
+#: apps/lexicon/models.py:256
 msgid "Downvote"
 msgstr "رای منفی"
 
-#: apps/lexicon/models.py:233
+#: apps/lexicon/models.py:257
 msgid "Upvote"
 msgstr "رای مثبت"
 
-#: apps/lexicon/models.py:243
+#: apps/lexicon/models.py:269 apps/users/models.py:61
+msgid "User"
+msgstr "کاربر"
+
+#: apps/lexicon/models.py:271
+msgid "Value"
+msgstr "مقدار"
+
+#: apps/lexicon/models.py:277
 msgid "Definition vote"
 msgstr "رای تعریف"
 
-#: apps/lexicon/models.py:244
+#: apps/lexicon/models.py:278
 msgid "Definition votes"
 msgstr "رای‌های تعریف"
 
@@ -187,10 +312,6 @@ msgstr "امتیاز شناسایی"
 #: apps/users/models.py:31
 msgid "Role"
 msgstr "نقش"
-
-#: apps/users/models.py:61
-msgid "User"
-msgstr "کاربر"
 
 #: apps/users/models.py:62
 msgid "Users"
@@ -268,10 +389,6 @@ msgstr "افزودن تعریف"
 #: templates/lexicon/entry_detail.html:28
 msgid "You have already submitted your definition for this entry."
 msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
-
-#: templates/lexicon/entry_detail.html:40
-msgid "Author"
-msgstr "نویسنده"
 
 #: templates/lexicon/entry_detail.html:41
 msgid "Score"

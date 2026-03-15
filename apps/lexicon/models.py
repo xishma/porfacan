@@ -76,10 +76,10 @@ class EntryManager(models.Manager.from_queryset(EntryQuerySet)):
 
 
 class Epoch(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    start_date = models.DateField()
-    end_date = models.DateField(blank=True, null=True)
-    description = models.TextField()
+    name = models.CharField(max_length=200, unique=True, verbose_name=_("Name"))
+    start_date = models.DateField(verbose_name=_("Start date"))
+    end_date = models.DateField(blank=True, null=True, verbose_name=_("End date"))
+    description = models.TextField(verbose_name=_("Description"))
 
     class Meta:
         ordering = ["start_date"]
@@ -96,13 +96,18 @@ class Epoch(models.Model):
 
 
 class Entry(models.Model):
-    headword = models.CharField(max_length=255, db_index=True)
-    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True)
-    epoch = models.ForeignKey(Epoch, on_delete=models.PROTECT, related_name="entries")
-    etymology = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_verified = models.BooleanField(default=False)
-    search_vector = SearchVectorField(blank=True, null=True)
+    headword = models.CharField(max_length=255, db_index=True, verbose_name=_("Headword"))
+    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
+    epoch = models.ForeignKey(
+        Epoch,
+        on_delete=models.PROTECT,
+        related_name="entries",
+        verbose_name=_("Epoch"),
+    )
+    etymology = models.TextField(blank=True, verbose_name=_("Etymology"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    is_verified = models.BooleanField(default=False, verbose_name=_("Is verified"))
+    search_vector = SearchVectorField(blank=True, null=True, verbose_name=_("Search vector"))
 
     objects = EntryManager()
 
@@ -130,15 +135,25 @@ class Entry(models.Model):
 
 
 class Definition(models.Model):
-    entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="definitions")
-    content = models.TextField()
-    context_annotation = models.TextField(blank=True)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="definitions")
-    reputation_score = models.IntegerField(default=0)
-    upvotes = models.PositiveIntegerField(default=0)
-    downvotes = models.PositiveIntegerField(default=0)
-    hot_score_value = models.FloatField(default=0.0, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="definitions",
+        verbose_name=_("Entry"),
+    )
+    content = models.TextField(verbose_name=_("Content"))
+    context_annotation = models.TextField(blank=True, verbose_name=_("Context annotation"))
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="definitions",
+        verbose_name=_("Author"),
+    )
+    reputation_score = models.IntegerField(default=0, verbose_name=_("Reputation score"))
+    upvotes = models.PositiveIntegerField(default=0, verbose_name=_("Upvotes"))
+    downvotes = models.PositiveIntegerField(default=0, verbose_name=_("Downvotes"))
+    hot_score_value = models.FloatField(default=0.0, db_index=True, verbose_name=_("Hot score value"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     class Meta:
         ordering = ["-hot_score_value", "-created_at"]
@@ -202,10 +217,19 @@ class Definition(models.Model):
 
 
 class DefinitionAttachment(models.Model):
-    definition = models.ForeignKey(Definition, on_delete=models.CASCADE, related_name="attachments")
-    link = models.URLField(blank=True)
-    image = models.ImageField(upload_to="lexicon/definition_attachments/%Y/%m/%d", blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    definition = models.ForeignKey(
+        Definition,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        verbose_name=_("Definition"),
+    )
+    link = models.URLField(blank=True, verbose_name=_("Link"))
+    image = models.ImageField(
+        upload_to="lexicon/definition_attachments/%Y/%m/%d",
+        blank=True,
+        verbose_name=_("Image"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     class Meta:
         ordering = ["created_at"]
@@ -232,11 +256,21 @@ class DefinitionVote(models.Model):
         DOWNVOTE = -1, _("Downvote")
         UPVOTE = 1, _("Upvote")
 
-    definition = models.ForeignKey(Definition, on_delete=models.CASCADE, related_name="votes")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="definition_votes")
-    value = models.SmallIntegerField(choices=VoteValue.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    definition = models.ForeignKey(
+        Definition,
+        on_delete=models.CASCADE,
+        related_name="votes",
+        verbose_name=_("Definition"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="definition_votes",
+        verbose_name=_("User"),
+    )
+    value = models.SmallIntegerField(choices=VoteValue.choices, verbose_name=_("Value"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
     class Meta:
         unique_together = ("definition", "user")
