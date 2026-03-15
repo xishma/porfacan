@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -10,9 +11,10 @@ class TailwindAuthenticationForm(AuthenticationForm):
         label="ایمیل",
         widget=forms.EmailInput(
             attrs={
-                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2 text-left",
                 "autocomplete": "email",
                 "autofocus": True,
+                "dir": "ltr",
             }
         ),
     )
@@ -22,8 +24,9 @@ class TailwindAuthenticationForm(AuthenticationForm):
         strip=False,
         widget=forms.PasswordInput(
             attrs={
-                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2 text-left",
                 "autocomplete": "current-password",
+                "dir": "ltr",
             }
         ),
     )
@@ -32,21 +35,49 @@ class TailwindAuthenticationForm(AuthenticationForm):
 class UserRegistrationForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name")
+        fields = ("email", "first_name")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         base_class = "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"
         self.fields["email"].widget = forms.EmailInput(
-            attrs={"class": base_class, "autocomplete": "email", "autofocus": True}
+            attrs={
+                "class": f"{base_class} text-left",
+                "autocomplete": "email",
+                "autofocus": True,
+                "dir": "ltr",
+            }
         )
         self.fields["first_name"].widget = forms.TextInput(
             attrs={"class": base_class, "autocomplete": "given-name"}
         )
-        self.fields["last_name"].widget = forms.TextInput(
-            attrs={"class": base_class, "autocomplete": "family-name"}
-        )
         self.fields["password1"].widget.attrs["class"] = base_class
         self.fields["password1"].widget.attrs["autocomplete"] = "new-password"
+        self.fields["password1"].widget.attrs["dir"] = "ltr"
+        self.fields["password1"].widget.attrs["class"] = f"{base_class} text-left"
         self.fields["password2"].widget.attrs["class"] = base_class
         self.fields["password2"].widget.attrs["autocomplete"] = "new-password"
+        self.fields["password2"].widget.attrs["dir"] = "ltr"
+        self.fields["password2"].widget.attrs["class"] = f"{base_class} text-left"
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("first_name", "email")
+
+    def __init__(self, *args, can_change_email: bool = True, **kwargs):
+        super().__init__(*args, **kwargs)
+        base_class = "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"
+        self.fields["first_name"].widget = forms.TextInput(
+            attrs={"class": base_class, "autocomplete": "given-name"}
+        )
+        self.fields["email"].widget = forms.EmailInput(
+            attrs={"class": f"{base_class} text-left", "autocomplete": "email", "dir": "ltr"}
+        )
+        self.can_change_email = can_change_email
+        if not can_change_email:
+            self.fields["email"].disabled = True
+            self.fields["email"].help_text = _(
+                "Email is managed by your social login provider and cannot be changed here."
+            )

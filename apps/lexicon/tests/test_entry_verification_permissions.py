@@ -1,4 +1,5 @@
 import pytest
+from allauth.account.models import EmailAddress
 from django.urls import reverse
 
 from apps.lexicon.forms import EntryForm
@@ -49,6 +50,12 @@ def test_contributor_cannot_set_is_verified_on_create(client, epoch):
         password="password123",
         role=User.Roles.CONTRIBUTOR,
     )
+    EmailAddress.objects.create(
+        user=contributor,
+        email=contributor.email,
+        verified=True,
+        primary=True,
+    )
     client.force_login(contributor)
 
     response = client.post(
@@ -72,6 +79,12 @@ def test_admin_can_set_is_verified_on_create(client, epoch):
         email="admin-create@example.com",
         password="password123",
         role=User.Roles.ADMIN,
+    )
+    EmailAddress.objects.create(
+        user=admin,
+        email=admin.email,
+        verified=True,
+        primary=True,
     )
     client.force_login(admin)
 

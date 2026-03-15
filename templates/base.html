@@ -12,15 +12,32 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="bg-slate-50 text-slate-900">
-    <header class="border-b border-slate-200 bg-white">
-        <div class="mx-auto flex max-w-5xl items-center justify-between ps-4 pe-4 py-4">
+    <header class="border-b border-slate-200 bg-white overflow-visible">
+        <div class="mx-auto flex max-w-5xl items-center justify-between ps-4 pe-4 py-4 overflow-visible">
             <a href="{% url 'lexicon:entry-list' %}" class="text-lg font-bold text-slate-900">{% trans "Porfacan" %}</a>
-            <nav class="flex items-center gap-3 text-sm">
+            <nav class="flex items-center gap-3 text-sm overflow-visible">
                 {% if request.user.is_authenticated %}
                     <span class="rounded-lg bg-slate-100 ps-3 pe-3 py-1 text-slate-700">
                         {% blocktrans with email=request.user.email iq=request.user.reputation_iq %}{{ email }} | IQ: {{ iq }}{% endblocktrans %}
                     </span>
-                    <a href="{% url 'lexicon:entry-create' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Add entry" %}</a>
+                    <a href="{% url 'users:profile' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Profile" %}</a>
+                    {% if request.user.is_email_verified %}
+                        <a href="{% url 'lexicon:entry-create' %}" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Add entry" %}</a>
+                    {% else %}
+                        <span
+                            class="group relative inline-block cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 ps-3 pe-3 py-1 text-slate-400"
+                            aria-describedby="add-entry-tooltip"
+                        >
+                            {% trans "Add entry" %}
+                            <span
+                                id="add-entry-tooltip"
+                                class="absolute top-full left-1/2 z-50 mt-2 hidden w-max max-w-xs -translate-x-1/2 rounded-lg border border-slate-200 bg-slate-800 px-3 py-2 text-xs font-medium leading-snug text-white shadow-lg group-hover:block"
+                                role="tooltip"
+                            >
+                                {% trans "Please verify your email first in your profile page." %}
+                            </span>
+                        </span>
+                    {% endif %}
                     <form method="post" action="{% url 'users:logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="rounded-lg border border-slate-300 ps-3 pe-3 py-1 hover:bg-slate-100">{% trans "Logout" %}</button>
@@ -33,6 +50,12 @@
         </div>
     </header>
     <main class="mx-auto max-w-5xl ps-4 pe-4 py-8">
+        {% if request.user.is_authenticated and not request.user.is_email_verified and request.resolver_match.url_name != 'profile' %}
+            <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 ps-3 pe-3 py-2 text-sm text-amber-800">
+                {% trans "Please verify your email first to add entries, add definitions, or vote." %}
+                <a href="{% url 'users:profile' %}" class="font-semibold underline">{% trans "Go to profile" %}</a>
+            </div>
+        {% endif %}
         {% if messages %}
             <div class="mb-4 space-y-2">
                 {% for message in messages %}

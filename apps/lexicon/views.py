@@ -62,7 +62,13 @@ class EntryDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["can_add_definition"] = False
+        context["can_contribute"] = False
+        context["can_vote"] = False
         if self.request.user.is_authenticated:
+            context["can_contribute"] = (
+                self.request.user.has_minimum_role(1) and self.request.user.is_email_verified
+            )
+            context["can_vote"] = self.request.user.is_email_verified
             context["can_add_definition"] = not Definition.objects.filter(
                 entry=context["entry"],
                 author=self.request.user,
@@ -162,6 +168,11 @@ class DefinitionVoteView(LoginRequiredMixin, View):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({"error": _("Authentication required.")}, status=401)
+        if not request.user.is_email_verified:
+            return JsonResponse(
+                {"error": _("Please verify your email first in your profile page.")},
+                status=403,
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 01:30+0330\n"
+"POT-Creation-Date: 2026-03-16 03:00+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -131,7 +131,7 @@ msgstr "متن تعریف"
 
 #: apps/lexicon/forms.py:89 templates/lexicon/definition_form.html:30
 #: templates/lexicon/definition_form.html:46
-#: templates/lexicon/entry_detail.html:66
+#: templates/lexicon/entry_detail.html:77
 msgid "Example link"
 msgstr "لینک مثال"
 
@@ -201,7 +201,7 @@ msgstr "محتوا"
 msgid "Context annotation"
 msgstr "توضیح بافت"
 
-#: apps/lexicon/models.py:150 templates/lexicon/entry_detail.html:40
+#: apps/lexicon/models.py:150 templates/lexicon/entry_detail.html:45
 msgid "Author"
 msgstr "نویسنده"
 
@@ -253,7 +253,7 @@ msgstr "رای منفی"
 msgid "Upvote"
 msgstr "رای مثبت"
 
-#: apps/lexicon/models.py:269 apps/users/models.py:61
+#: apps/lexicon/models.py:269 apps/users/models.py:81
 msgid "User"
 msgstr "کاربر"
 
@@ -269,17 +269,28 @@ msgstr "رای تعریف"
 msgid "Definition votes"
 msgstr "رای‌های تعریف"
 
-#: apps/lexicon/views.py:124
+#: apps/lexicon/views.py:130
 msgid "You have already submitted a definition for this entry."
 msgstr "شما قبلا برای این مدخل تعریف ثبت کرده‌اید."
 
-#: apps/lexicon/views.py:164
+#: apps/lexicon/views.py:170
 msgid "Authentication required."
 msgstr "احراز هویت لازم است."
 
-#: apps/lexicon/views.py:172 apps/lexicon/views.py:174
+#: apps/lexicon/views.py:173
+msgid "Please verify your email first in your profile page."
+msgstr "لطفا ابتدا در صفحه پروفایل، ایمیل خود را تایید کنید."
+
+#: apps/lexicon/views.py:183 apps/lexicon/views.py:185
 msgid "Invalid vote value."
 msgstr "مقدار رای نامعتبر است."
+
+#: apps/users/forms.py:82
+msgid ""
+"Email is managed by your social login provider and cannot be changed here."
+msgstr ""
+"ایمیل توسط ارائه‌دهنده ورود اجتماعی شما مدیریت می‌شود و در اینجا قابل تغییر "
+"نیست."
 
 #: apps/users/models.py:10
 msgid "Visitor"
@@ -313,9 +324,39 @@ msgstr "امتیاز شناسایی"
 msgid "Role"
 msgstr "نقش"
 
-#: apps/users/models.py:62
+#: apps/users/models.py:82
 msgid "Users"
 msgstr "کاربران"
+
+#: apps/users/permissions.py:26 apps/users/permissions.py:50
+msgid "Please verify your email before contributing."
+msgstr "لطفا پیش از مشارکت، ایمیل خود را تایید کنید."
+
+#: apps/users/permissions.py:27 apps/users/permissions.py:51
+msgid "Insufficient role level for this action."
+msgstr "سطح نقش شما برای انجام این عملیات کافی نیست."
+
+#: apps/users/views.py:73
+msgid ""
+"Your account has been created. Please verify your email before contributing."
+msgstr "حساب شما ایجاد شد. لطفا پیش از مشارکت، ایمیل خود را تایید کنید."
+
+#: apps/users/views.py:106
+msgid ""
+"Your email was updated. Please verify the new address before contributing."
+msgstr "ایمیل شما به‌روزرسانی شد. لطفا پیش از مشارکت، آدرس جدید را تایید کنید."
+
+#: apps/users/views.py:109
+msgid "Profile updated successfully."
+msgstr "پروفایل با موفقیت به‌روزرسانی شد."
+
+#: apps/users/views.py:116
+msgid "Your email is already verified."
+msgstr "ایمیل شما از قبل تایید شده است."
+
+#: apps/users/views.py:121
+msgid "Verification email sent. Check your inbox."
+msgstr "ایمیل تایید ارسال شد. صندوق ورودی خود را بررسی کنید."
 
 #: config/settings/base.py:89
 msgid "Persian"
@@ -325,7 +366,7 @@ msgstr "فارسی"
 #: templates/lexicon/definition_form.html:4
 #: templates/lexicon/entry_detail.html:4 templates/lexicon/entry_form.html:4
 #: templates/lexicon/entry_list.html:4 templates/users/login.html:4
-#: templates/users/register.html:4
+#: templates/users/profile.html:4 templates/users/register.html:4
 msgid "Porfacan"
 msgstr "پرفکان"
 
@@ -335,23 +376,37 @@ msgid "%(email)s | IQ: %(iq)s"
 msgstr "%(email)s | امتیاز: %(iq)s"
 
 #: templates/base.html:23
+msgid "Profile"
+msgstr "پروفایل"
+
+#: templates/base.html:25 templates/base.html:27
 msgid "Add entry"
 msgstr "ثبت مدخل"
 
-#: templates/base.html:26
+#: templates/base.html:31
 msgid "Logout"
 msgstr "خروج"
 
-#: templates/base.html:29 templates/users/login.html:4
+#: templates/base.html:34 templates/users/login.html:4
 #: templates/users/login.html:8 templates/users/login.html:49
 #: templates/users/register.html:57
 msgid "Login"
 msgstr "ورود"
 
-#: templates/base.html:30 templates/users/register.html:4
+#: templates/base.html:35 templates/users/register.html:4
 #: templates/users/register.html:8
 msgid "Register"
 msgstr "ثبت نام"
+
+#: templates/base.html:43
+msgid ""
+"Please verify your email first to add entries, add definitions, or vote."
+msgstr "برای افزودن مدخل، افزودن تعریف یا رای‌دادن، ابتدا ایمیل خود را تایید کنید."
+
+#: templates/base.html:44 templates/lexicon/entry_detail.html:29
+#: templates/lexicon/entry_detail.html:58
+msgid "Go to profile"
+msgstr "رفتن به پروفایل"
 
 #: templates/lexicon/definition_form.html:4
 msgid "New definition"
@@ -388,32 +443,40 @@ msgid "Add definition"
 msgstr "افزودن تعریف"
 
 #: templates/lexicon/entry_detail.html:28
+msgid "Verify your email first in your profile page to add definitions."
+msgstr "برای افزودن تعریف، ابتدا در صفحه پروفایل ایمیل خود را تایید کنید."
+
+#: templates/lexicon/entry_detail.html:33
 msgid "You have already submitted your definition for this entry."
 msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
 
-#: templates/lexicon/entry_detail.html:41
+#: templates/lexicon/entry_detail.html:46
 msgid "Score"
 msgstr "امتیاز"
 
-#: templates/lexicon/entry_detail.html:42
+#: templates/lexicon/entry_detail.html:47
 msgid "Hot"
 msgstr "رتبه داغ"
 
-#: templates/lexicon/entry_detail.html:55
-#: templates/lexicon/entry_detail.html:65
+#: templates/lexicon/entry_detail.html:57
+msgid "Verify your email first in your profile page to vote."
+msgstr "برای رای‌دادن، ابتدا در صفحه پروفایل ایمیل خود را تایید کنید."
+
+#: templates/lexicon/entry_detail.html:66
+#: templates/lexicon/entry_detail.html:76
 #, python-format
 msgid "Example %(number)s"
 msgstr "مثال %(number)s"
 
-#: templates/lexicon/entry_detail.html:57
+#: templates/lexicon/entry_detail.html:68
 msgid "Image example"
 msgstr "مثال تصویری"
 
-#: templates/lexicon/entry_detail.html:60
+#: templates/lexicon/entry_detail.html:71
 msgid "Example source"
 msgstr "منبع مثال"
 
-#: templates/lexicon/entry_detail.html:75
+#: templates/lexicon/entry_detail.html:86
 msgid "No definitions have been submitted for this entry yet."
 msgstr "هنوز تعریفی برای این مدخل ثبت نشده است."
 
@@ -485,6 +548,46 @@ msgstr "حساب کاربری ندارید؟"
 #: templates/users/login.html:54
 msgid "Sign up"
 msgstr "ثبت نام"
+
+#: templates/users/profile.html:4 templates/users/profile.html:8
+msgid "Profile settings"
+msgstr "تنظیمات پروفایل"
+
+#: templates/users/profile.html:9
+msgid "Manage your identity and email verification status."
+msgstr "هویت و وضعیت تایید ایمیل خود را مدیریت کنید."
+
+#: templates/users/profile.html:13
+msgid "Email verified"
+msgstr "ایمیل تایید شده است"
+
+#: templates/users/profile.html:14
+msgid "You can contribute to entries and definitions."
+msgstr "می‌توانید در مدخل‌ها و تعریف‌ها مشارکت کنید."
+
+#: templates/users/profile.html:16
+msgid "Email not verified"
+msgstr "ایمیل تایید نشده است"
+
+#: templates/users/profile.html:17
+msgid "Verify your email before contributing."
+msgstr "پیش از مشارکت، ایمیل خود را تایید کنید."
+
+#: templates/users/profile.html:21
+msgid "Send verification email again"
+msgstr "ارسال مجدد ایمیل تایید"
+
+#: templates/users/profile.html:49
+msgid "Save changes"
+msgstr "ذخیره تغییرات"
+
+#: templates/users/profile.html:55
+msgid ""
+"You signed in with Google or X, so email changes must be done in your "
+"provider account."
+msgstr ""
+"شما با Google یا X وارد شده‌اید؛ بنابراین تغییر ایمیل باید از طریق حساب "
+"ارائه‌دهنده انجام شود."
 
 #: templates/users/register.html:9
 msgid "Create your account to start contributing."

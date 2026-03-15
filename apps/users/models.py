@@ -54,6 +54,26 @@ class User(AbstractUser):
     def has_minimum_role(self, minimum_level: int) -> bool:
         return self.is_authenticated and self.role_level >= minimum_level
 
+    @property
+    def has_social_login(self) -> bool:
+        from allauth.socialaccount.models import SocialAccount
+
+        if not self.pk:
+            return False
+        return SocialAccount.objects.filter(user=self).exists()
+
+    @property
+    def is_email_verified(self) -> bool:
+        from allauth.account.models import EmailAddress
+
+        if not self.pk:
+            return False
+        return EmailAddress.objects.filter(
+            user=self,
+            email__iexact=self.email,
+            verified=True,
+        ).exists()
+
     def __str__(self) -> str:
         return self.email
 

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Profile settings" %} | {% trans "Porfacan" %}{% endblock title %}
+
+{% block content %}
+<section class="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h1 class="mb-2 text-xl font-semibold">{% trans "Profile settings" %}</h1>
+    <p class="mb-6 text-sm text-slate-600">{% trans "Manage your identity and email verification status." %}</p>
+
+    <div class="mb-6 rounded-lg border ps-4 pe-4 py-3 {% if is_email_verified %}border-emerald-300 bg-emerald-50 text-emerald-800{% else %}border-amber-300 bg-amber-50 text-amber-800{% endif %}">
+        {% if is_email_verified %}
+            <p class="text-sm font-medium">{% trans "Email verified" %}</p>
+            <p class="mt-1 text-sm">{% trans "You can contribute to entries and definitions." %}</p>
+        {% else %}
+            <p class="text-sm font-medium">{% trans "Email not verified" %}</p>
+            <p class="mt-1 text-sm">{% trans "Verify your email before contributing." %}</p>
+            <form method="post" action="{% url 'users:resend-verification' %}" class="mt-3">
+                {% csrf_token %}
+                <button type="submit" class="rounded-lg border border-amber-400 bg-white ps-3 pe-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-100">
+                    {% trans "Send verification email again" %}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <form method="post" class="space-y-4" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="rounded-lg border border-red-300 bg-red-50 ps-3 pe-3 py-2 text-sm text-red-700">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="mb-1 block text-sm font-medium text-slate-700">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ field.errors|striptags }}</p>
+                {% endif %}
+                {% if field.help_text %}
+                    <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">
+            {% trans "Save changes" %}
+        </button>
+    </form>
+
+    {% if not can_change_email %}
+        <p class="mt-5 text-sm text-slate-600">
+            {% trans "You signed in with Google or X, so email changes must be done in your provider account." %}
+        </p>
+    {% endif %}
+</section>
+{% endblock content %}
