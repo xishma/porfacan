@@ -1,7 +1,9 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.utils.translation import gettext_lazy as _
+from hcaptcha_field import hCaptchaField
 
 User = get_user_model()
 
@@ -31,6 +33,11 @@ class TailwindAuthenticationForm(AuthenticationForm):
         ),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.HCAPTCHA_SITEKEY:
+            self.fields["hcaptcha"] = hCaptchaField(label="")
+
 
 class UserRegistrationForm(UserCreationForm):
     class Meta:
@@ -59,6 +66,8 @@ class UserRegistrationForm(UserCreationForm):
         self.fields["password2"].widget.attrs["autocomplete"] = "new-password"
         self.fields["password2"].widget.attrs["dir"] = "ltr"
         self.fields["password2"].widget.attrs["class"] = f"{base_class} text-left"
+        if settings.HCAPTCHA_SITEKEY:
+            self.fields["hcaptcha"] = hCaptchaField(label="")
 
 
 class UserProfileForm(forms.ModelForm):

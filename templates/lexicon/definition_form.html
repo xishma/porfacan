@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n icons %}
 
 {% block title %}{% trans "New definition" %} | {% trans "Porfacan" %}{% endblock title %}
 
@@ -19,7 +19,7 @@
         <div class="space-y-3 rounded-lg border border-slate-200 p-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-slate-800">{% trans "Examples (optional, maximum 5)" %}</h2>
-                <button id="add-example-btn" type="button" class="rounded-md border border-slate-300 ps-3 pe-3 py-1 text-sm text-slate-700">+</button>
+                <button id="add-example-btn" type="button" class="inline-flex items-center gap-1 rounded-md border border-slate-300 ps-3 pe-3 py-1 text-sm text-slate-700">{% icon "plus" %}<span>+</span></button>
             </div>
             {{ attachment_formset.management_form }}
             {{ attachment_formset.non_form_errors }}
@@ -53,7 +53,7 @@
                 </div>
             </template>
         </div>
-        <button type="submit" class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">{% trans "Submit definition" %}</button>
+        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">{% icon "submit" %}<span>{% trans "Submit definition" %}</span></button>
     </form>
 </section>
 <script>

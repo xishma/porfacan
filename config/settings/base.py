@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.twitter",
     "storages",
     "django_celery_beat",
+    "hcaptcha_field",
     "apps.users",
     "apps.lexicon",
     "apps.archiver",
@@ -130,6 +131,9 @@ GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
 X_OAUTH_CLIENT_ID = os.getenv("X_OAUTH_CLIENT_ID", "")
 X_OAUTH_CLIENT_SECRET = os.getenv("X_OAUTH_CLIENT_SECRET", "")
+
+HCAPTCHA_SITEKEY = os.getenv("HCAPTCHA_SITEKEY", "")
+HCAPTCHA_SECRET = os.getenv("HCAPTCHA_SECRET", "")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {

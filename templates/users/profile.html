@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n icons %}
 
 {% block title %}{% trans "Profile settings" %} | {% trans "Porfacan" %}{% endblock title %}
 
@@ -17,8 +17,8 @@
             <p class="mt-1 text-sm">{% trans "Verify your email before contributing." %}</p>
             <form method="post" action="{% url 'users:resend-verification' %}" class="mt-3">
                 {% csrf_token %}
-                <button type="submit" class="rounded-lg border border-amber-400 bg-white ps-3 pe-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-100">
-                    {% trans "Send verification email again" %}
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-amber-400 bg-white ps-3 pe-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-100">
+                    {% icon "envelope" %}<span>{% trans "Send verification email again" %}</span>
                 </button>
             </form>
         {% endif %}
@@ -45,8 +45,8 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">
-            {% trans "Save changes" %}
+        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">
+            {% icon "save" %}<span>{% trans "Save changes" %}</span>
         </button>
     </form>
 

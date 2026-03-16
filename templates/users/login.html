@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n socialaccount %}
+{% load i18n socialaccount icons %}
 
 {% block title %}{% trans "Login" %} | {% trans "Porfacan" %}{% endblock title %}
 
@@ -11,13 +11,13 @@
     {% if google_oauth_enabled or x_oauth_enabled %}
         <div class="space-y-3">
             {% if google_oauth_enabled %}
-                <a href="{% provider_login_url 'google' process='login' %}" class="block w-full rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-center text-sm font-medium text-slate-800 hover:bg-slate-100">
-                    {% trans "Continue with Google" %}
+                <a href="{% provider_login_url 'google' process='login' %}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100">
+                    {% icon "google" %}<span>{% trans "Continue with Google" %}</span>
                 </a>
             {% endif %}
             {% if x_oauth_enabled %}
-                <a href="{% provider_login_url 'twitter' process='login' %}" class="block w-full rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-center text-sm font-medium text-slate-800 hover:bg-slate-100">
-                    {% trans "Continue with X" %}
+                <a href="{% provider_login_url 'twitter' process='login' %}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100">
+                    {% icon "x_twitter" %}<span>{% trans "Continue with X" %}</span>
                 </a>
             {% endif %}
         </div>
@@ -46,12 +46,12 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="w-full rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">{% trans "Login" %}</button>
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">{% icon "login" %}<span>{% trans "Login" %}</span></button>
     </form>
 
     <p class="mt-5 text-center text-sm text-slate-600">
         {% trans "Don't have an account?" %}
-        <a href="{% url 'users:register' %}" class="font-medium text-slate-900 underline">{% trans "Sign up" %}</a>
+        <a href="{% url 'users:register' %}" class="inline-flex items-center gap-2 font-medium text-slate-900 underline">{% icon "register" %}<span>{% trans "Sign up" %}</span></a>
     </p>
 </section>
 {% endblock content %}
