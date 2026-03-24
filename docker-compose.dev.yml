@@ -5,12 +5,6 @@ services:
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     env_file:
       - .env
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      REDIS_URL: redis://redis:6379/1
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER:-porfacan}:${RABBITMQ_PASSWORD:-porfacan}@rabbitmq:5672/${RABBITMQ_VHOST:-porfacan}
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
     volumes:
       - .:/app
     ports:
@@ -26,10 +20,8 @@ services:
   db:
     container_name: porfacan-db
     image: postgres:16
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-porfacan}
-      POSTGRES_USER: ${POSTGRES_USER:-porfacan}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-porfacan}
+    env_file:
+      - .env
     volumes:
       - ./docker/data/postgres:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -55,10 +47,8 @@ services:
   rabbitmq:
     container_name: porfacan-rabbitmq
     image: rabbitmq:3-management
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-porfacan}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-porfacan}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-porfacan}
+    env_file:
+      - .env
     volumes:
       - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
@@ -77,12 +67,6 @@ services:
     command: celery -A config worker -l info
     env_file:
       - .env
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      REDIS_URL: redis://redis:6379/1
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER:-porfacan}:${RABBITMQ_PASSWORD:-porfacan}@rabbitmq:5672/${RABBITMQ_VHOST:-porfacan}
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
     volumes:
       - .:/app
     depends_on:
@@ -99,12 +83,6 @@ services:
     command: sh -c "until python manage.py shell -c \"from django.db import connection; c = connection.cursor(); c.execute(\\\"SELECT to_regclass('public.django_celery_beat_crontabschedule')\\\"); import sys; sys.exit(0 if c.fetchone()[0] else 1)\"; do sleep 2; done; celery -A config beat -l info"
     env_file:
       - .env
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      REDIS_URL: redis://redis:6379/1
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER:-porfacan}:${RABBITMQ_PASSWORD:-porfacan}@rabbitmq:5672/${RABBITMQ_VHOST:-porfacan}
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
     volumes:
       - .:/app
     depends_on:
