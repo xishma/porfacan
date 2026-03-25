@@ -1,7 +1,18 @@
 services:
+  migrations:
+    container_name: porfacan-migrations
+    image: "${APP_IMAGE}"
+    command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    restart: "no"
+
   web:
     container_name: porfacan-web
-    build: .
+    image: "${APP_IMAGE}"
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
     env_file:
       - .env
@@ -44,7 +55,7 @@ services:
 
   celery-worker:
     container_name: porfacan-celery-worker
-    build: .
+    image: "${APP_IMAGE}"
     command: celery -A config worker -l info
     env_file:
       - .env
@@ -56,7 +67,7 @@ services:
 
   celery-beat:
     container_name: porfacan-celery-beat
-    build: .
+    image: "${APP_IMAGE}"
     command: celery -A config beat -l info
     env_file:
       - .env
