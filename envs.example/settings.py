@@ -1,0 +1,73 @@
+"""
+Copy this file to envs/settings.py and update values for your environment.
+This file is loaded automatically by config/settings/local.py and
+config/settings/production.py when present.
+"""
+
+SECRET_KEY = "change-me"
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+TIME_ZONE = "Asia/Tehran"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "porfacan",
+        "USER": "porfacan",
+        "PASSWORD": "porfacan",
+        "HOST": "porfacan-db",
+        "PORT": "5432",
+    }
+}
+
+REDIS_URL = "redis://porfacan-redis:6379/1"
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    }
+}
+
+CELERY_BROKER_URL = "amqp://guest:guest@porfacan-rabbitmq:5672//"
+CELERY_RESULT_BACKEND = "redis://porfacan-redis:6379/2"
+
+GOOGLE_OAUTH_CLIENT_ID = ""
+GOOGLE_OAUTH_CLIENT_SECRET = ""
+X_OAUTH_CLIENT_ID = ""
+X_OAUTH_CLIENT_SECRET = ""
+
+HCAPTCHA_SITEKEY = ""
+HCAPTCHA_SECRET = ""
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["email", "profile"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "APP": {
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "key": "",
+        },
+    },
+    "twitter": {
+        "SCOPE": ["users.read", "tweet.read", "offline.access"],
+        "APP": {
+            "client_id": X_OAUTH_CLIENT_ID,
+            "secret": X_OAUTH_CLIENT_SECRET,
+            "key": "",
+        },
+    },
+}
+
+AWS_ACCESS_KEY_ID = ""
+AWS_SECRET_ACCESS_KEY = ""
+AWS_STORAGE_BUCKET_NAME = ""
+AWS_S3_REGION_NAME = "eu-central-1"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_QUERYSTRING_AUTH = False
+AWS_DEFAULT_ACL = None
+if AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+ARWEAVE_GATEWAY_URL = "https://arweave.net"
+ARWEAVE_WALLET_PATH = ""

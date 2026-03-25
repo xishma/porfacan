@@ -1,0 +1,71 @@
+services:
+  web:
+    container_name: porfacan-web
+    build: .
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+
+  db:
+    container_name: porfacan-db
+    image: postgres:16
+    env_file:
+      - .env
+    volumes:
+      - ./docker/data/postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+
+  redis:
+    container_name: porfacan-redis
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  rabbitmq:
+    container_name: porfacan-rabbitmq
+    image: rabbitmq:3-management
+    env_file:
+      - .env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    restart: unless-stopped
+
+  celery-worker:
+    container_name: porfacan-celery-worker
+    build: .
+    command: celery -A config worker -l info
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+
+  celery-beat:
+    container_name: porfacan-celery-beat
+    build: .
+    command: celery -A config beat -l info
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  rabbitmq_data:
