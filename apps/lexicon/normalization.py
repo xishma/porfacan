@@ -15,6 +15,7 @@ _ARABIC_TO_PERSIAN = str.maketrans(
     }
 )
 _MULTI_SPACES = re.compile(r"\s+")
+_HAZM_NORMALIZER = Normalizer(persian_style=True, remove_diacritics=True) if Normalizer else None
 
 
 def normalize_persian(text: str) -> str:
@@ -24,7 +25,6 @@ def normalize_persian(text: str) -> str:
     normalized = text.translate(_ARABIC_TO_PERSIAN).strip()
     normalized = _MULTI_SPACES.sub(" ", normalized)
 
-    if Normalizer:
-        normalizer = Normalizer(persian_style=True, remove_diacritics=True)
-        normalized = normalizer.normalize(normalized)
+    if _HAZM_NORMALIZER:
+        normalized = _HAZM_NORMALIZER.normalize(normalized)
     return normalized

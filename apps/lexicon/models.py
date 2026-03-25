@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, SearchVectorField, TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, Exists, F, FloatField, IntegerField, Max, OuterRef, Q, QuerySet, Value, When
@@ -60,7 +60,11 @@ class EntryQuerySet(QuerySet):
             return self.none()
 
         return (
-            self.annotate(
+            self.filter(
+                Q(headword__istartswith=normalized_query)
+                | Q(headword__trigram_similar=normalized_query)
+            )
+            .annotate(
                 trigram_similarity=TrigramSimilarity("headword", normalized_query),
                 starts_with=Case(
                     When(headword__istartswith=normalized_query, then=Value(1)),
@@ -69,7 +73,7 @@ class EntryQuerySet(QuerySet):
                 ),
             )
             .filter(
-                Q(headword__icontains=normalized_query)
+                Q(starts_with=1)
                 | Q(trigram_similarity__gte=self.SUGGESTION_TRIGRAM_THRESHOLD)
             )
             .order_by("-starts_with", "-trigram_similarity", "-created_at")
@@ -150,6 +154,7 @@ class Entry(models.Model):
         indexes = [
             GinIndex(fields=["search_vector"]),
             GinIndex(fields=["headword"], opclasses=["gin_trgm_ops"], name="lexicon_ent_headword_trgm"),
+            models.Index(OpClass("headword", name="varchar_pattern_ops"), name="lex_ent_head_prefix_idx"),
             models.Index(fields=["is_verified", "-created_at"], name="lex_ent_ver_cr_idx"),
         ]
 

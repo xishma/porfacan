@@ -1,6 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.db.models import Q
+from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.contrib.postgres.search import TrigramSimilarity
+from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -11,8 +15,10 @@ from django.utils.translation import gettext as _
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
+from .cache import build_versioned_cache_key
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
-from .models import Definition, DefinitionVote, Entry, Epoch, Page
+from .models import Definition, DefinitionVote, Entry, EntryQuerySet, Epoch, Page
+from .normalization import normalize_persian
 
 
 class EntryListView(ListView):
@@ -21,15 +27,45 @@ class EntryListView(ListView):
     context_object_name = "entries"
     paginate_by = 20
 
-    def get_queryset(self):
-        queryset = (
-            Entry.objects.filter(is_verified=True)
+    def _cacheable_entry_query(self, normalized_query: str, selected_epoch: str) -> bool:
+        return bool(normalized_query or selected_epoch)
+
+    def _entry_search_cache_key(self, normalized_query: str, selected_epoch: str) -> str:
+        payload = {
+            "query": normalized_query,
+            "epoch": selected_epoch,
+        }
+        return build_versioned_cache_key("entry_search_ids", payload, version_scope="entry_search_results")
+
+    def _ordered_entry_queryset_from_ids(self, entry_ids: list[int]):
+        if not entry_ids:
+            return (
+                Entry.objects.filter(is_verified=True)
+                .only("id", "headword", "slug", "created_at", "is_verified")
+                .prefetch_related("epochs")
+                .none()
+            )
+
+        order_by_id = Case(
+            *[When(pk=entry_id, then=Value(position)) for position, entry_id in enumerate(entry_ids)],
+            output_field=IntegerField(),
+        )
+        return (
+            Entry.objects.filter(is_verified=True, pk__in=entry_ids)
             .only("id", "headword", "slug", "created_at", "is_verified")
             .prefetch_related("epochs")
-            .with_hot_rank()
+            .annotate(_cached_order=order_by_id)
+            .order_by("_cached_order")
+        )
+
+    def get_queryset(self):
+        queryset = Entry.objects.filter(is_verified=True).only("id", "headword", "slug", "created_at", "is_verified").prefetch_related(
+            "epochs"
         )
         query = self.request.GET.get("q", "")
         selected_epoch = self.request.GET.get("epoch", "").strip()
+        normalized_query = normalize_persian(query).strip()
+        has_query = bool(normalized_query)
         if query:
             queryset = queryset.search(query)
         if selected_epoch:
@@ -39,7 +75,26 @@ class EntryListView(ListView):
                 return queryset.none()
 
             queryset = queryset.filter(epochs__in=epochs)
-        return queryset.order_by("-hot_rank", "-created_at")
+        if not has_query:
+            queryset = queryset.with_hot_rank().order_by("-hot_rank", "-created_at")
+
+        if not self._cacheable_entry_query(normalized_query=normalized_query, selected_epoch=selected_epoch):
+            return queryset
+
+        cache_key = self._entry_search_cache_key(
+            normalized_query=normalized_query,
+            selected_epoch=selected_epoch,
+        )
+        cached_entry_ids = cache.get(cache_key)
+        if cached_entry_ids is not None:
+            return self._ordered_entry_queryset_from_ids(cached_entry_ids)
+
+        max_cached_results = settings.LEXICON_CACHE_MAX_RESULT_IDS
+        result_ids = list(queryset.values_list("id", flat=True)[: max_cached_results + 1])
+        if len(result_ids) <= max_cached_results:
+            cache.set(cache_key, result_ids, timeout=settings.LEXICON_CACHE_TIMEOUT_SEARCH)
+            return self._ordered_entry_queryset_from_ids(result_ids)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -56,6 +111,30 @@ class PageDetailView(DetailView):
     slug_field = "address"
     slug_url_kwarg = "address"
 
+    def get_object(self, queryset=None):
+        queryset = queryset if queryset is not None else self.get_queryset()
+        user = self.request.user
+        if user.is_authenticated and user.is_staff:
+            return super().get_object(queryset=queryset)
+
+        address = self.kwargs.get(self.slug_url_kwarg)
+        cache_key = build_versioned_cache_key(
+            "page_detail",
+            {"address": address},
+            version_scope="pages",
+        )
+        cached_page = cache.get(cache_key)
+        if cached_page is not None:
+            return cached_page
+
+        page = queryset.only("id", "address", "title", "content", "is_published", "created_at", "updated_at").filter(
+            address=address
+        ).first()
+        if page is None:
+            raise Http404
+        cache.set(cache_key, page, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
+        return page
+
     def get_queryset(self):
         queryset = Page.objects
         user = self.request.user
@@ -67,7 +146,38 @@ class PageDetailView(DetailView):
 class EntrySuggestionView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "")
-        suggestions = list(Entry.objects.filter(is_verified=True).suggestions(query=query, limit=8))
+        normalized_query = normalize_persian(query).strip()
+        if not normalized_query:
+            return JsonResponse({"results": []})
+
+        cache_key = build_versioned_cache_key(
+            "entry_suggestions",
+            {"query": normalized_query, "limit": 8},
+            version_scope="entry_suggestions",
+        )
+        suggestions = cache.get(cache_key)
+        if suggestions is None:
+            limit = 8
+            prefix_matches = list(
+                Entry.objects.filter(is_verified=True, headword__startswith=normalized_query)
+                .order_by("-created_at")
+                .values("headword", "slug")[:limit]
+            )
+            suggestions = prefix_matches
+            remaining = limit - len(prefix_matches)
+            if remaining > 0 and len(normalized_query) >= 3:
+                used_slugs = [item["slug"] for item in prefix_matches]
+                fuzzy_matches = list(
+                    Entry.objects.filter(is_verified=True)
+                    .exclude(slug__in=used_slugs)
+                    .filter(headword__trigram_similar=normalized_query)
+                    .annotate(trigram_similarity=TrigramSimilarity("headword", normalized_query))
+                    .filter(trigram_similarity__gte=EntryQuerySet.SUGGESTION_TRIGRAM_THRESHOLD)
+                    .order_by("-trigram_similarity", "-created_at")
+                    .values("headword", "slug")[:remaining]
+                )
+                suggestions = prefix_matches + fuzzy_matches
+            cache.set(cache_key, suggestions, timeout=settings.LEXICON_CACHE_TIMEOUT_SUGGESTIONS)
         return JsonResponse({"results": suggestions})
 
 

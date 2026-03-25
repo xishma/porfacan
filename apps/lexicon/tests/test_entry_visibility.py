@@ -1,5 +1,6 @@
 import pytest
 from urllib.parse import quote_plus
+from django.core.cache import cache
 from django.urls import reverse
 
 from apps.lexicon.models import Entry, Epoch
@@ -184,3 +185,43 @@ def test_entry_epoch_filter_with_search(
     content = response.content.decode()
     assert verified_entry.headword in content
     assert verified_entry_other_epoch.headword not in content
+
+
+@pytest.mark.django_db
+def test_entry_search_cache_invalidation_on_new_entry(client, epoch):
+    cache.clear()
+    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True)
+    first_entry.epochs.add(epoch)
+
+    first_response = client.get(reverse("lexicon:entry-list"), data={"q": "پی"})
+    assert first_response.status_code == 200
+    first_content = first_response.content.decode()
+    assert first_entry.headword in first_content
+
+    second_entry = Entry.objects.create(headword="پیام", is_verified=True)
+    second_entry.epochs.add(epoch)
+
+    second_response = client.get(reverse("lexicon:entry-list"), data={"q": "پی"})
+    assert second_response.status_code == 200
+    second_content = second_response.content.decode()
+    assert second_entry.headword in second_content
+
+
+@pytest.mark.django_db
+def test_entry_suggestion_cache_invalidation_on_new_entry(client, epoch):
+    cache.clear()
+    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True)
+    first_entry.epochs.add(epoch)
+
+    first_response = client.get(reverse("lexicon:entry-suggest"), data={"q": "پی"})
+    assert first_response.status_code == 200
+    first_headwords = [item["headword"] for item in first_response.json()["results"]]
+    assert first_entry.headword in first_headwords
+
+    second_entry = Entry.objects.create(headword="پیام", is_verified=True)
+    second_entry.epochs.add(epoch)
+
+    second_response = client.get(reverse("lexicon:entry-suggest"), data={"q": "پی"})
+    assert second_response.status_code == 200
+    second_headwords = [item["headword"] for item in second_response.json()["results"]]
+    assert second_entry.headword in second_headwords

@@ -132,8 +132,13 @@
     };
 
     let debounceTimer = null;
+    let activeSuggestionController = null;
     searchInput.addEventListener("input", () => {
         clearTimeout(debounceTimer);
+        if (activeSuggestionController) {
+            activeSuggestionController.abort();
+            activeSuggestionController = null;
+        }
         const q = searchInput.value.trim();
         if (q.length < 2) {
             suggestionBox.classList.add("hidden");
@@ -141,10 +146,21 @@
             return;
         }
         debounceTimer = setTimeout(async () => {
-            const response = await fetch(`/entries/suggest/?q=${encodeURIComponent(q)}`);
-            if (!response.ok) return;
-            const payload = await response.json();
-            renderSuggestions(payload.results || []);
+            activeSuggestionController = new AbortController();
+            try {
+                const response = await fetch(`/entries/suggest/?q=${encodeURIComponent(q)}`, {
+                    signal: activeSuggestionController.signal,
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                renderSuggestions(payload.results || []);
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    suggestionBox.classList.add("hidden");
+                }
+            } finally {
+                activeSuggestionController = null;
+            }
         }, 220);
     });
 

@@ -24,9 +24,27 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "TIMEOUT": 300,
+        "KEY_PREFIX": "porfacan",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+            "SOCKET_CONNECT_TIMEOUT": 0.5,
+            "SOCKET_TIMEOUT": 0.5,
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 200,
+                "retry_on_timeout": True,
+            },
+        },
     }
 }
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_CACHE_ALIAS = "default"
+LEXICON_CACHE_TIMEOUT_SEARCH = 180
+LEXICON_CACHE_TIMEOUT_SUGGESTIONS = 120
+LEXICON_CACHE_TIMEOUT_PAGES = 600
+LEXICON_CACHE_MAX_RESULT_IDS = 1000
 
 CELERY_BROKER_URL = "amqp://guest:guest@porfacan-rabbitmq:5672//"
 CELERY_RESULT_BACKEND = "redis://porfacan-redis:6379/2"

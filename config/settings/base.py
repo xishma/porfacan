@@ -157,11 +157,29 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"),
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "TIMEOUT": int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300")),
+        "KEY_PREFIX": os.getenv("CACHE_KEY_PREFIX", "porfacan"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": os.getenv("CACHE_IGNORE_EXCEPTIONS", "1") == "1",
+            "SOCKET_CONNECT_TIMEOUT": float(os.getenv("CACHE_SOCKET_CONNECT_TIMEOUT", "0.5")),
+            "SOCKET_TIMEOUT": float(os.getenv("CACHE_SOCKET_TIMEOUT", "0.5")),
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": int(os.getenv("CACHE_MAX_CONNECTIONS", "200")),
+                "retry_on_timeout": True,
+            },
+        },
     }
 }
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# Keep session persistence in DB while using Redis as fast-path cache.
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = "default"
+
+LEXICON_CACHE_TIMEOUT_SEARCH = int(os.getenv("LEXICON_CACHE_TIMEOUT_SEARCH", "180"))
+LEXICON_CACHE_TIMEOUT_SUGGESTIONS = int(os.getenv("LEXICON_CACHE_TIMEOUT_SUGGESTIONS", "120"))
+LEXICON_CACHE_TIMEOUT_PAGES = int(os.getenv("LEXICON_CACHE_TIMEOUT_PAGES", "600"))
+LEXICON_CACHE_MAX_RESULT_IDS = int(os.getenv("LEXICON_CACHE_MAX_RESULT_IDS", "1000"))
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://porfacan:porfacan@localhost:5672/porfacan")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/2")
