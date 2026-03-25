@@ -220,6 +220,10 @@ msgstr "نویسنده"
 msgid "Reputation score"
 msgstr "امتیاز اعتبار"
 
+#: apps/lexicon/models.py:153 templates/lexicon/entry_detail.html:49
+msgid "Featured"
+msgstr "ویژه"
+
 #: apps/lexicon/models.py:155
 msgid "Upvotes"
 msgstr "رای‌های مثبت"

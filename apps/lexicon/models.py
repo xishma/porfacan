@@ -177,6 +177,7 @@ class Definition(models.Model):
         related_name="definitions",
         verbose_name=_("Author"),
     )
+    is_featured = models.BooleanField(default=False, db_index=True, verbose_name=_("Featured"))
     reputation_score = models.IntegerField(default=0, verbose_name=_("Reputation score"))
     upvotes = models.PositiveIntegerField(default=0, verbose_name=_("Upvotes"))
     downvotes = models.PositiveIntegerField(default=0, verbose_name=_("Downvotes"))
@@ -184,7 +185,7 @@ class Definition(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     class Meta:
-        ordering = ["-hot_score_value", "-created_at"]
+        ordering = ["-is_featured", "-hot_score_value", "-created_at"]
         verbose_name = _("Definition")
         verbose_name_plural = _("Definitions")
         indexes = [

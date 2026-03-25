@@ -32,8 +32,18 @@ class EntryAdmin(admin.ModelAdmin):
 
 @admin.register(Definition)
 class DefinitionAdmin(admin.ModelAdmin):
-    list_display = ("entry", "author", "upvotes", "downvotes", "reputation_score", "hot_score_value", "created_at")
-    list_filter = ("created_at",)
+    list_display = (
+        "entry",
+        "author",
+        "is_featured",
+        "upvotes",
+        "downvotes",
+        "reputation_score",
+        "hot_score_value",
+        "created_at",
+    )
+    list_filter = ("is_featured", "created_at")
+    list_editable = ("is_featured",)
     search_fields = ("entry__headword", "content")
 
 
