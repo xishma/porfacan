@@ -15,7 +15,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
     <header class="border-b border-slate-200 bg-white overflow-visible">
         <div class="mx-auto flex max-w-5xl items-center justify-between ps-4 pe-4 py-4 overflow-visible">
             <a href="{% url 'lexicon:entry-list' %}" class="inline-flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -56,7 +56,7 @@
             </nav>
         </div>
     </header>
-    <main class="mx-auto max-w-5xl ps-4 pe-4 py-8">
+    <main class="mx-auto w-full max-w-5xl flex-1 ps-4 pe-4 py-8">
         {% if request.user.is_authenticated and not request.user.is_email_verified and request.resolver_match.url_name != 'profile' %}
             <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 ps-3 pe-3 py-2 text-sm text-amber-800">
                 {% trans "Please verify your email first to add entries, add definitions, or vote." %}
@@ -74,5 +74,21 @@
         {% endif %}
         {% block content %}{% endblock content %}
     </main>
+    <footer class="mt-10 border-t border-slate-200 bg-white">
+        <div class="mx-auto flex max-w-5xl flex-col gap-4 ps-4 pe-4 py-6 text-sm text-slate-600 md:flex-row md:items-start md:justify-between">
+            <div>
+                <p class="font-semibold text-slate-800">{% trans "Porfacan" %}</p>
+            </div>
+            {% if site_pages %}
+                <nav aria-label="{% trans 'Pages' %}" class="flex flex-wrap items-center gap-3">
+                    {% for page in site_pages %}
+                        <a href="{% url 'lexicon:page-detail' page.address %}" class="hover:text-slate-900 hover:underline">
+                            {{ page.title }}
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
+        </div>
+    </footer>
 </body>
 </html>

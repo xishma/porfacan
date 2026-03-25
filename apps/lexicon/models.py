@@ -97,6 +97,24 @@ class Epoch(models.Model):
         return self.name
 
 
+class Page(models.Model):
+    address = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Address"))
+    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    content = models.TextField(verbose_name=_("Content"))
+    display_order = models.PositiveSmallIntegerField(default=0, verbose_name=_("Display order"))
+    is_published = models.BooleanField(default=True, verbose_name=_("Is published"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+
+    class Meta:
+        ordering = ["display_order", "title"]
+        verbose_name = _("Page")
+        verbose_name_plural = _("Pages")
+
+    def __str__(self) -> str:
+        return self.title
+
+
 class Entry(models.Model):
     headword = models.CharField(max_length=255, db_index=True, verbose_name=_("Headword"))
     slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))

@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django import forms
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch
+from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch, Page
 
 
 @admin.register(Epoch)
@@ -48,3 +49,30 @@ class DefinitionAttachmentAdmin(admin.ModelAdmin):
     list_display = ("definition", "link", "created_at")
     list_filter = ("created_at",)
     search_fields = ("definition__entry__headword", "link")
+
+
+class PageAdminForm(forms.ModelForm):
+    class Meta:
+        model = Page
+        fields = "__all__"
+        widgets = {
+            "content": forms.Textarea(attrs={"class": "js-page-wysiwyg", "rows": 18}),
+        }
+
+    class Media:
+        css = {
+            "all": ("css/admin/page_wysiwyg.css",),
+        }
+        js = (
+            "https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js",
+            "js/admin/page_wysiwyg.js",
+        )
+
+
+@admin.register(Page)
+class PageAdmin(admin.ModelAdmin):
+    form = PageAdminForm
+    list_display = ("title", "address", "display_order", "is_published", "updated_at")
+    list_filter = ("is_published",)
+    search_fields = ("title", "address", "content")
+    prepopulated_fields = {"address": ("title",)}

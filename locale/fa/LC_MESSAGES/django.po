@@ -659,5 +659,29 @@ msgstr "ایجاد حساب"
 msgid "Already have an account?"
 msgstr "حساب کاربری دارید؟"
 
+#: apps/lexicon/models.py:100
+msgid "Address"
+msgstr "نشانی"
+
+#: apps/lexicon/models.py:101
+msgid "Title"
+msgstr "عنوان"
+
+#: apps/lexicon/models.py:103
+msgid "Display order"
+msgstr "ترتیب نمایش"
+
+#: apps/lexicon/models.py:104
+msgid "Is published"
+msgstr "منتشر شده است"
+
+#: apps/lexicon/models.py:110
+msgid "Page"
+msgstr "صفحه"
+
+#: apps/lexicon/models.py:111
+msgid "Pages"
+msgstr "صفحه‌ها"
+
 #~ msgid "Hot"
 #~ msgstr "رتبه داغ"

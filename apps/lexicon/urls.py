@@ -8,12 +8,14 @@ from .views import (
     EntryListView,
     EntrySuggestionView,
     EntryUpdateView,
+    PageDetailView,
 )
 
 app_name = "lexicon"
 
 urlpatterns = [
     path("", EntryListView.as_view(), name="entry-list"),
+    path("pages/<str:address>/", PageDetailView.as_view(), name="page-detail"),
     path("entries/suggest/", EntrySuggestionView.as_view(), name="entry-suggest"),
     path("entries/new/", EntryCreateView.as_view(), name="entry-create"),
     path("entries/<str:slug>/", EntryDetailView.as_view(), name="entry-detail"),

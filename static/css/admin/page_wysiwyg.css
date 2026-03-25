@@ -1,0 +1,11 @@
+.field-content textarea.js-page-wysiwyg {
+    min-height: 420px;
+    direction: rtl;
+    text-align: right;
+}
+
+.field-content .ck-editor__editable_inline {
+    min-height: 420px;
+    direction: rtl;
+    text-align: right;
+}

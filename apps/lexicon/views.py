@@ -12,7 +12,7 @@ from django.utils.translation import gettext as _
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
-from .models import Definition, DefinitionVote, Entry, Epoch
+from .models import Definition, DefinitionVote, Entry, Epoch, Page
 
 
 class EntryListView(ListView):
@@ -46,6 +46,21 @@ class EntryListView(ListView):
         context["epochs"] = Epoch.objects.only("id", "name").order_by("start_date")
         context["selected_epoch"] = self.request.GET.get("epoch", "").strip()
         return context
+
+
+class PageDetailView(DetailView):
+    model = Page
+    template_name = "lexicon/page_detail.html"
+    context_object_name = "page"
+    slug_field = "address"
+    slug_url_kwarg = "address"
+
+    def get_queryset(self):
+        queryset = Page.objects
+        user = self.request.user
+        if user.is_authenticated and user.is_staff:
+            return queryset
+        return queryset.filter(is_published=True)
 
 
 class EntrySuggestionView(View):
