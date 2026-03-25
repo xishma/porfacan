@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm
-from .models import Definition, DefinitionVote, Entry
+from .models import Definition, DefinitionVote, Entry, Epoch
 
 
 class EntryListView(ListView):
@@ -27,13 +27,23 @@ class EntryListView(ListView):
             .with_hot_rank()
         )
         query = self.request.GET.get("q", "")
+        selected_epoch = self.request.GET.get("epoch", "").strip()
         if query:
             queryset = queryset.search(query)
+        if selected_epoch:
+            epochs = Epoch.objects.filter(name__iexact=selected_epoch)
+            if not epochs.exists():
+                messages.error(self.request, _("Invalid epoch."))
+                return queryset.none()
+
+            queryset = queryset.filter(epochs__in=epochs)
         return queryset.order_by("-hot_rank", "-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "")
+        context["epochs"] = Epoch.objects.only("id", "name").order_by("start_date")
+        context["selected_epoch"] = self.request.GET.get("epoch", "").strip()
         return context
 
 

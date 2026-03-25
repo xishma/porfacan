@@ -14,6 +14,9 @@ from .ranking import hot_score
 
 
 class EntryQuerySet(QuerySet):
+    SEARCH_TRIGRAM_THRESHOLD = 0.32
+    SUGGESTION_TRIGRAM_THRESHOLD = 0.2
+
     def with_hot_rank(self):
         return self.annotate(hot_rank=Coalesce(Max("definitions__hot_score_value"), Value(0.0), output_field=FloatField()))
 
@@ -41,7 +44,7 @@ class EntryQuerySet(QuerySet):
             .filter(
                 Q(search_rank__gt=0)
                 | Q(headword__icontains=normalized_query)
-                | Q(trigram_similarity__gte=0.12)
+                | Q(trigram_similarity__gte=self.SEARCH_TRIGRAM_THRESHOLD)
             )
             .order_by("-starts_with", "-search_rank", "-trigram_similarity", "-created_at")
             .distinct()
@@ -63,7 +66,7 @@ class EntryQuerySet(QuerySet):
             )
             .filter(
                 Q(headword__icontains=normalized_query)
-                | Q(trigram_similarity__gte=0.15)
+                | Q(trigram_similarity__gte=self.SUGGESTION_TRIGRAM_THRESHOLD)
             )
             .order_by("-starts_with", "-trigram_similarity", "-created_at")
             .values("headword", "slug")[:limit]
