@@ -3,6 +3,7 @@ from urllib.parse import quote_plus
 from django.urls import reverse
 
 from apps.lexicon.models import Entry, Epoch
+from apps.users.models import User
 
 
 @pytest.fixture
@@ -110,6 +111,46 @@ def test_unverified_entry_detail_is_not_visible(client, verified_entry, unverifi
     verified_content = verified_response.content.decode()
     assert f'?epoch={quote_plus("Visibility Epoch")}' in verified_content
     assert unverified_response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_admin_can_view_unverified_entry_detail_with_warning(client, unverified_entry):
+    admin = User.objects.create_user(
+        email="entry-admin@example.com",
+        password="password123",
+        role=User.Roles.ADMIN,
+    )
+    client.force_login(admin)
+
+    response = client.get(reverse("lexicon:entry-detail", kwargs={"slug": unverified_entry.slug}))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert unverified_entry.headword in content
+    assert "not verified yet" in content
+
+
+@pytest.mark.django_db
+def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epoch):
+    creator = User.objects.create_user(
+        email="entry-creator@example.com",
+        password="password123",
+        role=User.Roles.CONTRIBUTOR,
+    )
+    created_entry = Entry.objects.create(
+        headword="پنهان",
+        is_verified=False,
+        created_by=creator,
+    )
+    created_entry.epochs.add(epoch)
+    client.force_login(creator)
+
+    response = client.get(reverse("lexicon:entry-detail", kwargs={"slug": created_entry.slug}))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert created_entry.headword in content
+    assert "not verified yet" in content
 
 
 @pytest.mark.django_db

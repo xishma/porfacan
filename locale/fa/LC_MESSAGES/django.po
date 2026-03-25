@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-25 05:25+0330\n"
+"POT-Creation-Date: 2026-03-25 05:51+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -36,8 +36,8 @@ msgstr "موفق"
 msgid "Failed"
 msgstr "ناموفق"
 
-#: apps/archiver/models.py:21 apps/lexicon/models.py:154
-#: apps/lexicon/models.py:218 apps/lexicon/models.py:257
+#: apps/archiver/models.py:21 apps/lexicon/models.py:162
+#: apps/lexicon/models.py:226 apps/lexicon/models.py:265
 msgid "Definition"
 msgstr "تعریف"
 
@@ -81,13 +81,13 @@ msgstr "آخرین زمان راستی‌آزمایی"
 msgid "Verification error"
 msgstr "خطای راستی‌آزمایی"
 
-#: apps/archiver/models.py:38 apps/lexicon/models.py:102
-#: apps/lexicon/models.py:150 apps/lexicon/models.py:226
-#: apps/lexicon/models.py:266
+#: apps/archiver/models.py:38 apps/lexicon/models.py:110
+#: apps/lexicon/models.py:158 apps/lexicon/models.py:234
+#: apps/lexicon/models.py:274
 msgid "Created at"
 msgstr "زمان ایجاد"
 
-#: apps/archiver/models.py:39 apps/lexicon/models.py:267
+#: apps/archiver/models.py:39 apps/lexicon/models.py:275
 msgid "Updated at"
 msgstr "زمان به‌روزرسانی"
 
@@ -99,18 +99,22 @@ msgstr "رکورد آرشیو"
 msgid "Archive records"
 msgstr "رکوردهای آرشیو"
 
-#: apps/lexicon/forms.py:14 apps/lexicon/models.py:98
+#: apps/lexicon/forms.py:14 apps/lexicon/models.py:101
 msgid "Headword"
 msgstr "سرواژه"
 
-#: apps/lexicon/forms.py:15 apps/lexicon/models.py:86
-#: apps/lexicon/models.py:100 templates/lexicon/entry_detail.html:11
-#: templates/lexicon/entry_list.html:29
+#: apps/lexicon/models.py:109
+msgid "Created by"
+msgstr "ایجادکننده"
+
+#: apps/lexicon/forms.py:15 apps/lexicon/models.py:89
+#: apps/lexicon/models.py:103 templates/lexicon/entry_detail.html:11
+#: templates/lexicon/entry_list.html:60
 msgid "Epochs"
 msgstr "دوره‌ها"
 
-#: apps/lexicon/forms.py:16 apps/lexicon/models.py:81
-#: apps/lexicon/models.py:101
+#: apps/lexicon/forms.py:16 apps/lexicon/models.py:84
+#: apps/lexicon/models.py:106
 msgid "Description"
 msgstr "توضیحات"
 
@@ -136,7 +140,7 @@ msgstr "متن تعریف"
 
 #: apps/lexicon/forms.py:97 templates/lexicon/definition_form.html:30
 #: templates/lexicon/definition_form.html:46
-#: templates/lexicon/entry_detail.html:82
+#: templates/lexicon/entry_detail.html:81
 msgid "Example link"
 msgstr "لینک مثال"
 
@@ -154,135 +158,155 @@ msgstr "هر مثال باید حداقل لینک یا تصویر داشته ب
 msgid "A maximum of %(max)d examples is allowed."
 msgstr "حداکثر %(max)d مثال مجاز است."
 
-#: apps/lexicon/models.py:78
+#: apps/lexicon/models.py:81
 msgid "Name"
 msgstr "نام"
 
-#: apps/lexicon/models.py:79
+#: apps/lexicon/models.py:82
 msgid "Start date"
 msgstr "تاریخ شروع"
 
-#: apps/lexicon/models.py:80
+#: apps/lexicon/models.py:83
 msgid "End date"
 msgstr "تاریخ پایان"
 
-#: apps/lexicon/models.py:85
+#: apps/lexicon/models.py:88
 msgid "Epoch"
 msgstr "دوره"
 
-#: apps/lexicon/models.py:91
+#: apps/lexicon/models.py:94
 msgid "End date cannot be before start date."
 msgstr "تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد."
 
-#: apps/lexicon/models.py:99
+#: apps/lexicon/models.py:102
 msgid "Slug"
 msgstr "نامک"
 
-#: apps/lexicon/models.py:103
+#: apps/lexicon/models.py:108
+msgid ""
+"A short description of the entry, this will be only visible to admins to "
+"know the context of the entry."
+msgstr "توضیح کوتاهی درباره مدخل که فقط برای مدیران قابل مشاهده است تا با مدخل آشنا شوند."
+
+#: apps/lexicon/models.py:111
 msgid "Is verified"
 msgstr "تایید شده است"
 
-#: apps/lexicon/models.py:104
+#: apps/lexicon/models.py:112
 msgid "Search vector"
 msgstr "بردار جستجو"
 
-#: apps/lexicon/models.py:110 apps/lexicon/models.py:136
+#: apps/lexicon/models.py:118 apps/lexicon/models.py:144
 msgid "Entry"
 msgstr "مدخل"
 
-#: apps/lexicon/models.py:111
+#: apps/lexicon/models.py:119
 msgid "Entries"
 msgstr "مدخل‌ها"
 
-#: apps/lexicon/models.py:138
+#: apps/lexicon/models.py:146
 msgid "Content"
 msgstr "محتوا"
 
-#: apps/lexicon/models.py:139
+#: apps/lexicon/models.py:147
 msgid "Context annotation"
 msgstr "توضیح بافت"
 
-#: apps/lexicon/models.py:144 templates/lexicon/entry_detail.html:50
+#: apps/lexicon/models.py:152 templates/lexicon/entry_detail.html:50
 msgid "Author"
 msgstr "نویسنده"
 
-#: apps/lexicon/models.py:146
+#: apps/lexicon/models.py:154
 msgid "Reputation score"
 msgstr "امتیاز اعتبار"
 
-#: apps/lexicon/models.py:147
+#: apps/lexicon/models.py:155
 msgid "Upvotes"
 msgstr "رای‌های مثبت"
 
-#: apps/lexicon/models.py:148
+#: apps/lexicon/models.py:156
 msgid "Downvotes"
 msgstr "رای‌های منفی"
 
-#: apps/lexicon/models.py:149
+#: apps/lexicon/models.py:157
 msgid "Hot score value"
 msgstr "مقدار امتیاز داغ"
 
-#: apps/lexicon/models.py:155 templates/lexicon/entry_detail.html:28
+#: apps/lexicon/models.py:163 templates/lexicon/entry_detail.html:28
 msgid "Definitions"
 msgstr "تعریف‌ها"
 
-#: apps/lexicon/models.py:220
+#: apps/lexicon/models.py:228
 msgid "Link"
 msgstr "پیوند"
 
-#: apps/lexicon/models.py:224
+#: apps/lexicon/models.py:232
 msgid "Image"
 msgstr "تصویر"
 
-#: apps/lexicon/models.py:230
+#: apps/lexicon/models.py:238
 msgid "Definition attachment"
 msgstr "پیوست تعریف"
 
-#: apps/lexicon/models.py:231
+#: apps/lexicon/models.py:239
 msgid "Definition attachments"
 msgstr "پیوست‌های تعریف"
 
-#: apps/lexicon/models.py:242
+#: apps/lexicon/models.py:250
 msgid "At least one of link or image is required."
 msgstr "حداقل یکی از لینک یا تصویر لازم است."
 
-#: apps/lexicon/models.py:250
+#: apps/lexicon/models.py:258
 msgid "Downvote"
 msgstr "رای منفی"
 
-#: apps/lexicon/models.py:251
+#: apps/lexicon/models.py:259
 msgid "Upvote"
 msgstr "رای مثبت"
 
-#: apps/lexicon/models.py:263 apps/users/models.py:81
+#: apps/lexicon/models.py:271 apps/users/models.py:81
 msgid "User"
 msgstr "کاربر"
 
-#: apps/lexicon/models.py:265
+#: apps/lexicon/models.py:273
 msgid "Value"
 msgstr "مقدار"
 
-#: apps/lexicon/models.py:271
+#: apps/lexicon/models.py:279
 msgid "Definition vote"
 msgstr "رای تعریف"
 
-#: apps/lexicon/models.py:272
+#: apps/lexicon/models.py:280
 msgid "Definition votes"
 msgstr "رای‌های تعریف"
 
-#: apps/lexicon/views.py:134
+#: apps/lexicon/views.py:36
+#, fuzzy
+#| msgid "Invalid vote value."
+msgid "Invalid epoch."
+msgstr "مقدار رای نامعتبر است."
+
+#: apps/lexicon/views.py:144
 msgid "You have already submitted a definition for this entry."
 msgstr "شما قبلا برای این مدخل تعریف ثبت کرده‌اید."
 
-#: apps/lexicon/views.py:174
+#: apps/lexicon/views.py:120
+msgid "This entry is not verified yet. It is visible only to admins and the entry creator until verification."
+msgstr "این مدخل هنوز تایید نشده است. تا زمان تایید، فقط برای مدیران و ایجادکننده مدخل قابل مشاهده است."
+
+#: apps/lexicon/views.py:160
+msgid "Definition text is required when adding examples."
+msgstr "هنگام افزودن مثال، متن تعریف الزامی است."
+
+#: apps/lexicon/views.py:184
 msgid "Authentication required."
 msgstr "احراز هویت لازم است."
 
-#: apps/lexicon/views.py:177 templates/base.html:37
+#: apps/lexicon/views.py:187 templates/base.html:37
 msgid "Please verify your email first in your profile page."
 msgstr "لطفا ابتدا در صفحه پروفایل، ایمیل خود را تایید کنید."
 
-#: apps/lexicon/views.py:187 apps/lexicon/views.py:189
+#: apps/lexicon/views.py:197 apps/lexicon/views.py:199
 msgid "Invalid vote value."
 msgstr "مقدار رای نامعتبر است."
 
@@ -328,6 +352,14 @@ msgstr "نقش"
 #: apps/users/models.py:82
 msgid "Users"
 msgstr "کاربران"
+
+#: apps/lexicon/admin.py:25
+msgid "Entry page"
+msgstr "صفحه مدخل"
+
+#: apps/lexicon/admin.py:28
+msgid "Open"
+msgstr "باز کردن"
 
 #: apps/users/permissions.py:26 apps/users/permissions.py:50
 msgid "Please verify your email before contributing."
@@ -406,7 +438,7 @@ msgstr ""
 "برای افزودن مدخل، افزودن تعریف یا رای‌دادن، ابتدا ایمیل خود را تایید کنید."
 
 #: templates/base.html:56 templates/lexicon/entry_detail.html:34
-#: templates/lexicon/entry_detail.html:63
+#: templates/lexicon/entry_detail.html:62
 msgid "Go to profile"
 msgstr "رفتن به پروفایل"
 
@@ -455,29 +487,25 @@ msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
 msgid "Score"
 msgstr "امتیاز"
 
-#: templates/lexicon/entry_detail.html:52
-msgid "Hot"
-msgstr "رتبه داغ"
-
-#: templates/lexicon/entry_detail.html:62
+#: templates/lexicon/entry_detail.html:61
 msgid "Verify your email first in your profile page to vote."
 msgstr "برای رای‌دادن، ابتدا در صفحه پروفایل ایمیل خود را تایید کنید."
 
-#: templates/lexicon/entry_detail.html:71
-#: templates/lexicon/entry_detail.html:81
+#: templates/lexicon/entry_detail.html:70
+#: templates/lexicon/entry_detail.html:80
 #, python-format
 msgid "Example %(number)s"
 msgstr "مثال %(number)s"
 
-#: templates/lexicon/entry_detail.html:73
+#: templates/lexicon/entry_detail.html:72
 msgid "Image example"
 msgstr "مثال تصویری"
 
-#: templates/lexicon/entry_detail.html:76
+#: templates/lexicon/entry_detail.html:75
 msgid "Example source"
 msgstr "منبع مثال"
 
-#: templates/lexicon/entry_detail.html:91
+#: templates/lexicon/entry_detail.html:90
 msgid "No definitions have been submitted for this entry yet."
 msgstr "هنوز تعریفی برای این مدخل ثبت نشده است."
 
@@ -489,7 +517,27 @@ msgstr "ثبت/ویرایش مدخل"
 msgid "Entry form"
 msgstr "فرم مدخل"
 
-#: templates/lexicon/entry_form.html:12
+#: templates/lexicon/entry_form.html:11
+msgid ""
+"New entries must be verified by admins before they become publicly visible "
+"and before users can add definitions."
+msgstr ""
+"مدخل‌های جدید باید ابتدا توسط مدیران تایید شوند تا به‌صورت عمومی قابل مشاهده "
+"باشند و کاربران بتوانند برای آن‌ها تعریف اضافه کنند."
+
+#: templates/lexicon/entry_form.html:18
+msgid "First definition (optional)"
+msgstr "تعریف اول (اختیاری)"
+
+#: templates/lexicon/entry_form.html:19
+msgid ""
+"Add the first definition now. You can also add it later once the entry is "
+"verified."
+msgstr ""
+"تعریف اول را همین الان اضافه کنید. همچنین می‌توانید پس از تایید مدخل، بعدا "
+"آن را اضافه کنید."
+
+#: templates/lexicon/entry_form.html:22
 msgid "Save"
 msgstr "ذخیره"
 
@@ -505,20 +553,25 @@ msgstr "آرشیو واژگان مقاومت"
 msgid "Crowdsourced dictionary of protest vocabulary (2009 to 2026)"
 msgstr "فرهنگ جمع‌سپاری‌شده واژگان اعتراض (۲۰۰۹ تا ۲۰۲۶)"
 
-#: templates/lexicon/entry_list.html:14
+#: templates/lexicon/entry_list.html:16
 msgid "Quick search"
 msgstr "جستجوی سریع"
 
-#: templates/lexicon/entry_list.html:16
+#: templates/lexicon/entry_list.html:18
 msgid "Word or usage..."
 msgstr "واژه یا کاربرد..."
 
-#: templates/lexicon/entry_list.html:17
+#: templates/lexicon/entry_list.html:27
 msgid "Search"
 msgstr "جستجو"
 
+#: templates/lexicon/entry_list.html:38
+#, fuzzy
+#| msgid "Epochs"
+msgid "All epochs"
+msgstr "دوره‌ها"
 
-#: templates/lexicon/entry_list.html:40
+#: templates/lexicon/entry_list.html:70
 msgid "No entries have been registered yet."
 msgstr "هنوز مدخلی ثبت نشده است."
 
@@ -605,3 +658,6 @@ msgstr "ایجاد حساب"
 #: templates/users/register.html:56
 msgid "Already have an account?"
 msgstr "حساب کاربری دارید؟"
+
+#~ msgid "Hot"
+#~ msgstr "رتبه داغ"

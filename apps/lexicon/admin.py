@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch
 
@@ -11,13 +14,19 @@ class EpochAdmin(admin.ModelAdmin):
 
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
-    list_display = ("headword", "display_epochs", "is_verified", "created_at")
+    list_display = ("headword", "display_epochs", "is_verified", "entry_page_link", "created_at")
     list_filter = ("is_verified", "epochs")
     search_fields = ("headword", "slug")
+    filter_horizontal = ("epochs",)
 
     @admin.display(description="Epochs")
     def display_epochs(self, obj):
         return ", ".join(obj.epochs.values_list("name", flat=True))
+
+    @admin.display(description=_("Entry page"))
+    def entry_page_link(self, obj):
+        url = reverse("lexicon:entry-detail", kwargs={"slug": obj.slug})
+        return format_html('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>', url, _("Open"))
 
 
 @admin.register(Definition)

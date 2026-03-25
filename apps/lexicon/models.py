@@ -100,8 +100,21 @@ class Epoch(models.Model):
 class Entry(models.Model):
     headword = models.CharField(max_length=255, db_index=True, verbose_name=_("Headword"))
     slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entries",
+        verbose_name=_("Created by"),
+    )
     epochs = models.ManyToManyField(Epoch, related_name="entries", verbose_name=_("Epochs"))
-    description = models.TextField(blank=True, verbose_name=_("Description"))
+    description = models.TextField(
+        blank=True,
+        verbose_name=_("Description"),
+        max_length=1024,
+        help_text=_("A short description of the entry, this will be only visible to admins to know the context of the entry."),
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     is_verified = models.BooleanField(default=False, verbose_name=_("Is verified"))
     search_vector = SearchVectorField(blank=True, null=True, verbose_name=_("Search vector"))

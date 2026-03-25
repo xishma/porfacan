@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -10,7 +11,7 @@ from django.utils.translation import gettext as _
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
-from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm
+from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
 from .models import Definition, DefinitionVote, Entry, Epoch
 
 
@@ -62,12 +63,25 @@ class EntryDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        return Entry.objects.filter(is_verified=True).prefetch_related(
+        queryset = Entry.objects
+        if self._can_view_all_unverified_entries():
+            pass
+        elif getattr(self.request.user, "is_authenticated", False):
+            queryset = queryset.filter(Q(is_verified=True) | Q(created_by=self.request.user))
+        else:
+            queryset = queryset.filter(is_verified=True)
+        return queryset.prefetch_related(
             "epochs",
             "definitions__author",
             "definitions__attachments",
             "definitions__votes",
         )
+
+    def _can_view_all_unverified_entries(self) -> bool:
+        user = self.request.user
+        if not getattr(user, "is_authenticated", False):
+            return False
+        return bool(user.is_superuser or getattr(user, "role", None) == "admin")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,6 +114,14 @@ class EntryDetailView(DetailView):
         else:
             for definition in context["entry"].definitions.all():
                 definition.current_user_vote = 0
+        if not context["entry"].is_verified and (
+            self._can_view_all_unverified_entries()
+            or context["entry"].created_by_id == getattr(self.request.user, "id", None)
+        ):
+            messages.warning(
+                self.request,
+                _("This entry is not verified yet. It is visible only to admins and the entry creator until verification."),
+            )
         return context
 
 
@@ -112,6 +134,73 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_definition_form(self):
+        if self.request.method == "POST":
+            return EntryInitialDefinitionForm(self.request.POST, prefix="definition")
+        return EntryInitialDefinitionForm(prefix="definition")
+
+    def get_attachment_formset(self):
+        if self.request.method == "POST":
+            return DefinitionAttachmentFormSet(
+                self.request.POST,
+                self.request.FILES,
+                prefix="attachments",
+            )
+        return DefinitionAttachmentFormSet(prefix="attachments")
+
+    def _has_initial_attachment_input(self) -> bool:
+        total_forms = int(self.request.POST.get("attachments-TOTAL_FORMS", 0) or 0)
+        for index in range(total_forms):
+            link_key = f"attachments-{index}-link"
+            image_key = f"attachments-{index}-image"
+            link_value = (self.request.POST.get(link_key) or "").strip()
+            if link_value or self.request.FILES.get(image_key):
+                return True
+        return False
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("definition_form", self.get_definition_form())
+        context.setdefault("attachment_formset", self.get_attachment_formset())
+        context["is_create"] = True
+        return context
+
+    def form_valid(self, form):
+        definition_form = self.get_definition_form()
+        attachment_formset = self.get_attachment_formset()
+        if not definition_form.is_valid():
+            return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
+
+        definition_content = definition_form.cleaned_data.get("content", "").strip()
+        has_initial_attachment_input = self._has_initial_attachment_input()
+        if has_initial_attachment_input and not definition_content:
+            definition_form.add_error("content", _("Definition text is required when adding examples."))
+            attachment_formset.is_valid()
+            return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
+        if definition_content and not attachment_formset.is_valid():
+            return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
+
+        self.object = form.save(commit=False)
+        self.object.created_by = self.request.user
+        self.object.save()
+        form.save_m2m()
+        if definition_content:
+            definition_form.save(author=self.request.user, entry=self.object, attachment_formset=attachment_formset)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form, definition_form=None, attachment_formset=None):
+        if definition_form is None:
+            definition_form = self.get_definition_form()
+        if attachment_formset is None:
+            attachment_formset = self.get_attachment_formset()
+        return self.render_to_response(
+            self.get_context_data(
+                form=form,
+                definition_form=definition_form,
+                attachment_formset=attachment_formset,
+            )
+        )
 
     def get_success_url(self):
         return reverse("lexicon:entry-detail", kwargs={"slug": self.object.slug})
@@ -128,6 +217,11 @@ class EntryUpdateView(EditorRequiredMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_create"] = False
+        return context
 
     def get_success_url(self):
         return reverse("lexicon:entry-detail", kwargs={"slug": self.object.slug})

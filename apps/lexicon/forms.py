@@ -18,7 +18,7 @@ class EntryForm(forms.ModelForm):
         }
         widgets = {
             "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
-            "epochs": forms.SelectMultiple(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "epochs": forms.CheckboxSelectMultiple(),
             "description": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 4}
             ),
@@ -28,10 +28,13 @@ class EntryForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields["epochs"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
-        if not self._can_manage_verification():
+        if self._is_create_form() or not self._can_manage_verification():
             self.fields.pop("is_verified", None)
         if not self._can_manage_entry_description():
             self.fields.pop("description", None)
+
+    def _is_create_form(self) -> bool:
+        return not bool(getattr(self.instance, "pk", None))
 
     def _can_manage_verification(self) -> bool:
         user = self.user
@@ -87,6 +90,15 @@ class DefinitionForm(forms.ModelForm):
             if attachment_formset is not None:
                 attachment_formset.save(definition=definition)
         return definition
+
+
+class EntryInitialDefinitionForm(DefinitionForm):
+    class Meta(DefinitionForm.Meta):
+        pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["content"].required = False
 
 
 class DefinitionAttachmentForm(forms.ModelForm):
