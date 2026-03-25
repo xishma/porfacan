@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, SearchVectorField, TrigramSimilarity
 from django.core.exceptions import ValidationError
-from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Q, QuerySet, Value, When
+from django.db.models import Case, Count, Exists, F, FloatField, IntegerField, Max, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Coalesce
 from django.db import models
 from django.utils.text import slugify
@@ -26,14 +26,18 @@ class EntryQuerySet(QuerySet):
             return self
 
         query_expr = SearchQuery(normalized_query, search_type="websearch", config="simple")
-        vector = (
-            SearchVector("headword", weight="A", config="simple")
-            + SearchVector("definitions__content", weight="B", config="simple")
-            + SearchVector("definitions__context_annotation", weight="C", config="simple")
+        definition_match_subquery = (
+            Definition.objects.filter(entry_id=OuterRef("pk"))
+            .annotate(
+                definition_vector=SearchVector("content", weight="B", config="simple")
+                + SearchVector("context_annotation", weight="C", config="simple")
+            )
+            .filter(definition_vector=query_expr)
         )
         return (
             self.annotate(
-                search_rank=SearchRank(vector, query_expr),
+                search_rank=Coalesce(SearchRank(F("search_vector"), query_expr), Value(0.0), output_field=FloatField()),
+                has_definition_match=Exists(definition_match_subquery),
                 trigram_similarity=TrigramSimilarity("headword", normalized_query),
                 starts_with=Case(
                     When(headword__istartswith=normalized_query, then=Value(1)),
@@ -43,11 +47,11 @@ class EntryQuerySet(QuerySet):
             )
             .filter(
                 Q(search_rank__gt=0)
+                | Q(has_definition_match=True)
                 | Q(headword__icontains=normalized_query)
                 | Q(trigram_similarity__gte=self.SEARCH_TRIGRAM_THRESHOLD)
             )
-            .order_by("-starts_with", "-search_rank", "-trigram_similarity", "-created_at")
-            .distinct()
+            .order_by("-starts_with", "-has_definition_match", "-search_rank", "-trigram_similarity", "-created_at")
         )
 
     def suggestions(self, query: str, limit: int = 8):
@@ -146,6 +150,7 @@ class Entry(models.Model):
         indexes = [
             GinIndex(fields=["search_vector"]),
             GinIndex(fields=["headword"], opclasses=["gin_trgm_ops"], name="lexicon_ent_headword_trgm"),
+            models.Index(fields=["is_verified", "-created_at"], name="lex_ent_ver_cr_idx"),
         ]
 
     def clean(self):
@@ -157,6 +162,8 @@ class Entry(models.Model):
         if not self.slug:
             self.slug = slugify(self.headword, allow_unicode=True)
         super().save(*args, **kwargs)
+        # Persist a dedicated tsvector so search avoids runtime vector computation.
+        Entry.objects.filter(pk=self.pk).update(search_vector=SearchVector(Value(self.headword), weight="A", config="simple"))
 
     def __str__(self) -> str:
         return self.headword
@@ -192,6 +199,10 @@ class Definition(models.Model):
             models.Index(fields=["entry", "-created_at"]),
             models.Index(fields=["upvotes", "downvotes"]),
             models.Index(fields=["hot_score_value"]),
+            GinIndex(
+                SearchVector("content", "context_annotation", config="simple"),
+                name="lexicon_def_search_vector_gin",
+            ),
         ]
 
     def clean(self):

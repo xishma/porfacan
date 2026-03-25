@@ -24,7 +24,8 @@ class EntryListView(ListView):
     def get_queryset(self):
         queryset = (
             Entry.objects.filter(is_verified=True)
-            .prefetch_related("epochs", "definitions")
+            .only("id", "headword", "slug", "created_at", "is_verified")
+            .prefetch_related("epochs")
             .with_hot_rank()
         )
         query = self.request.GET.get("q", "")
