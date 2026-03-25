@@ -14,12 +14,12 @@ def base_entry(db):
         end_date="2018-12-31",
         description="verification tests",
     )
-    return Entry.objects.create(
+    entry = Entry.objects.create(
         headword="همبستگی",
-        epoch=epoch,
-        etymology="verification test",
         is_verified=True,
     )
+    entry.epochs.add(epoch)
+    return entry
 
 
 @pytest.fixture

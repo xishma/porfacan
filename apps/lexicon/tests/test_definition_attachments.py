@@ -31,12 +31,12 @@ def entry(db):
         end_date="2012-12-31",
         description="Attachment tests",
     )
-    return Entry.objects.create(
+    created_entry = Entry.objects.create(
         headword="نمونه",
-        epoch=epoch,
-        etymology="attachment test",
         is_verified=True,
     )
+    created_entry.epochs.add(epoch)
+    return created_entry
 
 
 def _tiny_gif(name="example.gif"):

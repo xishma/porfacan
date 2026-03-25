@@ -9,17 +9,17 @@ from .normalization import normalize_persian
 class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
-        fields = ("headword", "epoch", "etymology", "is_verified")
+        fields = ("headword", "epochs", "description", "is_verified")
         labels = {
             "headword": _("Headword"),
-            "epoch": _("Epoch"),
-            "etymology": _("Etymology"),
+            "epochs": _("Epochs"),
+            "description": _("Description"),
             "is_verified": _("Verified"),
         }
         widgets = {
             "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
-            "epoch": forms.Select(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
-            "etymology": forms.Textarea(
+            "epochs": forms.SelectMultiple(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "description": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 4}
             ),
         }
@@ -27,10 +27,11 @@ class EntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["epoch"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
-        self.fields["epoch"].empty_label = _("Select epoch")
+        self.fields["epochs"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
         if not self._can_manage_verification():
             self.fields.pop("is_verified", None)
+        if not self._can_manage_entry_description():
+            self.fields.pop("description", None)
 
     def _can_manage_verification(self) -> bool:
         user = self.user
@@ -39,17 +40,24 @@ class EntryForm(forms.ModelForm):
         role = getattr(user, "role", None)
         return bool(user.is_superuser or role == "admin")
 
+    def _can_manage_entry_description(self) -> bool:
+        return self._can_manage_verification()
+
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["headword"] = normalize_persian(cleaned_data.get("headword", ""))
-        cleaned_data["etymology"] = normalize_persian(cleaned_data.get("etymology", ""))
+        if "description" in cleaned_data:
+            cleaned_data["description"] = normalize_persian(cleaned_data.get("description", ""))
         return cleaned_data
 
-    def clean_epoch(self):
-        epoch = self.cleaned_data["epoch"]
-        if not (2009 <= epoch.start_date.year <= 2026):
-            raise ValidationError(_("Epoch must be between 2009 and 2026."))
-        return epoch
+    def clean_epochs(self):
+        epochs = self.cleaned_data["epochs"]
+        if not epochs:
+            raise ValidationError(_("At least one epoch is required."))
+        for epoch in epochs:
+            if not (2009 <= epoch.start_date.year <= 2026):
+                raise ValidationError(_("Each epoch must be between 2009 and 2026."))
+        return epochs
 
 
 class DefinitionForm(forms.ModelForm):

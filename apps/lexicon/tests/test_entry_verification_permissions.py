@@ -62,8 +62,7 @@ def test_contributor_cannot_set_is_verified_on_create(client, epoch):
         reverse("lexicon:entry-create"),
         data={
             "headword": "آزادی",
-            "epoch": epoch.pk,
-            "etymology": "ریشه تست",
+            "epochs": [epoch.pk],
             "is_verified": "on",
         },
     )
@@ -92,8 +91,7 @@ def test_admin_can_set_is_verified_on_create(client, epoch):
         reverse("lexicon:entry-create"),
         data={
             "headword": "امید",
-            "epoch": epoch.pk,
-            "etymology": "ریشه تست",
+            "epochs": [epoch.pk],
             "is_verified": "on",
         },
     )
@@ -101,3 +99,25 @@ def test_admin_can_set_is_verified_on_create(client, epoch):
     assert response.status_code == 302
     created = Entry.objects.get(headword="امید")
     assert created.is_verified is True
+
+
+@pytest.mark.django_db
+def test_entry_form_hides_description_for_non_admin():
+    contributor = User.objects.create_user(
+        email="contributor-description@example.com",
+        password="password123",
+        role=User.Roles.CONTRIBUTOR,
+    )
+    form = EntryForm(user=contributor)
+    assert "description" not in form.fields
+
+
+@pytest.mark.django_db
+def test_entry_form_shows_description_for_admin():
+    admin = User.objects.create_user(
+        email="admin-description@example.com",
+        password="password123",
+        role=User.Roles.ADMIN,
+    )
+    form = EntryForm(user=admin)
+    assert "description" in form.fields

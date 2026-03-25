@@ -11,9 +11,13 @@ class EpochAdmin(admin.ModelAdmin):
 
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
-    list_display = ("headword", "epoch", "is_verified", "created_at")
-    list_filter = ("is_verified", "epoch")
+    list_display = ("headword", "display_epochs", "is_verified", "created_at")
+    list_filter = ("is_verified", "epochs")
     search_fields = ("headword", "slug")
+
+    @admin.display(description="Epochs")
+    def display_epochs(self, obj):
+        return ", ".join(obj.epochs.values_list("name", flat=True))
 
 
 @admin.register(Definition)

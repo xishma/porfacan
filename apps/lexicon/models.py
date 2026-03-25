@@ -25,7 +25,6 @@ class EntryQuerySet(QuerySet):
         query_expr = SearchQuery(normalized_query, search_type="websearch", config="simple")
         vector = (
             SearchVector("headword", weight="A", config="simple")
-            + SearchVector("etymology", weight="B", config="simple")
             + SearchVector("definitions__content", weight="B", config="simple")
             + SearchVector("definitions__context_annotation", weight="C", config="simple")
         )
@@ -98,13 +97,8 @@ class Epoch(models.Model):
 class Entry(models.Model):
     headword = models.CharField(max_length=255, db_index=True, verbose_name=_("Headword"))
     slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
-    epoch = models.ForeignKey(
-        Epoch,
-        on_delete=models.PROTECT,
-        related_name="entries",
-        verbose_name=_("Epoch"),
-    )
-    etymology = models.TextField(blank=True, verbose_name=_("Etymology"))
+    epochs = models.ManyToManyField(Epoch, related_name="entries", verbose_name=_("Epochs"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     is_verified = models.BooleanField(default=False, verbose_name=_("Is verified"))
     search_vector = SearchVectorField(blank=True, null=True, verbose_name=_("Search vector"))

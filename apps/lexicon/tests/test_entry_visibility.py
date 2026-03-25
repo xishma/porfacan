@@ -16,22 +16,22 @@ def epoch(db):
 
 @pytest.fixture
 def verified_entry(epoch):
-    return Entry.objects.create(
+    entry = Entry.objects.create(
         headword="پیروزی",
-        epoch=epoch,
-        etymology="verified",
         is_verified=True,
     )
+    entry.epochs.add(epoch)
+    return entry
 
 
 @pytest.fixture
 def unverified_entry(epoch):
-    return Entry.objects.create(
+    entry = Entry.objects.create(
         headword="ناپیدا",
-        epoch=epoch,
-        etymology="unverified",
         is_verified=False,
     )
+    entry.epochs.add(epoch)
+    return entry
 
 
 @pytest.mark.django_db

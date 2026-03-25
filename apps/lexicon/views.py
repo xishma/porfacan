@@ -23,8 +23,7 @@ class EntryListView(ListView):
     def get_queryset(self):
         queryset = (
             Entry.objects.filter(is_verified=True)
-            .select_related("epoch")
-            .prefetch_related("definitions")
+            .prefetch_related("epochs", "definitions")
             .with_hot_rank()
         )
         query = self.request.GET.get("q", "")
@@ -53,7 +52,8 @@ class EntryDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        return Entry.objects.filter(is_verified=True).select_related("epoch").prefetch_related(
+        return Entry.objects.filter(is_verified=True).prefetch_related(
+            "epochs",
             "definitions__author",
             "definitions__attachments",
             "definitions__votes",
@@ -64,11 +64,15 @@ class EntryDetailView(DetailView):
         context["can_add_definition"] = False
         context["can_contribute"] = False
         context["can_vote"] = False
+        context["can_view_entry_description"] = False
         if self.request.user.is_authenticated:
             context["can_contribute"] = (
                 self.request.user.has_minimum_role(1) and self.request.user.is_email_verified
             )
             context["can_vote"] = self.request.user.is_email_verified
+            context["can_view_entry_description"] = (
+                self.request.user.is_superuser or getattr(self.request.user, "role", None) == "admin"
+            )
             context["can_add_definition"] = not Definition.objects.filter(
                 entry=context["entry"],
                 author=self.request.user,

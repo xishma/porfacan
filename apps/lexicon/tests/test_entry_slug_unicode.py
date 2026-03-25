@@ -11,12 +11,11 @@ def test_entry_full_clean_accepts_persian_slug():
         end_date="2018-12-31",
         description="Unicode slug validation test",
     )
-    entry = Entry(
+    entry = Entry.objects.create(
         headword="آزادی",
         slug="آزادی",
-        epoch=epoch,
-        etymology="",
         is_verified=True,
     )
+    entry.epochs.add(epoch)
 
     entry.full_clean()
