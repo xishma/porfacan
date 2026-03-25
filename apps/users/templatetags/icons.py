@@ -9,7 +9,7 @@ ICON_CLASS = "size-5 shrink-0"
 ICONS = {
     "login": (
         '<svg class="%s" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">'
-        '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v3.75m0 10.5v3.75A2.25 2.25 0 017.5 21h6a2.25 2.25 0 002.25-2.25v-3.75m-9 0h9"/>'
+        '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm1.5-6l3-3m0 0l-3-3m3 3h-9"/>'
         "</svg>"
     ),
     "register": (
