@@ -27,7 +27,7 @@ class EntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["epochs"].queryset = Epoch.objects.filter(start_date__year__gte=2009, start_date__year__lte=2026)
+        self.fields["epochs"].queryset = Epoch.objects.all()
         if self._is_create_form() or not self._can_manage_verification():
             self.fields.pop("is_verified", None)
         if not self._can_manage_entry_description():
@@ -57,9 +57,6 @@ class EntryForm(forms.ModelForm):
         epochs = self.cleaned_data["epochs"]
         if not epochs:
             raise ValidationError(_("At least one epoch is required."))
-        for epoch in epochs:
-            if not (2009 <= epoch.start_date.year <= 2026):
-                raise ValidationError(_("Each epoch must be between 2009 and 2026."))
         return epochs
 
 
