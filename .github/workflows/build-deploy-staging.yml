@@ -23,7 +23,7 @@ jobs:
           cp envs.example/settings.py envs/settings.py
 
       - name: Run tests
-        run: docker compose -f docker-compose-ci.yml run --rm web pytest
+        run: docker compose -f docker-compose-ci.yml run --rm --build web pytest
 
       - name: Cleanup
         if: always()
