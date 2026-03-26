@@ -20,15 +20,6 @@ jobs:
           mkdir -p envs
           cp envs.example/settings.py envs/settings.py
 
-      - name: Build CI images
-        run: docker compose -f docker-compose.yml build
-
-      - name: Start CI infrastructure
-        run: docker compose -f docker-compose.yml up -d db redis rabbitmq
-
-      - name: Run migrations
-        run: docker compose -f docker-compose.yml run --rm web python manage.py migrate --noinput
-
       - name: Run tests
         run: docker compose -f docker-compose.yml run --rm web pytest
 
