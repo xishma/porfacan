@@ -4,7 +4,7 @@ services:
     image: "${APP_IMAGE}"
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
     volumes:
-      - .:/app
+      - ./environments:/app/environments/
     restart: "no"
 
   web:
@@ -14,7 +14,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ./environments:/app/environments/
     restart: unless-stopped
 
   celery-worker:
@@ -22,14 +22,5 @@ services:
     image: "${APP_IMAGE}"
     command: celery -A config worker -l info
     volumes:
-      - .:/app
+      - ./environments:/app/environments/
     restart: unless-stopped
-
-  celery-beat:
-    container_name: porfacan-celery-beat
-    image: "${APP_IMAGE}"
-    command: celery -A config beat -l info
-    volumes:
-      - .:/app
-    restart: unless-stopped
-

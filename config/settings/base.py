@@ -24,7 +24,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.twitter",
     "storages",
-    "django_celery_beat",
     "hcaptcha_field",
     "apps.users",
     "apps.lexicon",
@@ -187,13 +186,6 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-CELERY_BEAT_SCHEDULE = {
-    "reverify-archive-links": {
-        "task": "apps.archiver.tasks.reverify_archive_links_task",
-        "schedule": 60 * 60 * 6,
-    },
-}
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")

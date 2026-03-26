@@ -7,7 +7,7 @@ Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition sla
 - Django 5.x (templates, RTL-first UI)
 - PostgreSQL (search-ready schema with GIN index hooks)
 - Redis (cache + sessions)
-- RabbitMQ + Celery + Celery Beat
+- RabbitMQ + Celery
 - Amazon S3 via `django-storages`
 - Arweave integration hooks for permanent archiving
 

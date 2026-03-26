@@ -2,6 +2,7 @@ services:
   migrations:
     container_name: porfacan-migrations
     build:
+      dockerfile: Dockerfile
       context: .
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
     volumes:
