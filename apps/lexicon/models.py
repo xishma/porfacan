@@ -174,6 +174,50 @@ class Entry(models.Model):
         return self.headword
 
 
+class SimilarEntryLink(models.Model):
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="similar_links",
+        verbose_name=_("Entry"),
+    )
+    similar_entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="incoming_similar_links",
+        verbose_name=_("Similar entry"),
+    )
+    sort_order = models.PositiveSmallIntegerField(default=0, verbose_name=_("Display order"))
+    is_auto = models.BooleanField(
+        default=False,
+        verbose_name=_("From automatic suggestions"),
+        help_text=_("Refreshed when the entry is saved; manual links are kept."),
+    )
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = _("Similar entry link")
+        verbose_name_plural = _("Similar entry links")
+        constraints = [
+            models.UniqueConstraint(fields=["entry", "similar_entry"], name="lexicon_similar_entry_unique"),
+            models.CheckConstraint(
+                condition=~Q(entry_id=F("similar_entry_id")),
+                name="lexicon_similar_entry_not_self",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["entry", "sort_order"], name="lex_similar_ent_order_idx"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.entry_id and self.similar_entry_id and self.entry_id == self.similar_entry_id:
+            raise ValidationError(_("An entry cannot be similar to itself."))
+
+    def __str__(self) -> str:
+        return f"{self.entry_id} → {self.similar_entry_id}"
+
+
 class Definition(models.Model):
     entry = models.ForeignKey(
         Entry,

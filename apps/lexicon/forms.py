@@ -1,5 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from .models import Definition, DefinitionAttachment, Entry, Epoch
@@ -48,9 +50,37 @@ class EntryForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data["headword"] = normalize_persian(cleaned_data.get("headword", ""))
+        headword = normalize_persian(cleaned_data.get("headword", ""))
+        cleaned_data["headword"] = headword
         if "description" in cleaned_data:
             cleaned_data["description"] = normalize_persian(cleaned_data.get("description", ""))
+
+        if headword:
+            qs = Entry.objects.filter(headword=headword)
+            if getattr(self.instance, "pk", None):
+                qs = qs.exclude(pk=self.instance.pk)
+            other = qs.first()
+            if other:
+                if other.is_verified:
+                    url = reverse("lexicon:entry-detail", kwargs={"slug": other.slug})
+                    raise ValidationError(
+                        {
+                            "headword": format_html(
+                                '{} <a href="{}" class="font-medium text-blue-700 underline hover:text-blue-900">{}</a>',
+                                _("An entry with this headword already exists."),
+                                url,
+                                _("View entry"),
+                            ),
+                        }
+                    )
+                raise ValidationError(
+                    {
+                        "headword": _(
+                            "An entry with this headword already exists and is pending verification."
+                        ),
+                    }
+                )
+
         return cleaned_data
 
     def clean_epochs(self):

@@ -4,7 +4,18 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch, Page
+from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch, Page, SimilarEntryLink
+
+
+class SimilarEntryLinkInline(admin.TabularInline):
+    model = SimilarEntryLink
+    fk_name = "entry"
+    extra = 0
+    fields = ("similar_entry", "sort_order", "is_auto")
+    readonly_fields = ("is_auto",)
+    autocomplete_fields = ("similar_entry",)
+    verbose_name = _("Similar entry")
+    verbose_name_plural = _("Similar entries")
 
 
 @admin.register(Epoch)
@@ -19,6 +30,7 @@ class EntryAdmin(admin.ModelAdmin):
     list_filter = ("is_verified", "epochs")
     search_fields = ("headword", "slug")
     filter_horizontal = ("epochs",)
+    inlines = (SimilarEntryLinkInline,)
 
     @admin.display(description="Epochs")
     def display_epochs(self, obj):

@@ -1,14 +1,30 @@
+from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .cache import bump_cache_version
 from .models import Definition, DefinitionVote, Entry, Epoch, Page
+from .tasks import recompute_auto_similar_entries
 
 
 @receiver(post_save, sender=Entry)
 def invalidate_entry_search_cache_on_entry_save(sender, instance: Entry, **kwargs):
     bump_cache_version("entry_search_results")
     bump_cache_version("entry_suggestions")
+
+
+@receiver(post_save, sender=Entry)
+def schedule_similar_entry_recompute(sender, instance: Entry, **kwargs):
+    entry_id = instance.pk
+
+    def enqueue():
+        recompute_auto_similar_entries.delay(entry_id)
+
+    if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+        enqueue()
+    else:
+        transaction.on_commit(enqueue)
 
 
 @receiver(post_delete, sender=Entry)

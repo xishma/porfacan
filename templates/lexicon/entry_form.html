@@ -13,7 +13,20 @@
     {% endif %}
     <form method="post" enctype="multipart/form-data" class="space-y-4">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% for field in form %}
+            <div class="space-y-1">
+                {% if field.errors %}
+                    {% if field.name == "headword" %}
+                        <ul class="errorlist text-sm text-rose-700">{% for error in field.errors %}<li>{{ error|safe }}</li>{% endfor %}</ul>
+                    {% else %}
+                        {{ field.errors }}
+                    {% endif %}
+                {% endif %}
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<p class="text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+            </div>
+        {% endfor %}
         {% if is_create and definition_form %}
             <div class="rounded-lg border border-slate-200 bg-slate-50 ps-4 pe-4 py-4">
                 <h2 class="mb-2 text-base font-semibold">{% trans "First definition (optional)" %}</h2>

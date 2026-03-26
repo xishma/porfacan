@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
 from django.contrib.postgres.search import TrigramSimilarity
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -17,7 +17,7 @@ from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .cache import build_versioned_cache_key
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
-from .models import Definition, DefinitionVote, Entry, EntryQuerySet, Epoch, Page
+from .models import Definition, DefinitionVote, Entry, EntryQuerySet, Epoch, Page, SimilarEntryLink
 from .normalization import normalize_persian
 
 
@@ -196,8 +196,14 @@ class EntryDetailView(DetailView):
             queryset = queryset.filter(Q(is_verified=True) | Q(created_by=self.request.user))
         else:
             queryset = queryset.filter(is_verified=True)
+        similar_qs = (
+            SimilarEntryLink.objects.filter(similar_entry__is_verified=True)
+            .select_related("similar_entry")
+            .order_by("sort_order", "id")
+        )
         return queryset.prefetch_related(
             "epochs",
+            Prefetch("similar_links", queryset=similar_qs),
             "definitions__author",
             "definitions__attachments",
             "definitions__votes",
@@ -211,6 +217,22 @@ class EntryDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        seen_ids: set[int] = set()
+        seen_headwords: set[str] = set()
+        similar_links = []
+        for link in context["entry"].similar_links.all():
+            target = link.similar_entry
+            if not target.is_verified:
+                continue
+            if target.pk in seen_ids:
+                continue
+            headword_key = normalize_persian(target.headword or "")
+            if headword_key in seen_headwords:
+                continue
+            seen_ids.add(target.pk)
+            seen_headwords.add(headword_key)
+            similar_links.append(link)
+        context["similar_entry_links"] = similar_links
         context["can_add_definition"] = False
         context["can_contribute"] = False
         context["can_vote"] = False

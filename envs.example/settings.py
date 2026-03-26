@@ -46,7 +46,7 @@ LEXICON_CACHE_TIMEOUT_SUGGESTIONS = 120
 LEXICON_CACHE_TIMEOUT_PAGES = 600
 LEXICON_CACHE_MAX_RESULT_IDS = 1000
 
-CELERY_BROKER_URL = "amqp://guest:guest@porfacan-rabbitmq:5672//"
+CELERY_BROKER_URL = "amqp://porfacan:porfacan@porfacan-rabbitmq:5672/porfacan"
 CELERY_RESULT_BACKEND = "redis://porfacan-redis:6379/2"
 
 GOOGLE_OAUTH_CLIENT_ID = ""
