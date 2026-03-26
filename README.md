@@ -1,6 +1,6 @@
 # Porfacan
 
-Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition slang and dissent (2009-2026). The project is built with Django SSR, PostgreSQL, Celery, Redis, RabbitMQ, and S3-compatible media storage.
+Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition slang and dissent. The project is built with Django SSR, PostgreSQL, Celery, Redis, RabbitMQ, and S3-compatible media storage.
 
 ## Stack
 
@@ -48,6 +48,19 @@ Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition sla
 - `static/` CSS and font assets
 - `requirements/` split dependency files
 - `docs/` contributor and API docs
+
+## Documentation
+
+- Contributor guide: [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
+- API notes: [`docs/API.md`](docs/API.md)
+- Content license and terms: [`docs/CONTENT_LICENSE.md`](docs/CONTENT_LICENSE.md)
+
+## Open Source and Crowdsourcing Model
+
+- Porfacan is open source for code contributions and crowdsourced for public lexicon content.
+- Code contributions are governed by the `MIT` License in [`LICENSE`](LICENSE).
+- Public website content contributions are governed by `CC BY-SA 4.0` terms in [`docs/CONTENT_LICENSE.md`](docs/CONTENT_LICENSE.md).
+- Contributors should review both licenses before submitting code or content.
 
 ## Tests
 
