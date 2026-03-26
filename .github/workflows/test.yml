@@ -1,0 +1,81 @@
+name: Test
+
+on:
+  pull_request:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: porfacan
+          POSTGRES_USER: porfacan
+          POSTGRES_PASSWORD: porfacan
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U porfacan"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 6
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      POSTGRES_DB: porfacan
+      POSTGRES_USER: porfacan
+      POSTGRES_PASSWORD: porfacan
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://localhost:6379/1
+      CELERY_BROKER_URL: amqp://guest:guest@localhost:5672//
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements/local.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements/local.txt
+
+      - name: Setup local settings override
+        run: cp envs.example/settings.py envs/settings.py
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run tests
+        run: pytest
+
+      - name: Cleanup settings override
+        if: always()
+        run: rm -f envs/settings.py
