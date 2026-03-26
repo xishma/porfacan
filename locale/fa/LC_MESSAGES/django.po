@@ -570,10 +570,8 @@ msgid "Search"
 msgstr "جستجو"
 
 #: templates/lexicon/entry_list.html:38
-#, fuzzy
-#| msgid "Epochs"
 msgid "All epochs"
-msgstr "دوره‌ها"
+msgstr "همه دوره‌ها"
 
 #: templates/lexicon/entry_list.html:70
 msgid "No entries have been registered yet."
