@@ -68,7 +68,9 @@ jobs:
         run: pip install -r requirements/local.txt
 
       - name: Setup local settings override
-        run: cp envs.example/settings.py envs/settings.py
+        run: |
+          mkdir -p envs
+          cp envs.example/settings.py envs/settings.py
 
       - name: Run migrations
         run: python manage.py migrate --noinput
