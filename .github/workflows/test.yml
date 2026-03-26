@@ -19,17 +19,6 @@ jobs:
         run: |
           mkdir -p envs
           cp envs.example/settings.py envs/settings.py
-          sed -i 's/"HOST": "porfacan-db"/"HOST": "db"/' envs/settings.py
-          sed -i 's#redis://porfacan-redis:6379/1#redis://redis:6379/1#' envs/settings.py
-          sed -i 's#redis://porfacan-redis:6379/2#redis://redis:6379/2#' envs/settings.py
-          sed -i 's#amqp://guest:guest@porfacan-rabbitmq:5672//#amqp://porfacan:porfacan@rabbitmq:5672/porfacan#' envs/settings.py
-
-      - name: Prepare CI postgres data directory
-        run: |
-          sudo rm -rf docker/data/postgres
-          mkdir -p docker/data/postgres
-          sudo chown -R 999:999 docker/data/postgres
-          sudo chmod 700 docker/data/postgres
 
       - name: Build CI images
         run: docker compose -f docker-compose.yml build
