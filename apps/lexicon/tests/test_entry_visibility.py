@@ -1,6 +1,7 @@
 import pytest
-from urllib.parse import quote_plus
+from urllib.parse import quote
 from django.core.cache import cache
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from apps.lexicon.models import Entry, Epoch
@@ -110,11 +111,13 @@ def test_unverified_entry_detail_is_not_visible(client, verified_entry, unverifi
 
     assert verified_response.status_code == 200
     verified_content = verified_response.content.decode()
-    assert f'?epoch={quote_plus("Visibility Epoch")}' in verified_content
+    # entry_detail uses |urlencode (quote), not application/x-www-form-urlencoded (+ for space).
+    assert f"?epoch={quote('Visibility Epoch')}" in verified_content
     assert unverified_response.status_code == 404
 
 
 @pytest.mark.django_db
+@override_settings(LANGUAGE_CODE="en")
 def test_admin_can_view_unverified_entry_detail_with_warning(client, unverified_entry):
     admin = User.objects.create_user(
         email="entry-admin@example.com",
@@ -132,6 +135,7 @@ def test_admin_can_view_unverified_entry_detail_with_warning(client, unverified_
 
 
 @pytest.mark.django_db
+@override_settings(LANGUAGE_CODE="en")
 def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epoch):
     creator = User.objects.create_user(
         email="entry-creator@example.com",
