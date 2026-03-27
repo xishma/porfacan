@@ -12,9 +12,9 @@ def _article_count(html: str) -> int:
 
 
 @pytest.mark.django_db
-def test_entry_list_feed_pages_by_ten(client):
+def test_entry_list_feed_pages_by_ten(client, entry_category):
     for i in range(12):
-        Entry.objects.create(headword=f"scrollword{i}", is_verified=True)
+        Entry.objects.create(headword=f"scrollword{i}", is_verified=True, category=entry_category)
 
     first = client.get(reverse("lexicon:entry-list-more"))
     assert first.status_code == 200
@@ -33,13 +33,13 @@ def test_entry_list_feed_pages_by_ten(client):
 
 
 @pytest.mark.django_db
-def test_definition_feed_pages_by_ten(client):
+def test_definition_feed_pages_by_ten(client, entry_category):
     author = User.objects.create_user(
         email="def-scroll@example.com",
         password="password123",
         role=User.Roles.CONTRIBUTOR,
     )
-    entry = Entry.objects.create(headword="scroll-entry", is_verified=True)
+    entry = Entry.objects.create(headword="scroll-entry", is_verified=True, category=entry_category)
     for i in range(12):
         Definition.objects.create(entry=entry, author=author, content=f"def body {i}")
 
@@ -61,14 +61,14 @@ def test_definition_feed_pages_by_ten(client):
 
 
 @pytest.mark.django_db
-def test_entry_list_feed_invalid_cursor_requests_reset(client):
+def test_entry_list_feed_invalid_cursor_requests_reset(client, entry_category):
     epoch = Epoch.objects.create(
         name="Epoch scroll",
         start_date="2020-01-01",
         end_date="2020-12-31",
         description="x",
     )
-    e1 = Entry.objects.create(headword="onlyone", is_verified=True)
+    e1 = Entry.objects.create(headword="onlyone", is_verified=True, category=entry_category)
     e1.epochs.add(epoch)
 
     bogus = "not-valid-cursor"

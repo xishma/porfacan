@@ -7,7 +7,7 @@ from apps.users.models import User
 
 
 @pytest.fixture
-def base_entry(db):
+def base_entry(db, entry_category):
     epoch = Epoch.objects.create(
         name="Verification Epoch",
         start_date="2018-01-01",
@@ -17,6 +17,7 @@ def base_entry(db):
     entry = Entry.objects.create(
         headword="همبستگی",
         is_verified=True,
+        category=entry_category,
     )
     entry.epochs.add(epoch)
     return entry

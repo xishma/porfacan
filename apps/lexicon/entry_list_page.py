@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.db.models import Case, IntegerField, Q, Value, When
 
 from .cache import build_versioned_cache_key, get_cache_version
-from .models import Entry, Epoch
+from .models import Entry, EntryCategory, Epoch
 from .normalization import normalize_persian
 from .pagination import LIST_PAGE_SIZE, decode_cursor, encode_cursor
 
@@ -20,16 +20,18 @@ class EntryListPageResult:
     has_more: bool
     reset: bool
     invalid_epoch: bool = False
+    invalid_category: bool = False
 
 
-def _cacheable_entry_query(normalized_query: str, selected_epoch: str) -> bool:
-    return bool(normalized_query or selected_epoch)
+def _cacheable_entry_query(normalized_query: str, selected_epoch: str, selected_category: str) -> bool:
+    return bool(normalized_query or selected_epoch or selected_category)
 
 
-def _entry_search_cache_key(normalized_query: str, selected_epoch: str) -> str:
+def _entry_search_cache_key(normalized_query: str, selected_epoch: str, selected_category: str) -> str:
     payload = {
         "query": normalized_query,
         "epoch": selected_epoch,
+        "category": selected_category,
     }
     return build_versioned_cache_key("entry_search_ids", payload, version_scope="entry_search_results")
 
@@ -38,7 +40,18 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
     if not entry_ids:
         return (
             Entry.objects.filter(is_verified=True)
-            .only("id", "headword", "slug", "created_at", "is_verified")
+            .select_related("category")
+            .only(
+                "id",
+                "headword",
+                "slug",
+                "created_at",
+                "is_verified",
+                "category_id",
+                "category__id",
+                "category__name",
+                "category__slug",
+            )
             .prefetch_related("epochs")
             .none()
         )
@@ -49,7 +62,18 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
     )
     return (
         Entry.objects.filter(is_verified=True, pk__in=entry_ids)
-        .only("id", "headword", "slug", "created_at", "is_verified")
+        .select_related("category")
+        .only(
+            "id",
+            "headword",
+            "slug",
+            "created_at",
+            "is_verified",
+            "category_id",
+            "category__id",
+            "category__name",
+            "category__slug",
+        )
         .prefetch_related("epochs")
         .annotate(_cached_order=order_by_id)
         .order_by("_cached_order")
@@ -57,25 +81,45 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
 
 
 def _base_verified_entries():
-    return Entry.objects.filter(is_verified=True).only("id", "headword", "slug", "created_at", "is_verified").prefetch_related(
-        "epochs"
+    return (
+        Entry.objects.filter(is_verified=True)
+        .select_related("category")
+        .only(
+            "id",
+            "headword",
+            "slug",
+            "created_at",
+            "is_verified",
+            "category_id",
+            "category__id",
+            "category__name",
+            "category__slug",
+        )
+        .prefetch_related("epochs")
     )
 
 
-def _filtered_queryset_for_search_epoch(query: str, selected_epoch: str):
+def _filtered_queryset_for_search_epoch_category(query: str, selected_epoch: str, selected_category: str):
     queryset = _base_verified_entries()
     normalized_query = normalize_persian(query or "").strip()
     has_query = bool(normalized_query)
     invalid_epoch = False
+    invalid_category = False
     if query:
         queryset = queryset.search(query)
     if selected_epoch:
         epochs = Epoch.objects.filter(name__iexact=selected_epoch)
         if not epochs.exists():
             invalid_epoch = True
-            return queryset.none(), normalized_query, has_query, invalid_epoch
+            return queryset.none(), normalized_query, has_query, invalid_epoch, invalid_category
         queryset = queryset.filter(epochs__in=epochs)
-    return queryset, normalized_query, has_query, invalid_epoch
+    if selected_category:
+        categories = EntryCategory.objects.filter(slug__iexact=selected_category)
+        if not categories.exists():
+            invalid_category = True
+            return queryset.none(), normalized_query, has_query, invalid_epoch, invalid_category
+        queryset = queryset.filter(category__in=categories)
+    return queryset, normalized_query, has_query, invalid_epoch, invalid_category
 
 
 def _resolve_id_sequence(
@@ -83,10 +127,11 @@ def _resolve_id_sequence(
     *,
     normalized_query: str,
     selected_epoch: str,
+    selected_category: str,
 ) -> list[int] | None:
-    if not _cacheable_entry_query(normalized_query, selected_epoch):
+    if not _cacheable_entry_query(normalized_query, selected_epoch, selected_category):
         return None
-    cache_key = _entry_search_cache_key(normalized_query, selected_epoch)
+    cache_key = _entry_search_cache_key(normalized_query, selected_epoch, selected_category)
     cached_entry_ids = cache.get(cache_key)
     if cached_entry_ids is not None:
         return list(cached_entry_ids)
@@ -144,19 +189,24 @@ def fetch_entry_list_page(
     *,
     query: str,
     selected_epoch: str,
+    selected_category: str,
     after_token: str | None,
     limit: int = LIST_PAGE_SIZE,
 ) -> EntryListPageResult:
-    queryset, normalized_query, has_query, invalid_epoch = _filtered_queryset_for_search_epoch(query, selected_epoch)
+    queryset, normalized_query, has_query, invalid_epoch, invalid_category = _filtered_queryset_for_search_epoch_category(
+        query, selected_epoch, (selected_category or "").strip()
+    )
     if invalid_epoch:
         return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=False, invalid_epoch=True)
+    if invalid_category:
+        return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=False, invalid_category=True)
 
     after = (after_token or "").strip()
     parsed_after = decode_cursor(after) if after else None
     if after and parsed_after is None:
         return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=True)
 
-    cacheable = _cacheable_entry_query(normalized_query, selected_epoch)
+    cacheable = _cacheable_entry_query(normalized_query, selected_epoch, (selected_category or "").strip())
 
     if not cacheable:
         qs = _hot_queryset()
@@ -186,6 +236,7 @@ def fetch_entry_list_page(
         queryset,
         normalized_query=normalized_query,
         selected_epoch=selected_epoch,
+        selected_category=(selected_category or "").strip(),
     )
     if id_sequence is not None:
         cur = parsed_after

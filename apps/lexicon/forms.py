@@ -4,22 +4,24 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Definition, DefinitionAttachment, Entry, Epoch
+from .models import Definition, DefinitionAttachment, Entry, EntryCategory, Epoch
 from .normalization import normalize_persian
 
 
 class EntryForm(forms.ModelForm):
     class Meta:
         model = Entry
-        fields = ("headword", "epochs", "description", "is_verified")
+        fields = ("headword", "category", "epochs", "description", "is_verified")
         labels = {
             "headword": _("Headword"),
+            "category": _("Category"),
             "epochs": _("Epochs"),
             "description": _("Description"),
             "is_verified": _("Verified"),
         }
         widgets = {
             "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "category": forms.Select(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
             "epochs": forms.CheckboxSelectMultiple(),
             "description": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 4}
@@ -29,6 +31,7 @@ class EntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = EntryCategory.objects.all()
         self.fields["epochs"].queryset = Epoch.objects.all()
         if self._is_create_form() or not self._can_manage_verification():
             self.fields.pop("is_verified", None)

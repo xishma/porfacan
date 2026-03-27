@@ -20,7 +20,7 @@ from .cache import build_versioned_cache_key
 from .definition_page import definition_first_page_prefetch_queryset, fetch_definition_page, initial_definition_infinite_scroll_state
 from .entry_list_page import fetch_entry_list_page
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
-from .models import Definition, DefinitionVote, Entry, EntryQuerySet, Epoch, Page, SimilarEntryLink
+from .models import Definition, DefinitionVote, Entry, EntryCategory, EntryQuerySet, Epoch, Page, SimilarEntryLink
 from .normalization import normalize_persian
 
 
@@ -82,15 +82,25 @@ class EntryListView(TemplateView):
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get("q", "")
         selected_epoch = self.request.GET.get("epoch", "").strip()
-        page = fetch_entry_list_page(query=query, selected_epoch=selected_epoch, after_token=None)
+        selected_category = self.request.GET.get("category", "").strip()
+        page = fetch_entry_list_page(
+            query=query,
+            selected_epoch=selected_epoch,
+            selected_category=selected_category,
+            after_token=None,
+        )
         if page.invalid_epoch:
             messages.error(self.request, _("Invalid epoch."))
+        if page.invalid_category:
+            messages.error(self.request, _("Invalid category."))
         context["entries"] = page.entries
         context["entry_list_has_more"] = page.has_more
         context["entry_list_next_cursor"] = page.next_cursor or ""
         context["query"] = query
         context["epochs"] = Epoch.objects.only("id", "name").order_by("start_date")
+        context["entry_categories"] = EntryCategory.objects.only("id", "name", "slug").order_by("name")
         context["selected_epoch"] = selected_epoch
+        context["selected_category"] = selected_category
         return context
 
 
@@ -98,9 +108,15 @@ class EntryListMoreView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "")
         selected_epoch = request.GET.get("epoch", "").strip()
+        selected_category = request.GET.get("category", "").strip()
         after = (request.GET.get("after") or "").strip()
-        page = fetch_entry_list_page(query=query, selected_epoch=selected_epoch, after_token=after or None)
-        if page.reset or page.invalid_epoch:
+        page = fetch_entry_list_page(
+            query=query,
+            selected_epoch=selected_epoch,
+            selected_category=selected_category,
+            after_token=after or None,
+        )
+        if page.reset or page.invalid_epoch or page.invalid_category:
             return JsonResponse({"html": "", "has_more": False, "next_cursor": "", "reset": True})
         html = ""
         if page.entries:
@@ -209,7 +225,7 @@ class EntryDetailView(DetailView):
             .order_by("sort_order", "id")
         )
         defs_qs = definition_first_page_prefetch_queryset()
-        return queryset.prefetch_related(
+        return queryset.select_related("category").prefetch_related(
             "epochs",
             Prefetch("similar_links", queryset=similar_qs),
             Prefetch("definitions", queryset=defs_qs, to_attr="definitions_visible"),

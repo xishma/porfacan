@@ -29,30 +29,33 @@ def other_epoch(db):
 
 
 @pytest.fixture
-def verified_entry(epoch):
+def verified_entry(epoch, entry_category):
     entry = Entry.objects.create(
         headword="پیروزی",
         is_verified=True,
+        category=entry_category,
     )
     entry.epochs.add(epoch)
     return entry
 
 
 @pytest.fixture
-def verified_entry_other_epoch(other_epoch):
+def verified_entry_other_epoch(other_epoch, entry_category):
     entry = Entry.objects.create(
         headword="پایداری",
         is_verified=True,
+        category=entry_category,
     )
     entry.epochs.add(other_epoch)
     return entry
 
 
 @pytest.fixture
-def unverified_entry(epoch):
+def unverified_entry(epoch, entry_category):
     entry = Entry.objects.create(
         headword="ناپیدا",
         is_verified=False,
+        category=entry_category,
     )
     entry.epochs.add(epoch)
     return entry
@@ -79,10 +82,10 @@ def test_entry_search_hides_unverified_entries(client, verified_entry, unverifie
 
 
 @pytest.mark.django_db
-def test_entry_search_rejects_low_quality_persian_fuzzy_matches(client, epoch):
-    entry_one = Entry.objects.create(headword="آهو به کون", is_verified=True)
+def test_entry_search_rejects_low_quality_persian_fuzzy_matches(client, epoch, entry_category):
+    entry_one = Entry.objects.create(headword="آهو به کون", is_verified=True, category=entry_category)
     entry_one.epochs.add(epoch)
-    entry_two = Entry.objects.create(headword="زیرساخت به کون", is_verified=True)
+    entry_two = Entry.objects.create(headword="زیرساخت به کون", is_verified=True, category=entry_category)
     entry_two.epochs.add(epoch)
 
     response = client.get(reverse("lexicon:entry-list"), data={"q": "کونشسیششسیشسی"})
@@ -136,7 +139,7 @@ def test_admin_can_view_unverified_entry_detail_with_warning(client, unverified_
 
 @pytest.mark.django_db
 @override_settings(LANGUAGE_CODE="en")
-def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epoch):
+def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epoch, entry_category):
     creator = User.objects.create_user(
         email="entry-creator@example.com",
         password="password123",
@@ -146,6 +149,7 @@ def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epo
         headword="پنهان",
         is_verified=False,
         created_by=creator,
+        category=entry_category,
     )
     created_entry.epochs.add(epoch)
     client.force_login(creator)
@@ -192,9 +196,9 @@ def test_entry_epoch_filter_with_search(
 
 
 @pytest.mark.django_db
-def test_entry_search_cache_invalidation_on_new_entry(client, epoch):
+def test_entry_search_cache_invalidation_on_new_entry(client, epoch, entry_category):
     cache.clear()
-    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True)
+    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True, category=entry_category)
     first_entry.epochs.add(epoch)
 
     first_response = client.get(reverse("lexicon:entry-list"), data={"q": "پی"})
@@ -202,7 +206,7 @@ def test_entry_search_cache_invalidation_on_new_entry(client, epoch):
     first_content = first_response.content.decode()
     assert first_entry.headword in first_content
 
-    second_entry = Entry.objects.create(headword="پیام", is_verified=True)
+    second_entry = Entry.objects.create(headword="پیام", is_verified=True, category=entry_category)
     second_entry.epochs.add(epoch)
 
     second_response = client.get(reverse("lexicon:entry-list"), data={"q": "پی"})
@@ -212,9 +216,9 @@ def test_entry_search_cache_invalidation_on_new_entry(client, epoch):
 
 
 @pytest.mark.django_db
-def test_entry_suggestion_cache_invalidation_on_new_entry(client, epoch):
+def test_entry_suggestion_cache_invalidation_on_new_entry(client, epoch, entry_category):
     cache.clear()
-    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True)
+    first_entry = Entry.objects.create(headword="پیروزی", is_verified=True, category=entry_category)
     first_entry.epochs.add(epoch)
 
     first_response = client.get(reverse("lexicon:entry-suggest"), data={"q": "پی"})
@@ -222,7 +226,7 @@ def test_entry_suggestion_cache_invalidation_on_new_entry(client, epoch):
     first_headwords = [item["headword"] for item in first_response.json()["results"]]
     assert first_entry.headword in first_headwords
 
-    second_entry = Entry.objects.create(headword="پیام", is_verified=True)
+    second_entry = Entry.objects.create(headword="پیام", is_verified=True, category=entry_category)
     second_entry.epochs.add(epoch)
 
     second_response = client.get(reverse("lexicon:entry-suggest"), data={"q": "پی"})

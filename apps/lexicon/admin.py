@@ -4,7 +4,16 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Definition, DefinitionAttachment, DefinitionVote, Entry, Epoch, Page, SimilarEntryLink
+from .models import (
+    Definition,
+    DefinitionAttachment,
+    DefinitionVote,
+    Entry,
+    EntryCategory,
+    Epoch,
+    Page,
+    SimilarEntryLink,
+)
 
 
 class SimilarEntryLinkInline(admin.TabularInline):
@@ -24,10 +33,17 @@ class EpochAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+@admin.register(EntryCategory)
+class EntryCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug")
+    search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
-    list_display = ("headword", "display_epochs", "is_verified", "entry_page_link", "created_at")
-    list_filter = ("is_verified", "epochs")
+    list_display = ("headword", "category", "display_epochs", "is_verified", "entry_page_link", "created_at")
+    list_filter = ("is_verified", "category", "epochs")
     search_fields = ("headword", "slug")
     filter_horizontal = ("epochs",)
     list_editable = ("is_verified",)

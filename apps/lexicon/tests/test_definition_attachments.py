@@ -24,7 +24,7 @@ def contributor(db):
 
 
 @pytest.fixture
-def entry(db):
+def entry(db, entry_category):
     epoch = Epoch.objects.create(
         name="Attachment Epoch",
         start_date="2012-01-01",
@@ -34,6 +34,7 @@ def entry(db):
     created_entry = Entry.objects.create(
         headword="نمونه",
         is_verified=True,
+        category=entry_category,
     )
     created_entry.epochs.add(epoch)
     return created_entry

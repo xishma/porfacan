@@ -45,13 +45,13 @@ def test_entry_form_hides_is_verified_for_admin_on_create():
 
 
 @pytest.mark.django_db
-def test_entry_form_shows_is_verified_for_admin_on_update(epoch):
+def test_entry_form_shows_is_verified_for_admin_on_update(epoch, entry_category):
     admin = User.objects.create_user(
         email="admin-update@example.com",
         password="password123",
         role=User.Roles.ADMIN,
     )
-    entry = Entry.objects.create(headword="امید")
+    entry = Entry.objects.create(headword="امید", category=entry_category)
     entry.epochs.add(epoch)
 
     form = EntryForm(user=admin, instance=entry)
@@ -60,7 +60,7 @@ def test_entry_form_shows_is_verified_for_admin_on_update(epoch):
 
 
 @pytest.mark.django_db
-def test_contributor_cannot_set_is_verified_on_create(client, epoch):
+def test_contributor_cannot_set_is_verified_on_create(client, epoch, entry_category):
     contributor = User.objects.create_user(
         email="contributor-create@example.com",
         password="password123",
@@ -78,6 +78,7 @@ def test_contributor_cannot_set_is_verified_on_create(client, epoch):
         reverse("lexicon:entry-create"),
         data={
             "headword": "آزادی",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
             "is_verified": "on",
         },
@@ -89,7 +90,7 @@ def test_contributor_cannot_set_is_verified_on_create(client, epoch):
 
 
 @pytest.mark.django_db
-def test_admin_cannot_set_is_verified_on_create(client, epoch):
+def test_admin_cannot_set_is_verified_on_create(client, epoch, entry_category):
     admin = User.objects.create_user(
         email="admin-create@example.com",
         password="password123",
@@ -107,6 +108,7 @@ def test_admin_cannot_set_is_verified_on_create(client, epoch):
         reverse("lexicon:entry-create"),
         data={
             "headword": "امید",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
             "is_verified": "on",
         },
@@ -140,7 +142,7 @@ def test_entry_form_shows_description_for_admin():
 
 
 @pytest.mark.django_db
-def test_entry_create_with_first_definition_content_creates_definition(client, epoch):
+def test_entry_create_with_first_definition_content_creates_definition(client, epoch, entry_category):
     contributor = User.objects.create_user(
         email="contributor-first-definition@example.com",
         password="password123",
@@ -158,6 +160,7 @@ def test_entry_create_with_first_definition_content_creates_definition(client, e
         reverse("lexicon:entry-create"),
         data={
             "headword": "همبستگی",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
             "definition-content": "تعریف اولیه برای مدخل",
             "attachments-TOTAL_FORMS": "1",
@@ -177,7 +180,7 @@ def test_entry_create_with_first_definition_content_creates_definition(client, e
 
 
 @pytest.mark.django_db
-def test_entry_create_without_first_definition_content_skips_definition(client, epoch):
+def test_entry_create_without_first_definition_content_skips_definition(client, epoch, entry_category):
     contributor = User.objects.create_user(
         email="contributor-no-first-definition@example.com",
         password="password123",
@@ -195,6 +198,7 @@ def test_entry_create_without_first_definition_content_skips_definition(client, 
         reverse("lexicon:entry-create"),
         data={
             "headword": "پیوستگی",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
             "definition-content": "",
             "attachments-TOTAL_FORMS": "1",
@@ -223,7 +227,7 @@ def _tiny_gif(name="example.gif"):
 
 
 @pytest.mark.django_db
-def test_entry_create_with_initial_definition_examples_saves_attachments(client, epoch, settings, tmp_path):
+def test_entry_create_with_initial_definition_examples_saves_attachments(client, epoch, entry_category, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     contributor = User.objects.create_user(
         email="contributor-first-definition-examples@example.com",
@@ -242,6 +246,7 @@ def test_entry_create_with_initial_definition_examples_saves_attachments(client,
         reverse("lexicon:entry-create"),
         data={
             "headword": "همراهی",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
             "definition-content": "تعریف اولیه با مثال",
             "attachments-TOTAL_FORMS": "5",

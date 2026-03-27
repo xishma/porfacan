@@ -49,8 +49,8 @@ def verified_editor(db):
 
 
 @pytest.mark.django_db
-def test_create_duplicate_verified_headword_shows_link(client, epoch, verified_contributor):
-    existing = Entry.objects.create(headword="یکسان", is_verified=True)
+def test_create_duplicate_verified_headword_shows_link(client, epoch, verified_contributor, entry_category):
+    existing = Entry.objects.create(headword="یکسان", is_verified=True, category=entry_category)
     existing.epochs.add(epoch)
 
     client.force_login(verified_contributor)
@@ -59,6 +59,7 @@ def test_create_duplicate_verified_headword_shows_link(client, epoch, verified_c
         url,
         data={
             "headword": "یکسان",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
         },
     )
@@ -72,8 +73,8 @@ def test_create_duplicate_verified_headword_shows_link(client, epoch, verified_c
 
 
 @pytest.mark.django_db
-def test_create_duplicate_unverified_headword_message(client, epoch, verified_contributor):
-    existing = Entry.objects.create(headword="در انتظار", is_verified=False)
+def test_create_duplicate_unverified_headword_message(client, epoch, verified_contributor, entry_category):
+    existing = Entry.objects.create(headword="در انتظار", is_verified=False, category=entry_category)
     existing.epochs.add(epoch)
 
     client.force_login(verified_contributor)
@@ -81,6 +82,7 @@ def test_create_duplicate_unverified_headword_message(client, epoch, verified_co
         reverse("lexicon:entry-create"),
         data={
             "headword": "در انتظار",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
         },
     )
@@ -91,8 +93,8 @@ def test_create_duplicate_unverified_headword_message(client, epoch, verified_co
 
 
 @pytest.mark.django_db
-def test_update_entry_same_headword_ok(client, epoch, verified_editor):
-    entry = Entry.objects.create(headword="ثابت", is_verified=False, created_by=verified_editor)
+def test_update_entry_same_headword_ok(client, epoch, verified_editor, entry_category):
+    entry = Entry.objects.create(headword="ثابت", is_verified=False, created_by=verified_editor, category=entry_category)
     entry.epochs.add(epoch)
 
     client.force_login(verified_editor)
@@ -100,6 +102,7 @@ def test_update_entry_same_headword_ok(client, epoch, verified_editor):
         reverse("lexicon:entry-update", kwargs={"slug": entry.slug}),
         data={
             "headword": "ثابت",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
         },
     )
@@ -108,10 +111,10 @@ def test_update_entry_same_headword_ok(client, epoch, verified_editor):
 
 
 @pytest.mark.django_db
-def test_update_entry_headword_conflict(client, epoch, verified_editor):
-    a = Entry.objects.create(headword="الف", is_verified=True)
+def test_update_entry_headword_conflict(client, epoch, verified_editor, entry_category):
+    a = Entry.objects.create(headword="الف", is_verified=True, category=entry_category)
     a.epochs.add(epoch)
-    b = Entry.objects.create(headword="ب", is_verified=False, created_by=verified_editor)
+    b = Entry.objects.create(headword="ب", is_verified=False, created_by=verified_editor, category=entry_category)
     b.epochs.add(epoch)
 
     client.force_login(verified_editor)
@@ -119,6 +122,7 @@ def test_update_entry_headword_conflict(client, epoch, verified_editor):
         reverse("lexicon:entry-update", kwargs={"slug": b.slug}),
         data={
             "headword": "الف",
+            "category": entry_category.pk,
             "epochs": [epoch.pk],
         },
     )

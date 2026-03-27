@@ -4,7 +4,7 @@ from apps.lexicon.models import Entry, Epoch
 
 
 @pytest.mark.django_db
-def test_entry_full_clean_accepts_persian_slug():
+def test_entry_full_clean_accepts_persian_slug(entry_category):
     epoch = Epoch.objects.create(
         name="Unicode Slug Epoch",
         start_date="2017-01-01",
@@ -15,6 +15,7 @@ def test_entry_full_clean_accepts_persian_slug():
         headword="آزادی",
         slug="آزادی",
         is_verified=True,
+        category=entry_category,
     )
     entry.epochs.add(epoch)
 

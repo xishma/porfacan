@@ -4,7 +4,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .cache import bump_cache_version
-from .models import Definition, DefinitionVote, Entry, Epoch, Page
+from .models import Definition, DefinitionVote, Entry, EntryCategory, Epoch, Page
 from .tasks import recompute_auto_similar_entries
 
 
@@ -50,6 +50,16 @@ def invalidate_entry_search_cache_on_epoch_save(sender, instance: Epoch, **kwarg
 
 @receiver(post_delete, sender=Epoch)
 def invalidate_entry_search_cache_on_epoch_delete(sender, instance: Epoch, **kwargs):
+    bump_cache_version("entry_search_results")
+
+
+@receiver(post_save, sender=EntryCategory)
+def invalidate_entry_search_cache_on_entry_category_save(sender, instance: EntryCategory, **kwargs):
+    bump_cache_version("entry_search_results")
+
+
+@receiver(post_delete, sender=EntryCategory)
+def invalidate_entry_search_cache_on_entry_category_delete(sender, instance: EntryCategory, **kwargs):
     bump_cache_version("entry_search_results")
 
 

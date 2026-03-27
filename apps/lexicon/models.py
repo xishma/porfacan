@@ -105,6 +105,24 @@ class Epoch(models.Model):
         return self.name
 
 
+class EntryCategory(models.Model):
+    name = models.CharField(max_length=200, unique=True, verbose_name=_("Name"))
+    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = _("Entry category")
+        verbose_name_plural = _("Entry categories")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Page(models.Model):
     address = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Address"))
     title = models.CharField(max_length=255, verbose_name=_("Title"))
@@ -126,6 +144,12 @@ class Page(models.Model):
 class Entry(models.Model):
     headword = models.CharField(max_length=255, db_index=True, verbose_name=_("Headword"))
     slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
+    category = models.ForeignKey(
+        "EntryCategory",
+        on_delete=models.PROTECT,
+        related_name="entries",
+        verbose_name=_("Category"),
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

@@ -6,7 +6,7 @@ from apps.users.models import User
 
 
 @pytest.mark.django_db
-def test_featured_definitions_are_ordered_first_and_badged(client):
+def test_featured_definitions_are_ordered_first_and_badged(client, entry_category):
     epoch = Epoch.objects.create(
         name="Featured epoch",
         start_date="2020-01-01",
@@ -18,7 +18,7 @@ def test_featured_definitions_are_ordered_first_and_badged(client):
         password="password123",
         role=User.Roles.CONTRIBUTOR,
     )
-    entry = Entry.objects.create(headword="نمونه", is_verified=True)
+    entry = Entry.objects.create(headword="نمونه", is_verified=True, category=entry_category)
     entry.epochs.add(epoch)
 
     regular_definition = Definition.objects.create(

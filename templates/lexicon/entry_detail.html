@@ -6,15 +6,27 @@
 {% block content %}
 <article class="space-y-6">
     <header class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 class="text-3xl font-bold">{{ entry.headword }}</h1>
-        <p class="mt-2 text-sm text-slate-500">
-            {% trans "Epochs" %}:
-            {% for epoch in entry.epochs.all %}
-                <a href="{% url 'lexicon:entry-list' %}?epoch={{ epoch.name|urlencode }}" class="text-slate-700 hover:text-slate-900 hover:underline">{{ epoch.name }}</a>{% if not forloop.last %}, {% endif %}
-            {% empty %}
-                -
-            {% endfor %}
-        </p>
+        <div class="flex flex-row items-start gap-4">
+            <div class="min-w-0 flex-1">
+                <h1 class="text-3xl font-bold">{{ entry.headword }}</h1>
+                <p class="mt-2 text-sm text-slate-500">
+                    {% trans "Epochs" %}:
+                    {% for epoch in entry.epochs.all %}
+                        <a href="{% url 'lexicon:entry-list' %}?epoch={{ epoch.name|urlencode }}" class="text-slate-700 hover:text-slate-900 hover:underline">{{ epoch.name }}</a>{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        -
+                    {% endfor %}
+                </p>
+            </div>
+            {% if entry.category_id %}
+                <a
+                    href="{% url 'lexicon:entry-list' %}?category={{ entry.category.slug|urlencode }}"
+                    class="inline-flex shrink-0 items-center rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-900 transition hover:border-violet-300 hover:bg-violet-100"
+                >
+                    {{ entry.category.name }}
+                </a>
+            {% endif %}
+        </div>
         {% if can_view_entry_description and entry.description %}
             <div class="mt-4 rounded-lg bg-amber-50 p-4 text-amber-900">
                 <h2 class="mb-2 text-sm font-semibold">{% trans "Insider note" %}</h2>
