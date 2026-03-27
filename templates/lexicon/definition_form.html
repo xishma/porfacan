@@ -6,7 +6,7 @@
 {% block content %}
 <section class="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
     <h1 class="mb-2 text-xl font-semibold">{% blocktrans with headword=entry.headword %}Add definition for "{{ headword }}"{% endblocktrans %}</h1>
-    <p class="mb-4 text-sm text-slate-500">{% trans "Content is normalized with Hazm before saving. You can add up to 5 examples per definition, each with a link, image, or both." %}</p>
+    <p class="mb-4 text-sm text-slate-500">{% trans "Text fields are normalized with Hazm before saving. You can add up to 5 examples per definition, each with a link, image, or both." %}</p>
     <form method="post" enctype="multipart/form-data" class="space-y-4">
         {% csrf_token %}
         {{ form.non_field_errors }}
@@ -14,6 +14,18 @@
             <label class="mb-2 block text-sm text-slate-600" for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
             {{ form.content }}
             {{ form.content.errors }}
+        </div>
+        <div>
+            <label class="mb-2 block text-sm text-slate-600" for="{{ form.context_annotation.id_for_label }}">{{ form.context_annotation.label }}</label>
+            {% if form.context_annotation.help_text %}<p class="mb-1 text-xs text-slate-500">{{ form.context_annotation.help_text }}</p>{% endif %}
+            {{ form.context_annotation }}
+            {{ form.context_annotation.errors }}
+        </div>
+        <div>
+            <label class="mb-2 block text-sm text-slate-600" for="{{ form.usage_example.id_for_label }}">{{ form.usage_example.label }}</label>
+            {% if form.usage_example.help_text %}<p class="mb-1 text-xs text-slate-500">{{ form.usage_example.help_text }}</p>{% endif %}
+            {{ form.usage_example }}
+            {{ form.usage_example.errors }}
         </div>
 
         <div class="space-y-3 rounded-lg border border-slate-200 p-4">

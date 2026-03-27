@@ -21,7 +21,18 @@ class EntryForm(forms.ModelForm):
         }
         widgets = {
             "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
-            "category": forms.Select(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "category": forms.Select(
+                attrs={
+                    "class": (
+                        "entry-category-select block w-full cursor-pointer rounded-lg border border-slate-300 "
+                        "bg-white py-2.5 ps-3 pe-10 text-sm text-slate-900 shadow-sm transition-colors "
+                        "hover:border-slate-400 "
+                        "focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 "
+                        "disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 "
+                        "[appearance:none] [-webkit-appearance:none]"
+                    ),
+                }
+            ),
             "epochs": forms.CheckboxSelectMultiple(),
             "description": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 4}
@@ -96,19 +107,33 @@ class EntryForm(forms.ModelForm):
 class DefinitionForm(forms.ModelForm):
     class Meta:
         model = Definition
-        fields = ("content",)
+        fields = ("content", "context_annotation", "usage_example")
         labels = {
-            "content": _("Definition text"),
+            "content": _("Meaning"),
+            "context_annotation": _("Background and context"),
+            "usage_example": _("Example of usage"),
+        }
+        help_texts = {
+            "context_annotation": _("Optional."),
+            "usage_example": _("Optional."),
         }
         widgets = {
             "content": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 5}
+            ),
+            "context_annotation": forms.Textarea(
+                attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 4}
+            ),
+            "usage_example": forms.Textarea(
+                attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 3}
             ),
         }
 
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["content"] = normalize_persian(cleaned_data.get("content", ""))
+        cleaned_data["context_annotation"] = normalize_persian(cleaned_data.get("context_annotation", ""))
+        cleaned_data["usage_example"] = normalize_persian(cleaned_data.get("usage_example", ""))
         return cleaned_data
 
     def save(self, author, entry, attachment_formset=None, commit=True):

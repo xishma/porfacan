@@ -31,6 +31,7 @@ class EntryQuerySet(QuerySet):
             .annotate(
                 definition_vector=SearchVector("content", weight="B", config="simple")
                 + SearchVector("context_annotation", weight="C", config="simple")
+                + SearchVector("usage_example", weight="C", config="simple")
             )
             .filter(definition_vector=query_expr)
         )
@@ -249,8 +250,9 @@ class Definition(models.Model):
         related_name="definitions",
         verbose_name=_("Entry"),
     )
-    content = models.TextField(verbose_name=_("Content"))
-    context_annotation = models.TextField(blank=True, verbose_name=_("Context annotation"))
+    content = models.TextField(verbose_name=_("Meaning"))
+    context_annotation = models.TextField(blank=True, verbose_name=_("Background and context"))
+    usage_example = models.TextField(blank=True, verbose_name=_("Example of usage"))
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -273,7 +275,7 @@ class Definition(models.Model):
             models.Index(fields=["upvotes", "downvotes"]),
             models.Index(fields=["hot_score_value"]),
             GinIndex(
-                SearchVector("content", "context_annotation", config="simple"),
+                SearchVector("content", "context_annotation", "usage_example", config="simple"),
                 name="lexicon_def_search_vector_gin",
             ),
         ]
@@ -282,6 +284,7 @@ class Definition(models.Model):
         super().clean()
         self.content = normalize_persian(self.content)
         self.context_annotation = normalize_persian(self.context_annotation)
+        self.usage_example = normalize_persian(self.usage_example)
 
     @property
     def hot_score(self) -> float:
@@ -290,6 +293,7 @@ class Definition(models.Model):
     def save(self, *args, **kwargs):
         self.content = normalize_persian(self.content)
         self.context_annotation = normalize_persian(self.context_annotation)
+        self.usage_example = normalize_persian(self.usage_example)
         created_at = self.created_at or timezone.now()
         self.hot_score_value = hot_score(self.upvotes, self.downvotes, created_at)
         super().save(*args, **kwargs)

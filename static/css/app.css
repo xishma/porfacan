@@ -2,3 +2,17 @@ html,
 body {
     font-family: "Vazirmatn", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Native selects: Tailwind arbitrary [appearance:none] is not always enough across engines. */
+.entry-category-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #fff;
+    color-scheme: light;
+}
+
+.entry-category-select option,
+.entry-category-select optgroup {
+    background-color: #fff;
+    color: #0f172a;
+}

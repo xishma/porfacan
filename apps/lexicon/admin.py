@@ -73,7 +73,7 @@ class DefinitionAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_featured", "created_at")
     list_editable = ("is_featured",)
-    search_fields = ("entry__headword", "content")
+    search_fields = ("entry__headword", "content", "context_annotation", "usage_example")
 
 
 @admin.register(DefinitionVote)
