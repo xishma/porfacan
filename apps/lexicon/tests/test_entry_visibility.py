@@ -108,6 +108,19 @@ def test_entry_suggestion_hides_unverified_entries(client, verified_entry, unver
 
 
 @pytest.mark.django_db
+def test_entry_suggestion_for_form_includes_unverified(client, verified_entry, unverified_entry):
+    response = client.get(reverse("lexicon:entry-suggest"), data={"q": "نا", "for_form": "1"})
+
+    assert response.status_code == 200
+    suggested_headwords = [item["headword"] for item in response.json()["results"]]
+    assert unverified_entry.headword in suggested_headwords
+
+    default_response = client.get(reverse("lexicon:entry-suggest"), data={"q": "نا"})
+    default_headwords = [item["headword"] for item in default_response.json()["results"]]
+    assert unverified_entry.headword not in default_headwords
+
+
+@pytest.mark.django_db
 def test_unverified_entry_detail_is_not_visible(client, verified_entry, unverified_entry):
     verified_response = client.get(reverse("lexicon:entry-detail", kwargs={"slug": verified_entry.slug}))
     unverified_response = client.get(reverse("lexicon:entry-detail", kwargs={"slug": unverified_entry.slug}))

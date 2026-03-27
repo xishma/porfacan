@@ -20,7 +20,15 @@ class EntryForm(forms.ModelForm):
             "is_verified": _("Verified"),
         }
         widgets = {
-            "headword": forms.TextInput(attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2"}),
+            "headword": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                    "autocomplete": "off",
+                    "autocorrect": "off",
+                    "autocapitalize": "off",
+                    "spellcheck": "false",
+                }
+            ),
             "category": forms.Select(
                 attrs={
                     "class": (
@@ -87,13 +95,14 @@ class EntryForm(forms.ModelForm):
                             ),
                         }
                     )
-                raise ValidationError(
-                    {
-                        "headword": _(
-                            "An entry with this headword already exists and is pending verification."
-                        ),
-                    }
-                )
+                if not self._is_create_form():
+                    raise ValidationError(
+                        {
+                            "headword": _(
+                                "An entry with this headword already exists and is pending verification."
+                            ),
+                        }
+                    )
 
         return cleaned_data
 

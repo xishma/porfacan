@@ -172,6 +172,32 @@ class PageDetailView(DetailView):
         return queryset.filter(is_published=True)
 
 
+class PendingHeadwordCheckView(ContributorRequiredMixin, View):
+    """JSON: pending headword match plus category/epochs/description for the canonical pending entry."""
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("q", "")
+        normalized = normalize_persian(query).strip()
+        if not normalized:
+            return JsonResponse({"matches_pending": False})
+        entry = (
+            Entry.objects.filter(headword=normalized, is_verified=False)
+            .order_by("created_at")
+            .first()
+        )
+        if entry is None:
+            return JsonResponse({"matches_pending": False})
+        epoch_ids = list(entry.epochs.order_by("id").values_list("id", flat=True))
+        return JsonResponse(
+            {
+                "matches_pending": True,
+                "category_id": entry.category_id,
+                "epoch_ids": epoch_ids,
+                "description": entry.description or "",
+            }
+        )
+
+
 class EntrySuggestionView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "")
@@ -179,24 +205,36 @@ class EntrySuggestionView(View):
         if not normalized_query:
             return JsonResponse({"results": []})
 
+        for_form = request.GET.get("for_form", "").strip().lower() in ("1", "true", "yes")
         cache_key = build_versioned_cache_key(
             "entry_suggestions",
-            {"query": normalized_query, "limit": 8},
+            {"query": normalized_query, "limit": 8, "for_form": for_form},
             version_scope="entry_suggestions",
         )
         suggestions = cache.get(cache_key)
         if suggestions is None:
             limit = 8
-            prefix_matches = list(
+            used_slugs: set[str] = set()
+            suggestions = []
+
+            def add_rows(rows):
+                for item in rows:
+                    if len(suggestions) >= limit:
+                        break
+                    if item["slug"] in used_slugs:
+                        continue
+                    suggestions.append(item)
+                    used_slugs.add(item["slug"])
+
+            add_rows(
                 Entry.objects.filter(is_verified=True, headword__startswith=normalized_query)
                 .order_by("-created_at")
                 .values("headword", "slug")[:limit]
             )
-            suggestions = prefix_matches
-            remaining = limit - len(prefix_matches)
+
+            remaining = limit - len(suggestions)
             if remaining > 0 and len(normalized_query) >= 3:
-                used_slugs = [item["slug"] for item in prefix_matches]
-                fuzzy_matches = list(
+                add_rows(
                     Entry.objects.filter(is_verified=True)
                     .exclude(slug__in=used_slugs)
                     .filter(headword__trigram_similar=normalized_query)
@@ -205,7 +243,28 @@ class EntrySuggestionView(View):
                     .order_by("-trigram_similarity", "-created_at")
                     .values("headword", "slug")[:remaining]
                 )
-                suggestions = prefix_matches + fuzzy_matches
+
+            if for_form:
+                remaining = limit - len(suggestions)
+                if remaining > 0:
+                    add_rows(
+                        Entry.objects.filter(is_verified=False, headword__startswith=normalized_query)
+                        .exclude(slug__in=used_slugs)
+                        .order_by("-created_at")
+                        .values("headword", "slug")[:remaining]
+                    )
+                remaining = limit - len(suggestions)
+                if remaining > 0 and len(normalized_query) >= 3:
+                    add_rows(
+                        Entry.objects.filter(is_verified=False)
+                        .exclude(slug__in=used_slugs)
+                        .filter(headword__trigram_similar=normalized_query)
+                        .annotate(trigram_similarity=TrigramSimilarity("headword", normalized_query))
+                        .filter(trigram_similarity__gte=EntryQuerySet.SUGGESTION_TRIGRAM_THRESHOLD)
+                        .order_by("-trigram_similarity", "-created_at")
+                        .values("headword", "slug")[:remaining]
+                    )
+
             cache.set(cache_key, suggestions, timeout=settings.LEXICON_CACHE_TIMEOUT_SUGGESTIONS)
         return JsonResponse({"results": suggestions})
 
@@ -355,6 +414,30 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
             return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
         if definition_content and not attachment_formset.is_valid():
             return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
+
+        headword = form.cleaned_data["headword"]
+        pending_entry = (
+            Entry.objects.filter(headword=headword, is_verified=False).order_by("created_at").first()
+        )
+        if pending_entry:
+            self.object = pending_entry
+            if definition_content:
+                definition_form.save(
+                    author=self.request.user, entry=self.object, attachment_formset=attachment_formset
+                )
+                messages.success(
+                    self.request,
+                    _(
+                        "Your definition(s) were added to the existing entry. You will be able to see them "
+                        "on the site once the entry is published."
+                    ),
+                )
+            else:
+                messages.info(
+                    self.request,
+                    _("This headword already has an entry awaiting review. No new definition was added."),
+                )
+            return HttpResponseRedirect(reverse("lexicon:entry-create"))
 
         self.object = form.save(commit=False)
         self.object.created_by = self.request.user

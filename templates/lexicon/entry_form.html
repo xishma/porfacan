@@ -4,17 +4,25 @@
 {% block title %}{% trans "Create or edit entry" %} | {% trans "Porfacan" %}{% endblock title %}
 
 {% block content %}
-<section class="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+<section class="mx-auto max-w-2xl overflow-visible rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
     <h1 class="mb-4 text-xl font-semibold">{% trans "Entry form" %}</h1>
     {% if is_create %}
         <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 ps-4 pe-4 py-3 text-sm text-amber-900">
             {% trans "New entries must be verified by admins before they become publicly visible and before users can add definitions." %}
         </div>
+        <div
+            id="pending-headword-notice"
+            class="mb-4 hidden rounded-lg border border-sky-200 bg-sky-50 ps-4 pe-4 py-3 text-sm text-sky-950"
+            role="status"
+            aria-live="polite"
+        >
+            {% trans "This word is currently under review by the moderation team. However, you can add your own definition, example, or sources (such as social media links) to help us build a more complete archive." %}
+        </div>
     {% endif %}
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
+    <form id="lexicon-entry-form" method="post" enctype="multipart/form-data" class="space-y-4 overflow-visible">
         {% csrf_token %}
         {% for field in form %}
-            <div class="space-y-1">
+            <div class="space-y-1"{% if field.name == "headword" %} id="entry-headword-row"{% endif %}>
                 {% if field.errors %}
                     {% if field.name == "headword" %}
                         <ul class="errorlist text-sm text-rose-700">{% for error in field.errors %}<li>{{ error|safe }}</li>{% endfor %}</ul>
@@ -31,6 +39,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
                         </span>
+                    </div>
+                {% elif field.name == "headword" %}
+                    {{ field.label_tag }}
+                    <div class="relative">
+                        {{ field }}
+                        <div
+                            id="headword-suggestions"
+                            class="absolute inset-x-0 top-full z-[100] mt-1 hidden max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg"
+                            role="listbox"
+                            aria-label="{% trans 'Similar existing headwords' %}"
+                        ></div>
                     </div>
                 {% else %}
                     {{ field.label_tag }}
@@ -110,8 +129,281 @@
         <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 ps-4 pe-4 py-2 text-white">{% icon "save" %}<span>{% trans "Save" %}</span></button>
     </form>
 </section>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const entryForm = document.getElementById("lexicon-entry-form");
+        const headwordRow = document.getElementById("entry-headword-row");
+        const headwordField = entryForm ? entryForm.querySelector('[name="headword"]') : null;
+        const headwordSuggestBox = document.getElementById("headword-suggestions");
+        const entrySuggestPath = "{% url 'lexicon:entry-suggest' %}";
+        if (!entryForm || !headwordField || !headwordSuggestBox || !entrySuggestPath) return;
+
+        const escapeHtml = (s) =>
+            String(s)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        const escapeAttr = (s) =>
+            String(s)
+                .replace(/&/g, "&amp;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+
+        const renderHeadwordSuggestions = (results) => {
+            if (!results.length) {
+                headwordSuggestBox.classList.add("hidden");
+                headwordSuggestBox.innerHTML = "";
+                return;
+            }
+            headwordSuggestBox.innerHTML = results
+                .map((item) => {
+                    const label = escapeHtml(item.headword);
+                    const attr = escapeAttr(item.headword);
+                    return (
+                        '<button type="button" class="block w-full border-b border-slate-100 ps-3 pe-3 py-2 text-start text-sm text-slate-900 hover:bg-slate-50 last:border-b-0" role="option" data-headword="' +
+                        attr +
+                        '">' +
+                        label +
+                        "</button>"
+                    );
+                })
+                .join("");
+            headwordSuggestBox.classList.remove("hidden");
+        };
+
+        let suggestDebounce = null;
+        let suggestController = null;
+        let composing = false;
+        let suppressNextSuggest = false;
+
+        const scheduleSuggest = () => {
+            if (suppressNextSuggest) {
+                suppressNextSuggest = false;
+                clearTimeout(suggestDebounce);
+                if (suggestController) {
+                    suggestController.abort();
+                    suggestController = null;
+                }
+                headwordSuggestBox.classList.add("hidden");
+                headwordSuggestBox.innerHTML = "";
+                return;
+            }
+            clearTimeout(suggestDebounce);
+            if (suggestController) {
+                suggestController.abort();
+                suggestController = null;
+            }
+            const q = headwordField.value.trim();
+            if (q.length < 1) {
+                headwordSuggestBox.classList.add("hidden");
+                headwordSuggestBox.innerHTML = "";
+                return;
+            }
+            suggestDebounce = setTimeout(async () => {
+                suggestController = new AbortController();
+                try {
+                    const u = new URL(entrySuggestPath, window.location.origin);
+                    u.searchParams.set("q", q);
+                    u.searchParams.set("for_form", "1");
+                    const response = await fetch(u.toString(), {
+                        signal: suggestController.signal,
+                        credentials: "same-origin",
+                    });
+                    if (!response.ok) return;
+                    const payload = await response.json();
+                    renderHeadwordSuggestions(payload.results || []);
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        headwordSuggestBox.classList.add("hidden");
+                    }
+                } finally {
+                    suggestController = null;
+                }
+            }, 180);
+        };
+
+        headwordField.addEventListener("compositionstart", () => {
+            composing = true;
+        });
+        headwordField.addEventListener("compositionend", () => {
+            composing = false;
+            scheduleSuggest();
+        });
+        headwordField.addEventListener("input", () => {
+            if (composing) return;
+            scheduleSuggest();
+        });
+
+        headwordSuggestBox.addEventListener("click", (event) => {
+            const btn = event.target.closest("button[data-headword]");
+            if (!btn || !headwordSuggestBox.contains(btn)) return;
+            event.preventDefault();
+            const text = btn.getAttribute("data-headword");
+            if (text === null) return;
+            suppressNextSuggest = true;
+            headwordField.value = text;
+            headwordSuggestBox.classList.add("hidden");
+            headwordSuggestBox.innerHTML = "";
+            headwordField.focus();
+            headwordField.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+
+        document.addEventListener("click", (event) => {
+            const inside = headwordRow && headwordRow.contains(event.target);
+            if (!inside) {
+                headwordSuggestBox.classList.add("hidden");
+            }
+        });
+
+        headwordField.addEventListener("focus", () => {
+            const q = headwordField.value.trim();
+            if (q.length >= 1 && headwordSuggestBox.innerHTML.trim()) {
+                headwordSuggestBox.classList.remove("hidden");
+            }
+        });
+    });
+</script>
 {% if is_create and definition_form %}
 <script>
+    const pendingHeadwordNotice = document.getElementById("pending-headword-notice");
+    const entryForm = document.getElementById("lexicon-entry-form");
+    const headwordField = entryForm ? entryForm.querySelector('[name="headword"]') : null;
+    const categoryField = entryForm ? entryForm.querySelector('[name="category"]') : null;
+    const epochInputs = entryForm ? Array.from(entryForm.querySelectorAll('input[name="epochs"]')) : [];
+    const descriptionField = entryForm ? entryForm.querySelector('[name="description"]') : null;
+    const pendingHeadwordCheckUrl = "{% url 'lexicon:entry-pending-headword' %}";
+
+    let pendingFieldsStash = null;
+
+    const readEpochSelection = () => {
+        const selected = [];
+        epochInputs.forEach((input) => {
+            if (input.checked) selected.push(input.value);
+        });
+        return selected;
+    };
+
+    const applyEpochSelection = (values) => {
+        const want = new Set((values || []).map(String));
+        epochInputs.forEach((input) => {
+            input.checked = want.has(String(input.value));
+        });
+    };
+
+    const unlockPendingMirroredFields = () => {
+        if (categoryField) {
+            categoryField.disabled = false;
+        }
+        epochInputs.forEach((input) => {
+            input.disabled = false;
+        });
+        if (descriptionField) {
+            descriptionField.readOnly = false;
+            descriptionField.classList.remove("cursor-not-allowed", "bg-slate-50");
+        }
+    };
+
+    const restoreStashedFields = () => {
+        if (!pendingFieldsStash) return;
+        if (categoryField) {
+            categoryField.value = pendingFieldsStash.category;
+        }
+        applyEpochSelection(pendingFieldsStash.epochs);
+        if (descriptionField) {
+            descriptionField.value = pendingFieldsStash.description;
+        }
+        pendingFieldsStash = null;
+    };
+
+    const applyPendingPayload = (payload) => {
+        if (!payload.matches_pending) return;
+        if (categoryField && payload.category_id != null) {
+            categoryField.value = String(payload.category_id);
+        }
+        applyEpochSelection(payload.epoch_ids || []);
+        if (descriptionField && typeof payload.description === "string") {
+            descriptionField.value = payload.description;
+        }
+        if (categoryField) {
+            categoryField.disabled = true;
+        }
+        epochInputs.forEach((input) => {
+            input.disabled = true;
+        });
+        if (descriptionField) {
+            descriptionField.readOnly = true;
+            descriptionField.classList.add("cursor-not-allowed", "bg-slate-50");
+        }
+    };
+
+    if (entryForm) {
+        entryForm.addEventListener(
+            "submit",
+            () => {
+                unlockPendingMirroredFields();
+            },
+            true,
+        );
+    }
+
+    if (pendingHeadwordNotice && headwordField && pendingHeadwordCheckUrl) {
+        let pendingCheckTimer = null;
+        let pendingCheckController = null;
+        headwordField.addEventListener("input", () => {
+            clearTimeout(pendingCheckTimer);
+            if (pendingCheckController) {
+                pendingCheckController.abort();
+                pendingCheckController = null;
+            }
+            const q = headwordField.value.trim();
+            if (!q.length) {
+                pendingHeadwordNotice.classList.add("hidden");
+                unlockPendingMirroredFields();
+                restoreStashedFields();
+                return;
+            }
+            pendingCheckTimer = setTimeout(async () => {
+                pendingCheckController = new AbortController();
+                try {
+                    const response = await fetch(
+                        `${pendingHeadwordCheckUrl}?q=${encodeURIComponent(q)}`,
+                        { signal: pendingCheckController.signal },
+                    );
+                    if (!response.ok) {
+                        pendingHeadwordNotice.classList.add("hidden");
+                        unlockPendingMirroredFields();
+                        restoreStashedFields();
+                        return;
+                    }
+                    const payload = await response.json();
+                    if (!payload.matches_pending) {
+                        pendingHeadwordNotice.classList.add("hidden");
+                        unlockPendingMirroredFields();
+                        restoreStashedFields();
+                        return;
+                    }
+                    pendingHeadwordNotice.classList.remove("hidden");
+                    if (!pendingFieldsStash) {
+                        pendingFieldsStash = {
+                            category: categoryField ? categoryField.value : "",
+                            epochs: readEpochSelection(),
+                            description: descriptionField ? descriptionField.value : "",
+                        };
+                    }
+                    applyPendingPayload(payload);
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        pendingHeadwordNotice.classList.add("hidden");
+                        unlockPendingMirroredFields();
+                        restoreStashedFields();
+                    }
+                } finally {
+                    pendingCheckController = null;
+                }
+            }, 220);
+        });
+    }
+
     const addExampleButton = document.getElementById("add-example-btn");
     const exampleFormsContainer = document.getElementById("example-forms");
     const totalFormsInput = document.getElementById("id_attachments-TOTAL_FORMS");
