@@ -4,6 +4,8 @@ services:
     build:
       context: .
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     volumes:
       - ./:/app
     depends_on:
@@ -16,6 +18,8 @@ services:
     container_name: porfacan-web
     build: .
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     volumes:
       - .:/app
     ports:
@@ -69,6 +73,8 @@ services:
     container_name: porfacan-celery-worker
     build: .
     command: celery -A config worker -l info
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     volumes:
       - .:/app
     depends_on:
