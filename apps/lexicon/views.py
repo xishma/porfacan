@@ -2,106 +2,119 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
+from django.db.models import Prefetch, Q
 from django.contrib.postgres.search import TrigramSimilarity
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 from django.utils.translation import gettext as _
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .cache import build_versioned_cache_key
+from .definition_page import definition_first_page_prefetch_queryset, fetch_definition_page, initial_definition_infinite_scroll_state
+from .entry_list_page import fetch_entry_list_page
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
 from .models import Definition, DefinitionVote, Entry, EntryQuerySet, Epoch, Page, SimilarEntryLink
 from .normalization import normalize_persian
 
 
-class EntryListView(ListView):
-    model = Entry
+def _entry_admin_visibility(user) -> bool:
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return bool(user.is_superuser or getattr(user, "role", None) == "admin")
+
+
+def entry_visible_queryset(request):
+    queryset = Entry.objects
+    if _entry_admin_visibility(request.user):
+        pass
+    elif getattr(request.user, "is_authenticated", False):
+        queryset = queryset.filter(Q(is_verified=True) | Q(created_by=request.user))
+    else:
+        queryset = queryset.filter(is_verified=True)
+    return queryset
+
+
+def _attach_definition_votes(request, definitions: list):
+    if not definitions:
+        return
+    if not getattr(request.user, "is_authenticated", False):
+        for definition in definitions:
+            definition.current_user_vote = 0
+        return
+    ids = [d.id for d in definitions]
+    vote_map = {
+        vote.definition_id: vote.value
+        for vote in DefinitionVote.objects.filter(user=request.user, definition_id__in=ids)
+    }
+    for definition in definitions:
+        definition.current_user_vote = vote_map.get(definition.id, 0)
+
+
+def _entry_detail_lexicon_flags(request, entry):
+    can_add_definition = False
+    can_contribute = False
+    can_vote = False
+    can_view_entry_description = False
+    if request.user.is_authenticated:
+        can_contribute = request.user.has_minimum_role(1) and request.user.is_email_verified
+        can_vote = request.user.is_email_verified
+        can_view_entry_description = _entry_admin_visibility(request.user)
+        can_add_definition = not Definition.objects.filter(entry=entry, author=request.user).exists()
+    return {
+        "can_add_definition": can_add_definition,
+        "can_contribute": can_contribute,
+        "can_vote": can_vote,
+        "can_view_entry_description": can_view_entry_description,
+    }
+
+
+class EntryListView(TemplateView):
     template_name = "lexicon/entry_list.html"
-    context_object_name = "entries"
-    paginate_by = 20
-
-    def _cacheable_entry_query(self, normalized_query: str, selected_epoch: str) -> bool:
-        return bool(normalized_query or selected_epoch)
-
-    def _entry_search_cache_key(self, normalized_query: str, selected_epoch: str) -> str:
-        payload = {
-            "query": normalized_query,
-            "epoch": selected_epoch,
-        }
-        return build_versioned_cache_key("entry_search_ids", payload, version_scope="entry_search_results")
-
-    def _ordered_entry_queryset_from_ids(self, entry_ids: list[int]):
-        if not entry_ids:
-            return (
-                Entry.objects.filter(is_verified=True)
-                .only("id", "headword", "slug", "created_at", "is_verified")
-                .prefetch_related("epochs")
-                .none()
-            )
-
-        order_by_id = Case(
-            *[When(pk=entry_id, then=Value(position)) for position, entry_id in enumerate(entry_ids)],
-            output_field=IntegerField(),
-        )
-        return (
-            Entry.objects.filter(is_verified=True, pk__in=entry_ids)
-            .only("id", "headword", "slug", "created_at", "is_verified")
-            .prefetch_related("epochs")
-            .annotate(_cached_order=order_by_id)
-            .order_by("_cached_order")
-        )
-
-    def get_queryset(self):
-        queryset = Entry.objects.filter(is_verified=True).only("id", "headword", "slug", "created_at", "is_verified").prefetch_related(
-            "epochs"
-        )
-        query = self.request.GET.get("q", "")
-        selected_epoch = self.request.GET.get("epoch", "").strip()
-        normalized_query = normalize_persian(query).strip()
-        has_query = bool(normalized_query)
-        if query:
-            queryset = queryset.search(query)
-        if selected_epoch:
-            epochs = Epoch.objects.filter(name__iexact=selected_epoch)
-            if not epochs.exists():
-                messages.error(self.request, _("Invalid epoch."))
-                return queryset.none()
-
-            queryset = queryset.filter(epochs__in=epochs)
-        if not has_query:
-            queryset = queryset.with_hot_rank().order_by("-hot_rank", "-created_at")
-
-        if not self._cacheable_entry_query(normalized_query=normalized_query, selected_epoch=selected_epoch):
-            return queryset
-
-        cache_key = self._entry_search_cache_key(
-            normalized_query=normalized_query,
-            selected_epoch=selected_epoch,
-        )
-        cached_entry_ids = cache.get(cache_key)
-        if cached_entry_ids is not None:
-            return self._ordered_entry_queryset_from_ids(cached_entry_ids)
-
-        max_cached_results = settings.LEXICON_CACHE_MAX_RESULT_IDS
-        result_ids = list(queryset.values_list("id", flat=True)[: max_cached_results + 1])
-        if len(result_ids) <= max_cached_results:
-            cache.set(cache_key, result_ids, timeout=settings.LEXICON_CACHE_TIMEOUT_SEARCH)
-            return self._ordered_entry_queryset_from_ids(result_ids)
-        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["query"] = self.request.GET.get("q", "")
+        query = self.request.GET.get("q", "")
+        selected_epoch = self.request.GET.get("epoch", "").strip()
+        page = fetch_entry_list_page(query=query, selected_epoch=selected_epoch, after_token=None)
+        if page.invalid_epoch:
+            messages.error(self.request, _("Invalid epoch."))
+        context["entries"] = page.entries
+        context["entry_list_has_more"] = page.has_more
+        context["entry_list_next_cursor"] = page.next_cursor or ""
+        context["query"] = query
         context["epochs"] = Epoch.objects.only("id", "name").order_by("start_date")
-        context["selected_epoch"] = self.request.GET.get("epoch", "").strip()
+        context["selected_epoch"] = selected_epoch
         return context
+
+
+class EntryListMoreView(View):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("q", "")
+        selected_epoch = request.GET.get("epoch", "").strip()
+        after = (request.GET.get("after") or "").strip()
+        page = fetch_entry_list_page(query=query, selected_epoch=selected_epoch, after_token=after or None)
+        if page.reset or page.invalid_epoch:
+            return JsonResponse({"html": "", "has_more": False, "next_cursor": "", "reset": True})
+        html = ""
+        if page.entries:
+            html = "".join(
+                render_to_string("lexicon/_entry_list_item.html", {"entry": entry}, request=request) for entry in page.entries
+            )
+        return JsonResponse(
+            {
+                "html": html,
+                "has_more": page.has_more,
+                "next_cursor": page.next_cursor or "",
+                "reset": False,
+            }
+        )
 
 
 class PageDetailView(DetailView):
@@ -189,38 +202,26 @@ class EntryDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        queryset = Entry.objects
-        if self._can_view_all_unverified_entries():
-            pass
-        elif getattr(self.request.user, "is_authenticated", False):
-            queryset = queryset.filter(Q(is_verified=True) | Q(created_by=self.request.user))
-        else:
-            queryset = queryset.filter(is_verified=True)
+        queryset = entry_visible_queryset(self.request)
         similar_qs = (
             SimilarEntryLink.objects.filter(similar_entry__is_verified=True)
             .select_related("similar_entry")
             .order_by("sort_order", "id")
         )
+        defs_qs = definition_first_page_prefetch_queryset()
         return queryset.prefetch_related(
             "epochs",
             Prefetch("similar_links", queryset=similar_qs),
-            "definitions__author",
-            "definitions__attachments",
-            "definitions__votes",
+            Prefetch("definitions", queryset=defs_qs, to_attr="definitions_visible"),
         )
-
-    def _can_view_all_unverified_entries(self) -> bool:
-        user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return False
-        return bool(user.is_superuser or getattr(user, "role", None) == "admin")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        entry = context["entry"]
         seen_ids: set[int] = set()
         seen_headwords: set[str] = set()
         similar_links = []
-        for link in context["entry"].similar_links.all():
+        for link in entry.similar_links.all():
             target = link.similar_entry
             if not target.is_verified:
                 continue
@@ -233,44 +234,54 @@ class EntryDetailView(DetailView):
             seen_headwords.add(headword_key)
             similar_links.append(link)
         context["similar_entry_links"] = similar_links
-        context["can_add_definition"] = False
-        context["can_contribute"] = False
-        context["can_vote"] = False
-        context["can_view_entry_description"] = False
-        if self.request.user.is_authenticated:
-            context["can_contribute"] = (
-                self.request.user.has_minimum_role(1) and self.request.user.is_email_verified
-            )
-            context["can_vote"] = self.request.user.is_email_verified
-            context["can_view_entry_description"] = (
-                self.request.user.is_superuser or getattr(self.request.user, "role", None) == "admin"
-            )
-            context["can_add_definition"] = not Definition.objects.filter(
-                entry=context["entry"],
-                author=self.request.user,
-            ).exists()
-            definition_ids = [definition.id for definition in context["entry"].definitions.all()]
-            vote_map = {
-                vote.definition_id: vote.value
-                for vote in DefinitionVote.objects.filter(
-                    user=self.request.user,
-                    definition_id__in=definition_ids,
-                )
-            }
-            for definition in context["entry"].definitions.all():
-                definition.current_user_vote = vote_map.get(definition.id, 0)
-        else:
-            for definition in context["entry"].definitions.all():
-                definition.current_user_vote = 0
-        if not context["entry"].is_verified and (
-            self._can_view_all_unverified_entries()
-            or context["entry"].created_by_id == getattr(self.request.user, "id", None)
+        flags = _entry_detail_lexicon_flags(self.request, entry)
+        context.update(flags)
+        definitions_visible = list(entry.definitions_visible)
+        _attach_definition_votes(self.request, definitions_visible)
+        context["definitions_visible"] = definitions_visible
+        context["definition_total_count"] = Definition.objects.filter(entry=entry).count()
+        has_more, next_cursor = initial_definition_infinite_scroll_state(definitions_visible, context["definition_total_count"])
+        context["definition_list_has_more"] = has_more
+        context["definition_list_next_cursor"] = next_cursor
+        if not entry.is_verified and (
+            _entry_admin_visibility(self.request.user)
+            or entry.created_by_id == getattr(self.request.user, "id", None)
         ):
             messages.warning(
                 self.request,
                 _("This entry is not verified yet. It is visible only to admins and the entry creator until verification."),
             )
         return context
+
+
+class EntryDefinitionsMoreView(View):
+    def get(self, request, *args, **kwargs):
+        slug = kwargs["slug"]
+        entry = get_object_or_404(entry_visible_queryset(request), slug=slug)
+        after = (request.GET.get("after") or "").strip()
+        page = fetch_definition_page(entry_id=entry.pk, after_token=after or None)
+        if page.reset:
+            return JsonResponse({"html": "", "has_more": False, "next_cursor": "", "reset": True})
+        _attach_definition_votes(request, page.definitions)
+        flags = _entry_detail_lexicon_flags(request, entry)
+        html = ""
+        if page.definitions:
+            html = "".join(
+                render_to_string(
+                    "lexicon/_definition_card.html",
+                    {"definition": definition, "entry": entry, **flags},
+                    request=request,
+                )
+                for definition in page.definitions
+            )
+        return JsonResponse(
+            {
+                "html": html,
+                "has_more": page.has_more,
+                "next_cursor": page.next_cursor or "",
+                "reset": False,
+            }
+        )
 
 
 class EntryCreateView(ContributorRequiredMixin, CreateView):

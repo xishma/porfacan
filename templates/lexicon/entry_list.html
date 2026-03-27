@@ -61,28 +61,65 @@
         </div>
     </form>
 
-    <div class="grid gap-4">
+    <div id="entry-list-grid" class="grid gap-4">
         {% for entry in entries %}
-            <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <h2 class="text-lg font-semibold">
-                    <a href="{% url 'lexicon:entry-detail' entry.slug %}" class="hover:underline">{{ entry.headword }}</a>
-                </h2>
-                <p class="text-sm text-slate-500">
-                    {% trans "Epochs" %}:
-                    {% for epoch in entry.epochs.all %}
-                        {{ epoch.name }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}
-                        -
-                    {% endfor %}
-                </p>
-            </article>
+            {% include "lexicon/_entry_list_item.html" %}
         {% empty %}
             <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">
                 {% trans "No entries have been registered yet." %}
             </p>
         {% endfor %}
     </div>
+    {% if entry_list_has_more %}
+        <div id="entry-list-sentinel" class="h-4 w-full" aria-hidden="true"></div>
+    {% endif %}
 </section>
+<script>
+    (function () {
+        const grid = document.getElementById("entry-list-grid");
+        const sentinel = document.getElementById("entry-list-sentinel");
+        const feedUrl = "{% url 'lexicon:entry-list-more' %}";
+        let cursor = "{{ entry_list_next_cursor|escapejs }}";
+        let loading = false;
+        let done = {% if entry_list_has_more %}false{% else %}true{% endif %};
+
+        async function loadMore() {
+            if (!grid || !sentinel || done || loading) return;
+            loading = true;
+            sentinel.dataset.loading = "1";
+            try {
+                const url = new URL(feedUrl, window.location.origin);
+                const params = new URLSearchParams(window.location.search);
+                params.forEach((value, key) => url.searchParams.set(key, value));
+                if (cursor) url.searchParams.set("after", cursor);
+                const response = await fetch(url.toString(), { credentials: "same-origin" });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data.reset) {
+                    window.location.reload();
+                    return;
+                }
+                if (data.html) grid.insertAdjacentHTML("beforeend", data.html);
+                cursor = data.next_cursor || "";
+                done = !data.has_more;
+                if (done && sentinel.parentNode) sentinel.remove();
+            } finally {
+                loading = false;
+                if (sentinel) delete sentinel.dataset.loading;
+            }
+        }
+
+        if (grid && sentinel && !done) {
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    if (entries.some((e) => e.isIntersecting)) loadMore();
+                },
+                { root: null, rootMargin: "240px", threshold: 0 }
+            );
+            observer.observe(sentinel);
+        }
+    })();
+</script>
 <script>
     const filterForm = document.getElementById("entry-filters-form");
     const searchInput = document.getElementById("q");

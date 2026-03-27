@@ -30,6 +30,7 @@ class EntryAdmin(admin.ModelAdmin):
     list_filter = ("is_verified", "epochs")
     search_fields = ("headword", "slug")
     filter_horizontal = ("epochs",)
+    list_editable = ("is_verified",)
     inlines = (SimilarEntryLinkInline,)
 
     @admin.display(description="Epochs")

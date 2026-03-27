@@ -148,14 +148,14 @@ class Entry(models.Model):
     objects = EntryManager()
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["headword"]
         verbose_name = _("Entry")
         verbose_name_plural = _("Entries")
         indexes = [
             GinIndex(fields=["search_vector"]),
             GinIndex(fields=["headword"], opclasses=["gin_trgm_ops"], name="lexicon_ent_headword_trgm"),
             models.Index(OpClass("headword", name="varchar_pattern_ops"), name="lex_ent_head_prefix_idx"),
-            models.Index(fields=["is_verified", "-created_at"], name="lex_ent_ver_cr_idx"),
+            models.Index(fields=["is_verified", "headword"], name="lex_ent_ver_cr_idx"),
         ]
 
     def clean(self):
@@ -241,11 +241,11 @@ class Definition(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     class Meta:
-        ordering = ["-is_featured", "-hot_score_value", "-created_at"]
+        ordering = ["-is_featured", "-hot_score_value", "created_at"]
         verbose_name = _("Definition")
         verbose_name_plural = _("Definitions")
         indexes = [
-            models.Index(fields=["entry", "-created_at"]),
+            models.Index(fields=["entry", "created_at"]),
             models.Index(fields=["upvotes", "downvotes"]),
             models.Index(fields=["hot_score_value"]),
             GinIndex(
