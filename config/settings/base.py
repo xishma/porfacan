@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     "hcaptcha_field",
     "apps.users",
     "apps.lexicon",
-    "apps.archiver",
     "apps.api",
 ]
 
@@ -197,10 +196,6 @@ AWS_DEFAULT_ACL = None
 
 if AWS_STORAGE_BUCKET_NAME:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-# Arweave integration hook settings (used by future archiver service code).
-ARWEAVE_GATEWAY_URL = os.getenv("ARWEAVE_GATEWAY_URL", "https://arweave.net")
-ARWEAVE_WALLET_PATH = os.getenv("ARWEAVE_WALLET_PATH", "")
 
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

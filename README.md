@@ -9,7 +9,6 @@ Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition sla
 - Redis (cache + sessions)
 - RabbitMQ + Celery
 - Amazon S3 via `django-storages`
-- Arweave integration hooks for permanent archiving
 
 ## Quickstart (Docker Compose)
 
@@ -43,7 +42,7 @@ Porfacan is a digital archive and crowdsourced lexicon of Iranian opposition sla
 ## Project Layout
 
 - `config/` Django project config and split settings (`base.py`, `local.py`, `production.py`)
-- `apps/` domain apps (`lexicon`, `users`, `archiver`, `api`)
+- `apps/` domain apps (`lexicon`, `users`, `api`)
 - `templates/` global templates with RTL base
 - `static/` CSS and font assets
 - `requirements/` split dependency files

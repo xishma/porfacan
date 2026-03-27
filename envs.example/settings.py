@@ -86,6 +86,3 @@ AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
 if AWS_STORAGE_BUCKET_NAME:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-ARWEAVE_GATEWAY_URL = "https://arweave.net"
-ARWEAVE_WALLET_PATH = ""
