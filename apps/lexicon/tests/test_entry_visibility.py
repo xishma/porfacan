@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.test.utils import override_settings
 from django.urls import reverse
 
-from apps.lexicon.models import Entry, Epoch
+from apps.lexicon.models import Definition, Entry, Epoch
 from apps.users.models import User
 
 
@@ -172,6 +172,37 @@ def test_entry_creator_can_view_unverified_entry_detail_with_warning(client, epo
     assert response.status_code == 200
     content = response.content.decode()
     assert created_entry.headword in content
+    assert "not verified yet" in content
+
+
+@pytest.mark.django_db
+@override_settings(LANGUAGE_CODE="en")
+def test_definition_author_can_view_unverified_entry_detail(client, epoch, entry_category):
+    creator = User.objects.create_user(
+        email="entry-creator-for-def@example.com",
+        password="password123",
+        role=User.Roles.CONTRIBUTOR,
+    )
+    contributor = User.objects.create_user(
+        email="definition-only-viewer@example.com",
+        password="password123",
+        role=User.Roles.CONTRIBUTOR,
+    )
+    entry = Entry.objects.create(
+        headword="تعریف‌دهنده",
+        is_verified=False,
+        created_by=creator,
+        category=entry_category,
+    )
+    entry.epochs.add(epoch)
+    Definition.objects.create(entry=entry, author=contributor, content="A gloss")
+    client.force_login(contributor)
+
+    response = client.get(reverse("lexicon:entry-detail", kwargs={"slug": entry.slug}))
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert entry.headword in content
     assert "not verified yet" in content
 
 

@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Prefetch, Q
+from django.db.models import Exists, OuterRef, Prefetch, Q
 from django.contrib.postgres.search import TrigramSimilarity
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -33,12 +33,14 @@ def _entry_admin_visibility(user) -> bool:
 def entry_visible_queryset(request):
     queryset = Entry.objects
     if _entry_admin_visibility(request.user):
-        pass
-    elif getattr(request.user, "is_authenticated", False):
-        queryset = queryset.filter(Q(is_verified=True) | Q(created_by=request.user))
-    else:
-        queryset = queryset.filter(is_verified=True)
-    return queryset
+        return queryset
+    if not getattr(request.user, "is_authenticated", False):
+        return queryset.filter(is_verified=True)
+    user = request.user
+    authored_definition = Definition.objects.filter(entry_id=OuterRef("pk"), author_id=user.pk)
+    return queryset.filter(
+        Q(is_verified=True) | Q(created_by=user) | Exists(authored_definition)
+    )
 
 
 def _attach_definition_votes(request, definitions: list):
@@ -318,13 +320,18 @@ class EntryDetailView(DetailView):
         has_more, next_cursor = initial_definition_infinite_scroll_state(definitions_visible, context["definition_total_count"])
         context["definition_list_has_more"] = has_more
         context["definition_list_next_cursor"] = next_cursor
-        if not entry.is_verified and (
+        uid = getattr(self.request.user, "id", None)
+        if not entry.is_verified and self.request.user.is_authenticated and (
             _entry_admin_visibility(self.request.user)
-            or entry.created_by_id == getattr(self.request.user, "id", None)
+            or entry.created_by_id == uid
+            or Definition.objects.filter(entry=entry, author_id=uid).exists()
         ):
             messages.warning(
                 self.request,
-                _("This entry is not verified yet. It is visible only to admins and the entry creator until verification."),
+                _(
+                    "This entry is not verified yet. Until it is published, it is only visible to "
+                    "administrators, the person who suggested the entry, and people who have added definitions."
+                ),
             )
         return context
 
@@ -437,7 +444,7 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
                     self.request,
                     _("This headword already has an entry awaiting review. No new definition was added."),
                 )
-            return HttpResponseRedirect(reverse("lexicon:entry-create"))
+            return HttpResponseRedirect(self.get_success_url())
 
         self.object = form.save(commit=False)
         self.object.created_by = self.request.user

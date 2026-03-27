@@ -96,7 +96,7 @@ def test_create_duplicate_unverified_headword_merges_without_new_entry(
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("lexicon:entry-create")
+    assert response.url == reverse("lexicon:entry-detail", kwargs={"slug": existing.slug})
     assert Entry.objects.filter(headword="در انتظار").count() == 1
 
 
@@ -134,7 +134,7 @@ def test_create_duplicate_unverified_headword_adds_second_definition(
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("lexicon:entry-create")
+    assert response.url == reverse("lexicon:entry-detail", kwargs={"slug": existing.slug})
     assert Entry.objects.filter(headword="اشتراکی").count() == 1
     assert Definition.objects.filter(entry=existing).count() == 2
     second = Definition.objects.get(entry=existing, author=verified_contributor)
@@ -175,7 +175,7 @@ def test_create_duplicate_unverified_same_user_can_add_second_definition(
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("lexicon:entry-create")
+    assert response.url == reverse("lexicon:entry-detail", kwargs={"slug": existing.slug})
     assert Definition.objects.filter(entry=existing, author=verified_contributor).count() == 2
 
 
