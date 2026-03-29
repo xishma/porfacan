@@ -9,5 +9,8 @@ ssh -o StrictHostKeyChecking=no -p $PORT $USER@$DOMAIN << 'ENDSSH'
   if docker ps -a --format '{{.Names}}' | grep -q '^porfacan-web$'; then
     docker restart porfacan-web
   fi
+  if docker ps -a --format '{{.Names}}' | grep -q '^nginx$'; then
+    docker restart nginx
+  fi
   rm .env
 ENDSSH
