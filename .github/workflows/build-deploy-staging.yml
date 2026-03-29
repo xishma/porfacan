@@ -72,23 +72,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug environment variables
-        env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
-        run: |
-          echo "SSH_PORT from vars context: '${{ vars.SSH_PORT }}'"
-          echo "SSH_PORT env variable: '${SSH_PORT}'"
-          echo "SSH_PORT length: ${#SSH_PORT}"
-          echo "SSH_PORT hex dump:"
-          echo -n "${SSH_PORT}" | xxd || echo "No xxd available"
-          if [ -z "${SSH_PORT}" ]; then
-            echo "ERROR: SSH_PORT is empty or not set!"
-            echo "Please configure SSH_PORT in GitHub Settings → Environments → staging → Variables"
-            exit 1
-          fi
-          echo "DEPLOY_USER set: ${{ secrets.DEPLOY_USER != '' }}"
-          echo "STAGING_DOMAIN set: ${{ secrets.STAGING_DOMAIN != '' }}"
-
       - name: Setup environment
         run: |
           export APP_IMAGE=ghcr.io/${{ github.repository }}/app:staging
@@ -97,14 +80,14 @@ jobs:
           export CI_REGISTRY=ghcr.io
           export USER=${{ secrets.DEPLOY_USER }}
           export DOMAIN=${{ secrets.STAGING_DOMAIN }}
-          export GUNICORN_WORKERS=${{ secrets.STAGING_GUNICORN_WORKERS }}
-          export PORT=${{ vars.SSH_PORT }}
+          export GUNICORN_WORKERS=${{ vars.STAGING_GUNICORN_WORKERS }}
+          export PORT=${{ secrets.SSH_PORT }}
           chmod +x ./setup_env.sh
           bash ./setup_env.sh
 
       - name: Setup SSH for deployment
         env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
           PRIVATE_KEY: ${{ secrets.STAGING_PRIVATE_KEY }}
         run: |
@@ -125,10 +108,10 @@ jobs:
 
       - name: Deploy to staging
         env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-          GUNICORN_WORKERS: ${{ secrets.STAGING_GUNICORN_WORKERS }}
+          GUNICORN_WORKERS: ${{ vars.STAGING_GUNICORN_WORKERS }}
         run: |
           # Trim whitespace
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)

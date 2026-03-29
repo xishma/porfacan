@@ -78,19 +78,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug environment variables
-        env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
-        run: |
-          echo "SSH_PORT from vars context: '${{ vars.SSH_PORT }}'"
-          echo "SSH_PORT env variable: '${SSH_PORT}'"
-          echo "SSH_PORT length: ${#SSH_PORT}"
-          if [ -z "${SSH_PORT}" ]; then
-            echo "ERROR: SSH_PORT is empty or not set!"
-            echo "Please configure SSH_PORT in GitHub Settings → Environments → production → Variables"
-            exit 1
-          fi
-
       - name: Setup environment
         run: |
           export APP_IMAGE=ghcr.io/${{ github.repository }}/app:latest
@@ -99,13 +86,13 @@ jobs:
           export CI_REGISTRY=ghcr.io
           export USER=${{ secrets.DEPLOY_USER }}
           export DOMAIN=${{ secrets.PRODUCTION_DOMAIN }}
-          export PORT=${{ vars.SSH_PORT }}
+          export PORT=${{ secrets.SSH_PORT }}
           chmod +x ./setup_env.sh
           bash ./setup_env.sh
 
       - name: Setup SSH for deployment
         env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
           PRIVATE_KEY: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
         run: |
@@ -125,10 +112,10 @@ jobs:
 
       - name: Deploy to production
         env:
-          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
-          GUNICORN_WORKERS: ${{ secrets.PRODUCTION_GUNICORN_WORKERS }}
+          GUNICORN_WORKERS: ${{ vars.PRODUCTION_GUNICORN_WORKERS }}
         run: |
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
           echo "Deploying with SSH_PORT: ${SSH_PORT}"
@@ -137,10 +124,10 @@ jobs:
             exit 1
           fi
           chmod +x ./deploy.sh
-          scp -P "${SSH_PORT}" -o StrictHostKeyChecking=no ./.env ./docker-compose.prod.yml ${DEPLOY_USER}@${PRODUCTION_DOMAIN}:~/porfacan
+          scp -P "${SSH_PORT}" -o StrictHostKeyChecking=no ./.env ./docker-compose.prod.yml ${DEPLOY_USER}@${DOMAIN}:~/porfacan
           export PORT="${SSH_PORT}"
           export USER="${DEPLOY_USER}"
-          export DOMAIN="${PRODUCTION_DOMAIN}"
+          export DOMAIN="${DOMAIN}"
           export GUNICORN_WORKERS="${GUNICORN_WORKERS}"
           bash ./deploy.sh
 
