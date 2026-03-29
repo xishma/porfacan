@@ -1,7 +1,63 @@
-docker/volumes/
-docker/volumes/**
-docker/data/
-docker/data/**
-**/__pycache__/
-**/*.pyc
+# Version control and CI
 .git
+.github
+
+# Editor and agent tooling
+.agents
+.cursor
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Python bytecode and build artifacts
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Tests and coverage (runtime image does not run pytest)
+.pytest_cache/
+.coverage*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.hypothesis/
+pytest.ini
+conftest.py
+
+# Secrets and environment files — do not copy into image layers
+.env
+.env.*
+.env.example
+envs/
+envs.example/
+
+# Django generated and user-uploaded content
+media/
+staticfiles/
+
+# Documentation (not used by the app process)
+docs/
+
+# Compose and host-only deploy scripts (not executed inside this image)
+docker-compose*.yml
+deploy.sh
+setup_env.sh
+
+# Local Docker state (large, host-specific)
+docker/data/
+docker/volumes/

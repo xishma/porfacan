@@ -2,6 +2,7 @@ services:
   migrations:
     container_name: porfacan-migrations
     build:
+      dockerfile: Dockerfile.local
       context: .
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
     environment:
@@ -16,7 +17,9 @@ services:
 
   web:
     container_name: porfacan-web
-    build: .
+    build:
+      dockerfile: Dockerfile.local
+      context: .
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
@@ -71,7 +74,9 @@ services:
 
   celery-worker:
     container_name: porfacan-celery-worker
-    build: .
+    build:
+      dockerfile: Dockerfile.local
+      context: .
     command: celery -A config worker -l info
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
