@@ -1,0 +1,23 @@
+name: Reusable pytest
+
+on:
+  workflow_call:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup local settings
+        run: |
+          mkdir -p envs
+          cp envs.example/settings.py envs/settings.py
+
+      - name: Run tests
+        run: docker compose -f docker-compose-ci.yml run --rm --build web pytest
+
+      - name: Cleanup
+        if: always()
+        run: rm -f envs/settings.py

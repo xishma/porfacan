@@ -11,25 +11,7 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup local settings
-        run: |
-          mkdir -p envs
-          cp envs.example/settings.py envs/settings.py
-
-      - name: Run tests
-        run: docker compose -f docker-compose-ci.yml run --rm --build web pytest
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -f envs/settings.py
-          rm -f ~/.ssh/id_rsa
+    uses: ./.github/workflows/reusable-pytest.yml
 
   build:
     needs: test
@@ -38,7 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,7 +49,7 @@ jobs:
     needs: build
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -91,7 +73,6 @@ jobs:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
           PRIVATE_KEY: ${{ secrets.STAGING_PRIVATE_KEY }}
         run: |
-          # Trim whitespace
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
           echo "Using SSH_PORT: ${SSH_PORT}"
           if [ -z "${SSH_PORT}" ]; then
@@ -113,7 +94,6 @@ jobs:
           DOMAIN: ${{ secrets.STAGING_DOMAIN }}
           GUNICORN_WORKERS: ${{ vars.STAGING_GUNICORN_WORKERS }}
         run: |
-          # Trim whitespace
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
           echo "Deploying with SSH_PORT: ${SSH_PORT}"
           if [ -z "${SSH_PORT}" ]; then

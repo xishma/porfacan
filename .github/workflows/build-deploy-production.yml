@@ -3,7 +3,8 @@ name: Build and Deploy Production
 on:
   push:
     branches:
-      - 'release-[0-9]+.[0-9]+.[0-9]+'
+      # Branch filters use glob patterns, not regex (e.g. + is literal).
+      - 'release-*'
 
 concurrency:
   group: production-${{ github.ref }}
@@ -11,25 +12,7 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup local settings
-        run: |
-          mkdir -p envs
-          cp envs.example/settings.py envs/settings.py
-
-      - name: Run tests
-        run: docker compose -f docker-compose-ci.yml run --rm --build web pytest
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -f envs/settings.py
-          rm -f ~/.ssh/id_rsa
+    uses: ./.github/workflows/reusable-pytest.yml
 
   build:
     needs: test
@@ -38,7 +21,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,7 +56,7 @@ jobs:
     needs: build
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -86,6 +69,7 @@ jobs:
           export CI_REGISTRY=ghcr.io
           export USER=${{ secrets.DEPLOY_USER }}
           export DOMAIN=${{ secrets.PRODUCTION_DOMAIN }}
+          export GUNICORN_WORKERS=${{ vars.PRODUCTION_GUNICORN_WORKERS }}
           export PORT=${{ secrets.SSH_PORT }}
           chmod +x ./setup_env.sh
           bash ./setup_env.sh
