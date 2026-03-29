@@ -2,7 +2,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa
 
-DEBUG = False
 # Terminate TLS at nginx/Cloudflare; Gunicorn sees HTTP. Trust X-Forwarded-Proto from the proxy.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
