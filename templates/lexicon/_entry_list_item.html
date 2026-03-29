@@ -1,10 +1,13 @@
-{% load i18n %}
+{% load i18n lexicon_extras %}
 <article class="flex flex-row items-stretch gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="min-w-0 flex-1">
         <h2 class="text-lg font-semibold">
             <a href="{% url 'lexicon:entry-detail' entry.slug %}" class="hover:underline">{{ entry.headword }}</a>
         </h2>
-        <p class="text-sm text-slate-500">
+        {% if entry.top_definition_content %}
+            <p class="mt-1.5 text-sm leading-relaxed text-slate-700">{{ entry.top_definition_content|definition_first_line_preview:127 }}</p>
+        {% endif %}
+        <p class="mt-1.5 text-sm text-slate-500">
             {% trans "Epochs" %}:
             {% for epoch in entry.epochs.all %}
                 {{ epoch.name }}{% if not forloop.last %}, {% endif %}

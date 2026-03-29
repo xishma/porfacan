@@ -5,10 +5,10 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
 
 from .cache import build_versioned_cache_key, get_cache_version
-from .models import Entry, EntryCategory, Epoch
+from .models import Definition, Entry, EntryCategory, Epoch
 from .normalization import normalize_persian
 from .pagination import LIST_PAGE_SIZE, decode_cursor, encode_cursor
 
@@ -36,9 +36,21 @@ def _entry_search_cache_key(normalized_query: str, selected_epoch: str, selected
     return build_versioned_cache_key("entry_search_ids", payload, version_scope="entry_search_results")
 
 
+def _top_definition_content_subquery():
+    return Subquery(
+        Definition.objects.filter(entry_id=OuterRef("pk"))
+        .order_by("-is_featured", "-hot_score_value", "-created_at", "-id")
+        .values("content")[:1]
+    )
+
+
+def _annotate_top_definition_for_list(queryset):
+    return queryset.annotate(top_definition_content=_top_definition_content_subquery())
+
+
 def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
     if not entry_ids:
-        return (
+        return _annotate_top_definition_for_list(
             Entry.objects.filter(is_verified=True)
             .select_related("category")
             .only(
@@ -60,7 +72,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
         *[When(pk=entry_id, then=Value(position)) for position, entry_id in enumerate(entry_ids)],
         output_field=IntegerField(),
     )
-    return (
+    return _annotate_top_definition_for_list(
         Entry.objects.filter(is_verified=True, pk__in=entry_ids)
         .select_related("category")
         .only(
@@ -81,7 +93,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
 
 
 def _base_verified_entries():
-    return (
+    return _annotate_top_definition_for_list(
         Entry.objects.filter(is_verified=True)
         .select_related("category")
         .only(
