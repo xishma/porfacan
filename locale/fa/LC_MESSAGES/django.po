@@ -737,3 +737,34 @@ msgstr "ایجاد حساب"
 #: templates/users/register.html:56
 msgid "Already have an account?"
 msgstr "حساب کاربری دارید؟"
+
+#: templates/socialaccount/authentication_error.html:4
+#: templates/socialaccount/authentication_error.html:9
+msgid "Third-party login failed"
+msgstr "خطا در ورود با حساب شخص ثالث"
+
+#: templates/socialaccount/authentication_error.html:11
+msgid ""
+"Something went wrong while signing in with the external account. Please "
+"try again or use email login."
+msgstr ""
+"هنگام ورود با حساب خارجی خطایی رخ داد. دوباره تلاش کنید یا با ایمیل وارد "
+"شوید."
+
+#: templates/socialaccount/authentication_error.html:14
+msgid ""
+"For X, set the developer callback to https://your-domain/accounts/"
+"twitter_oauth2/login/callback/ and use the same OAuth 2.0 client ID and "
+"secret as this site."
+msgstr ""
+"برای X، نشانی بازگشت را در پنل توسعه‌دهنده روی https://your-domain/accounts/"
+"twitter_oauth2/login/callback/ بگذارید و همان شناسه و رمز OAuth 2.0 این سایت "
+"را استفاده کنید."
+
+#: templates/socialaccount/authentication_error.html:24
+msgid "Back to login"
+msgstr "بازگشت به ورود"
+
+#: templates/socialaccount/authentication_error.html:27
+msgid "Home"
+msgstr "خانه"

@@ -70,7 +70,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "key": "",
         },
     },
-    "twitter": {
+    "twitter_oauth2": {
         "SCOPE": ["users.read", "tweet.read", "offline.access"],
         "APP": {
             "client_id": X_OAUTH_CLIENT_ID,

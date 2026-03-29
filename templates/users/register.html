@@ -16,7 +16,7 @@
                 </a>
             {% endif %}
             {% if x_oauth_enabled %}
-                <a href="{% provider_login_url 'twitter' process='signup' %}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100">
+                <a href="{% provider_login_url 'twitter_oauth2' process='signup' %}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white ps-4 pe-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100">
                     {% icon "x_twitter" %}<span>{% trans "Sign up with X" %}</span>
                 </a>
             {% endif %}

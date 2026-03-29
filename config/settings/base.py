@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "allauth.socialaccount.providers.twitter",
+    "allauth.socialaccount.providers.twitter_oauth2",
     "storages",
     "hcaptcha_field",
     "apps.users",
@@ -51,6 +51,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -141,7 +142,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "key": "",
         },
     },
-    "twitter": {
+    "twitter_oauth2": {
         "SCOPE": ["users.read", "tweet.read", "offline.access"],
         "APP": {
             "client_id": X_OAUTH_CLIENT_ID,
@@ -216,7 +217,7 @@ if AWS_STORAGE_BUCKET_NAME:
             f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
         )
     _s3_url_prefix = f"{AWS_LOCATION}/" if AWS_LOCATION else ""
-    MEDIA_URL = f"{_S3_PUBLIC_BASE}/{_s3_url_prefix}"
+    MEDIA_URL = f"{_S3_PUBLIC_BASE}/{_s3_url_prefix}media/"
     STATIC_URL = f"{_S3_PUBLIC_BASE}/{_s3_url_prefix}static/"
     _default_storage_opts = {"location": AWS_LOCATION} if AWS_LOCATION else {}
     _staticfiles_location = f"{AWS_LOCATION}/static" if AWS_LOCATION else "static"

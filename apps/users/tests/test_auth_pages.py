@@ -49,10 +49,10 @@ class AuthPagesWithSocialTest(TestCase):
         response = self.client.get(reverse("users:login"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "/accounts/google/login/?process=login")
-        self.assertContains(response, "/accounts/twitter/login/?process=login")
+        self.assertContains(response, "/accounts/twitter_oauth2/login/?process=login")
 
     def test_register_shows_social_buttons(self):
         response = self.client.get(reverse("users:register"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "/accounts/google/login/?process=signup")
-        self.assertContains(response, "/accounts/twitter/login/?process=signup")
+        self.assertContains(response, "/accounts/twitter_oauth2/login/?process=signup")
