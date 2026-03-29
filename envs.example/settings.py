@@ -6,6 +6,8 @@ config/settings/production.py when present.
 
 SECRET_KEY = "change-me"
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+# Public origin for Open Graph / canonical URLs (no trailing slash). Set in production.
+# SITE_CANONICAL_URL = "https://example.com"  # or export DJANGO_SITE_URL=https://example.com
 TIME_ZONE = "Asia/Tehran"
 
 DATABASES = {

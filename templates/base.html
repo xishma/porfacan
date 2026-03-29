@@ -5,6 +5,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% trans "Porfacan" %}{% endblock title %}</title>
+    <link rel="canonical" href="{% block canonical_url %}{{ share_canonical_url }}{% endblock canonical_url %}">
+    <meta name="description" content="{% if share_meta_description %}{{ share_meta_description }}{% else %}{% block meta_description %}{% trans "Crowdsourced lexicon of Iranian opposition slang and dissent." %}{% endblock meta_description %}{% endif %}">
+    <meta property="og:locale" content="fa_IR">
+    <meta property="og:type" content="{% block og_type %}website{% endblock og_type %}">
+    <meta property="og:url" content="{% block og_url %}{{ share_canonical_url }}{% endblock og_url %}">
+    <meta property="og:site_name" content="{% trans "Porfacan" %}">
+    <meta property="og:title" content="{% if share_meta_title %}{{ share_meta_title }}{% else %}{% block og_title %}{% trans "Porfacan" %}{% endblock og_title %}{% endif %}">
+    <meta property="og:description" content="{% if share_meta_description %}{{ share_meta_description }}{% else %}{% block og_description %}{% trans "Crowdsourced lexicon of Iranian opposition slang and dissent." %}{% endblock og_description %}{% endif %}">
+    <meta property="og:image" content="{% if share_meta_image %}{{ share_meta_image }}{% else %}{{ share_default_og_image }}{% endif %}">
+    <meta property="og:image:alt" content="{% block og_image_alt %}{% trans "Porfacan" %}{% endblock og_image_alt %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if share_meta_title %}{{ share_meta_title }}{% else %}{% block twitter_title %}{% trans "Porfacan" %}{% endblock twitter_title %}{% endif %}">
+    <meta name="twitter:description" content="{% if share_meta_description %}{{ share_meta_description }}{% else %}{% block twitter_description %}{% trans "Crowdsourced lexicon of Iranian opposition slang and dissent." %}{% endblock twitter_description %}{% endif %}">
+    <meta name="twitter:image" content="{% if share_meta_image %}{{ share_meta_image }}{% else %}{{ share_default_og_image }}{% endif %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'porfacan.png' %}">
     <link rel="icon" type="image/png" sizes="192x192" href="{% static 'porfacan.png' %}">
     <link rel="apple-touch-icon" href="{% static 'porfacan.png' %}">

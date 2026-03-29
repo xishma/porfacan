@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from django.utils.translation import gettext as _
 
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
@@ -173,6 +175,16 @@ class PageDetailView(DetailView):
         if user.is_authenticated and user.is_staff:
             return queryset
         return queryset.filter(is_published=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = context["page"]
+        context["share_meta_title"] = _("%(title)s | Porfacan") % {"title": page.title}
+        plain = strip_tags(page.content or "").strip()
+        context["share_meta_description"] = (
+            Truncator(plain).chars(300) if plain else _("%(title)s — Porfacan") % {"title": page.title}
+        )
+        return context
 
 
 class PendingHeadwordCheckView(ContributorRequiredMixin, View):
@@ -336,6 +348,17 @@ class EntryDetailView(DetailView):
                     "administrators, the person who suggested the entry, and people who have added definitions."
                 ),
             )
+        context["share_meta_title"] = _("%(headword)s | Porfacan") % {"headword": entry.headword}
+        if definitions_visible:
+            snippet = Truncator(definitions_visible[0].content).chars(200)
+            context["share_meta_description"] = _("%(headword)s — %(text)s") % {
+                "headword": entry.headword,
+                "text": snippet,
+            }
+        else:
+            context["share_meta_description"] = _("%(headword)s — Lexicon entry on Porfacan.") % {
+                "headword": entry.headword,
+            }
         return context
 
 
