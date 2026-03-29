@@ -17,12 +17,18 @@ from .tasks import send_verification_email_task
 User = get_user_model()
 
 
-def _oauth_provider_context() -> dict:
+def _oauth_provider_context(request) -> dict:
+    from allauth.socialaccount.adapter import get_adapter
+
+    adapter = get_adapter(request)
+    google_creds = bool(
+        settings.GOOGLE_OAUTH_CLIENT_ID and settings.GOOGLE_OAUTH_CLIENT_SECRET
+    )
+    x_creds = bool(settings.X_OAUTH_CLIENT_ID and settings.X_OAUTH_CLIENT_SECRET)
     return {
-        "google_oauth_enabled": bool(
-            settings.GOOGLE_OAUTH_CLIENT_ID and settings.GOOGLE_OAUTH_CLIENT_SECRET
-        ),
-        "x_oauth_enabled": bool(settings.X_OAUTH_CLIENT_ID and settings.X_OAUTH_CLIENT_SECRET),
+        "google_oauth_enabled": google_creds and bool(adapter.list_apps(request, provider="google")),
+        "x_oauth_enabled": x_creds
+        and bool(adapter.list_apps(request, provider="twitter_oauth2")),
     }
 
 
@@ -43,7 +49,7 @@ class UserLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(_oauth_provider_context())
+        context.update(_oauth_provider_context(self.request))
         return context
 
 
@@ -59,7 +65,7 @@ class UserRegisterView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(_oauth_provider_context())
+        context.update(_oauth_provider_context(self.request))
         return context
 
     def form_valid(self, form):

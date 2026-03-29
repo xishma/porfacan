@@ -60,6 +60,7 @@ X_OAUTH_CLIENT_SECRET = ""
 HCAPTCHA_SITEKEY = ""
 HCAPTCHA_SECRET = ""
 
+# If you replace this dict, include every provider you use (e.g. twitter_oauth2 for X).
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": ["email", "profile"],
