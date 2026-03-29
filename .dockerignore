@@ -55,8 +55,6 @@ docs/
 
 # Compose and host-only deploy scripts (not executed inside this image)
 docker-compose*.yml
-deploy.sh
-setup_env.sh
 
 # Local Docker state (large, host-specific)
 docker/data/
