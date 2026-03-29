@@ -2,7 +2,7 @@ services:
   migrations:
     container_name: porfacan-migrations
     build:
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.ci
       context: .
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
     volumes:
@@ -15,7 +15,9 @@ services:
 
   web:
     container_name: porfacan-web
-    build: .
+    build:
+      dockerfile: Dockerfile.ci
+      context: .
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
@@ -68,7 +70,9 @@ services:
 
   celery-worker:
     container_name: porfacan-celery-worker
-    build: .
+    build:
+      dockerfile: Dockerfile.ci
+      context: .
     command: celery -A config worker -l info
     volumes:
       - .:/app
