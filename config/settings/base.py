@@ -202,7 +202,6 @@ AWS_LOCATION = ""
 AWS_S3_REGION_NAME = ""
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_QUERYSTRING_AUTH = True
-AWS_DEFAULT_ACL = None
 
 try:
     from envs.settings import *  # noqa
