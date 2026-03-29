@@ -46,6 +46,9 @@ LEXICON_CACHE_TIMEOUT_SUGGESTIONS = 120
 LEXICON_CACHE_TIMEOUT_PAGES = 600
 LEXICON_CACHE_MAX_RESULT_IDS = 1000
 
+# Optional: CMS page slug for the contribution guide (default "contribute").
+# LEXICON_CONTRIBUTION_GUIDE_PAGE_ADDRESS = "contribute"
+
 CELERY_BROKER_URL = "amqp://porfacan:porfacan@porfacan-rabbitmq:5672/porfacan"
 CELERY_RESULT_BACKEND = "redis://porfacan-redis:6379/2"
 

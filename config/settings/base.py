@@ -179,6 +179,9 @@ LEXICON_CACHE_TIMEOUT_SUGGESTIONS = int(os.getenv("LEXICON_CACHE_TIMEOUT_SUGGEST
 LEXICON_CACHE_TIMEOUT_PAGES = int(os.getenv("LEXICON_CACHE_TIMEOUT_PAGES", "600"))
 LEXICON_CACHE_MAX_RESULT_IDS = int(os.getenv("LEXICON_CACHE_MAX_RESULT_IDS", "1000"))
 
+# Slug for the CMS Page that explains how to contribute (path: /lexicon/pages/<address>/).
+LEXICON_CONTRIBUTION_GUIDE_PAGE_ADDRESS = "contribute"
+
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://porfacan:porfacan@localhost:5672/porfacan")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/2")
 CELERY_ACCEPT_CONTENT = ["json"]

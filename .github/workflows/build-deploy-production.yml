@@ -106,8 +106,8 @@ jobs:
       - name: Setup SSH for deployment
         env:
           SSH_PORT: ${{ vars.SSH_PORT }}
-          PRODUCTION_DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
-          PRODUCTION_PRIVATE_KEY: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
+          DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
+          PRIVATE_KEY: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
         run: |
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
           echo "Using SSH_PORT: ${SSH_PORT}"
@@ -116,18 +116,19 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
-          echo "${PRODUCTION_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          echo "${PRIVATE_KEY}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           chmod 700 ~/.ssh
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
-          ssh-keyscan -p "${SSH_PORT}" -H "${PRODUCTION_DOMAIN}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${SSH_PORT}" -H "${DOMAIN}" >> ~/.ssh/known_hosts
 
       - name: Deploy to production
         env:
           SSH_PORT: ${{ vars.SSH_PORT }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          PRODUCTION_DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
+          DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
+          GUNICORN_WORKERS: ${{ secrets.PRODUCTION_GUNICORN_WORKERS }}
         run: |
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
           echo "Deploying with SSH_PORT: ${SSH_PORT}"
@@ -140,6 +141,7 @@ jobs:
           export PORT="${SSH_PORT}"
           export USER="${DEPLOY_USER}"
           export DOMAIN="${PRODUCTION_DOMAIN}"
+          export GUNICORN_WORKERS="${GUNICORN_WORKERS}"
           bash ./deploy.sh
 
       - name: Cleanup SSH keys

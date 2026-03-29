@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if lexicon_contribution_guide_url %}
+<div class="mb-4 rounded-lg border border-sky-200 bg-sky-50 ps-4 pe-4 py-3 text-sm text-sky-950">
+    <p class="mb-2">
+        {% trans "Before you add an entry or a definition, read the contribution guide. It explains what we publish, how to write definitions, and how to cite sources." %}
+    </p>
+    <p class="mb-0">
+        <a
+            href="{{ lexicon_contribution_guide_url }}"
+            class="font-semibold text-sky-900 underline decoration-sky-400 underline-offset-2 hover:text-sky-950"
+            target="_blank"
+        >{% trans "Open the contribution guide" %}</a>
+    </p>
+</div>
+{% endif %}

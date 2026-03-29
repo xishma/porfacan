@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-27 19:01+0330\n"
+"POT-Creation-Date: 2026-03-27 19:18+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -87,15 +87,15 @@ msgid "Optional."
 msgstr "اختیاری."
 
 #: apps/lexicon/forms.py:173 templates/lexicon/_definition_card.html:43
-#: templates/lexicon/definition_form.html:42
-#: templates/lexicon/definition_form.html:61
-#: templates/lexicon/entry_form.html:95 templates/lexicon/entry_form.html:114
+#: templates/lexicon/definition_form.html:43
+#: templates/lexicon/definition_form.html:62
+#: templates/lexicon/entry_form.html:96 templates/lexicon/entry_form.html:115
 msgid "Example link"
 msgstr "لینک مثال"
 
-#: apps/lexicon/forms.py:174 templates/lexicon/definition_form.html:47
-#: templates/lexicon/definition_form.html:65
-#: templates/lexicon/entry_form.html:100 templates/lexicon/entry_form.html:118
+#: apps/lexicon/forms.py:174 templates/lexicon/definition_form.html:48
+#: templates/lexicon/definition_form.html:66
+#: templates/lexicon/entry_form.html:101 templates/lexicon/entry_form.html:119
 msgid "Example image"
 msgstr "تصویر مثال"
 
@@ -304,15 +304,15 @@ msgstr "رای تعریف"
 msgid "Definition votes"
 msgstr "رای‌های تعریف"
 
-#: apps/lexicon/views.py:95
+#: apps/lexicon/views.py:96
 msgid "Invalid epoch."
 msgstr "دوره نامعتبر است."
 
-#: apps/lexicon/views.py:97
+#: apps/lexicon/views.py:98
 msgid "Invalid category."
 msgstr "دسته‌بندی نامعتبر است."
 
-#: apps/lexicon/views.py:332
+#: apps/lexicon/views.py:335
 msgid ""
 "This entry is not verified yet. Until it is published, it is only visible to "
 "administrators, the person who suggested the entry, and people who have "
@@ -321,11 +321,11 @@ msgstr ""
 "این مدخل هنوز تایید نشده است. تا زمان تایید، فقط برای مدیران و ایجادکننده "
 "مدخل قابل مشاهده است."
 
-#: apps/lexicon/views.py:419
+#: apps/lexicon/views.py:423
 msgid "Definition text is required when adding examples."
 msgstr "هنگام افزودن مثال، متن تعریف الزامی است."
 
-#: apps/lexicon/views.py:438
+#: apps/lexicon/views.py:442
 msgid ""
 "Your definition(s) were added to the existing entry. You will be able to see "
 "them on the site once the entry is published."
@@ -333,25 +333,26 @@ msgstr ""
 "تعریف‌های شما به مدخل موجود اضافه شد. هنگام تایید مدخل، به‌صورت عمومی قابل "
 "مشاهده خواهند شد."
 
-#: apps/lexicon/views.py:445
+#: apps/lexicon/views.py:449
 msgid ""
 "This headword already has an entry awaiting review. No new definition was "
 "added."
 msgstr ""
 "این سرواژه قبلا در انتظار تایید قرار گرفته است. هیچ تعریف جدیدی اضافه نشد."
-#: apps/lexicon/views.py:503
+
+#: apps/lexicon/views.py:507
 msgid "You have already submitted a definition for this entry."
 msgstr "شما قبلا برای این مدخل تعریف ثبت کرده‌اید."
 
-#: apps/lexicon/views.py:543
+#: apps/lexicon/views.py:548
 msgid "Authentication required."
 msgstr "احراز هویت لازم است."
 
-#: apps/lexicon/views.py:546 templates/base.html:44
+#: apps/lexicon/views.py:551 templates/base.html:44
 msgid "Please verify your email first in your profile page."
 msgstr "لطفا ابتدا در صفحه پروفایل، ایمیل خود را تایید کنید."
 
-#: apps/lexicon/views.py:556 apps/lexicon/views.py:558
+#: apps/lexicon/views.py:561 apps/lexicon/views.py:563
 msgid "Invalid vote value."
 msgstr "مقدار رای نامعتبر است."
 
@@ -476,9 +477,21 @@ msgstr ""
 "برای افزودن مدخل، افزودن تعریف یا رای‌دادن، ابتدا ایمیل خود را تایید کنید."
 
 #: templates/base.html:63 templates/lexicon/_definition_card.html:64
-#: templates/lexicon/entry_detail.html:61
+#: templates/lexicon/entry_detail.html:70
 msgid "Go to profile"
 msgstr "رفتن به پروفایل"
+
+#: templates/lexicon/_contribution_guide_notice.html:5
+msgid ""
+"Before you add an entry or a definition, read the contribution guide. It "
+"explains what we publish, how to write definitions, and how to cite sources."
+msgstr ""
+"قبل از افزودن مدخل یا تعریف، راهنمای مشارکت را بخوانید. این راهنما توضیح می‌دهد "
+"چه چیزی می‌نویسیم، چگونه تعریف بنویسیم و چگونه منابع را نشان دهیم."
+
+#: templates/lexicon/_contribution_guide_notice.html:12
+msgid "Open the contribution guide"
+msgstr "راهنمای مشارکت"
 
 #: templates/lexicon/_definition_card.html:27
 msgid "Examples"
@@ -515,7 +528,7 @@ msgstr "تعریف جدید"
 msgid "Add definition for \"%(headword)s\""
 msgstr "افزودن تعریف برای «%(headword)s»"
 
-#: templates/lexicon/definition_form.html:9
+#: templates/lexicon/definition_form.html:10
 msgid ""
 "Text fields are normalized with Hazm before saving. You can add up to 5 "
 "examples per definition, each with a link, image, or both."
@@ -523,12 +536,12 @@ msgstr ""
 "فیلدهای متنی پیش از ذخیره با Hazm نرمال‌سازی می‌شوند. برای هر تعریف تا ۵ مثال "
 "با لینک یا تصویر یا هر دو می‌توانید اضافه کنید."
 
-#: templates/lexicon/definition_form.html:33
-#: templates/lexicon/entry_form.html:86
+#: templates/lexicon/definition_form.html:34
+#: templates/lexicon/entry_form.html:87
 msgid "Examples (optional, maximum 5)"
 msgstr "مثال‌ها (اختیاری، حداکثر ۵ مورد)"
 
-#: templates/lexicon/definition_form.html:74
+#: templates/lexicon/definition_form.html:75
 msgid "Submit definition"
 msgstr "ثبت تعریف"
 
@@ -536,19 +549,27 @@ msgstr "ثبت تعریف"
 msgid "Insider note"
 msgstr "یادداشت داخلی"
 
-#: templates/lexicon/entry_detail.html:57
+#: templates/lexicon/entry_detail.html:60
+msgid "Read the contribution guide before adding a definition."
+msgstr "قبل از افزودن تعریف، راهنمای مشارکت را بخوانید."
+
+#: templates/lexicon/entry_detail.html:62
+msgid "Contribution guide"
+msgstr "راهنمای مشارکت"
+
+#: templates/lexicon/entry_detail.html:65
 msgid "Add definition"
 msgstr "افزودن تعریف"
 
-#: templates/lexicon/entry_detail.html:60
+#: templates/lexicon/entry_detail.html:69
 msgid "Verify your email first in your profile page to add definitions."
 msgstr "برای افزودن تعریف، ابتدا در صفحه پروفایل ایمیل خود را تایید کنید."
 
-#: templates/lexicon/entry_detail.html:65
+#: templates/lexicon/entry_detail.html:74
 msgid "You have already submitted your definition for this entry."
 msgstr "شما قبلا تعریف خود را ثبت کرده‌اید."
 
-#: templates/lexicon/entry_detail.html:76
+#: templates/lexicon/entry_detail.html:85
 msgid "No definitions have been submitted for this entry yet."
 msgstr "هنوز تعریفی برای این مدخل ثبت نشده است."
 
@@ -560,7 +581,7 @@ msgstr "ثبت/ویرایش مدخل"
 msgid "Entry form"
 msgstr "فرم مدخل"
 
-#: templates/lexicon/entry_form.html:11
+#: templates/lexicon/entry_form.html:12
 msgid ""
 "New entries must be verified by admins before they become publicly visible "
 "and before users can add definitions."
@@ -568,22 +589,22 @@ msgstr ""
 "مدخل‌های جدید باید ابتدا توسط مدیران تایید شوند تا به‌صورت عمومی قابل مشاهده "
 "باشند و کاربران بتوانند برای آن‌ها تعریف اضافه کنند."
 
-#: templates/lexicon/entry_form.html:19
+#: templates/lexicon/entry_form.html:20
 msgid ""
 "This word is currently under review by the moderation team. However, you can "
 "add your own definition, example, or sources (such as social media links) to "
 "help us build a more complete archive."
 msgstr ""
 
-#: templates/lexicon/entry_form.html:51
+#: templates/lexicon/entry_form.html:52
 msgid "Similar existing headwords"
 msgstr "سرواژه‌های مشابه موجود"
 
-#: templates/lexicon/entry_form.html:63
+#: templates/lexicon/entry_form.html:64
 msgid "First definition (optional)"
 msgstr "تعریف اول (اختیاری)"
 
-#: templates/lexicon/entry_form.html:64
+#: templates/lexicon/entry_form.html:65
 msgid ""
 "Add the first definition now. You can also add it later once the entry is "
 "verified."
@@ -591,7 +612,7 @@ msgstr ""
 "تعریف اول را همین الان اضافه کنید. همچنین می‌توانید پس از تایید مدخل، بعدا آن "
 "را اضافه کنید."
 
-#: templates/lexicon/entry_form.html:129
+#: templates/lexicon/entry_form.html:130
 msgid "Save"
 msgstr "ذخیره"
 

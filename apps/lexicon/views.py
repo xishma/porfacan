@@ -17,6 +17,7 @@ from django.utils.translation import gettext as _
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .cache import build_versioned_cache_key
+from .contribution_guide import get_contribution_guide_page_url
 from .definition_page import definition_first_page_prefetch_queryset, fetch_definition_page, initial_definition_infinite_scroll_state
 from .entry_list_page import fetch_entry_list_page
 from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
@@ -313,6 +314,8 @@ class EntryDetailView(DetailView):
         context["similar_entry_links"] = similar_links
         flags = _entry_detail_lexicon_flags(self.request, entry)
         context.update(flags)
+        if flags["can_contribute"] and flags["can_add_definition"]:
+            context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
         definitions_visible = list(entry.definitions_visible)
         _attach_definition_votes(self.request, definitions_visible)
         context["definitions_visible"] = definitions_visible
@@ -405,6 +408,7 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
         context.setdefault("definition_form", self.get_definition_form())
         context.setdefault("attachment_formset", self.get_attachment_formset())
         context["is_create"] = True
+        context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
         return context
 
     def form_valid(self, form):
@@ -532,6 +536,7 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["entry"] = self.entry
         context.setdefault("attachment_formset", self.get_attachment_formset())
+        context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
         return context
 
 

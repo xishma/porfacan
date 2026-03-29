@@ -97,6 +97,7 @@ jobs:
           export CI_REGISTRY=ghcr.io
           export USER=${{ secrets.DEPLOY_USER }}
           export DOMAIN=${{ secrets.STAGING_DOMAIN }}
+          export GUNICORN_WORKERS=${{ secrets.STAGING_GUNICORN_WORKERS }}
           export PORT=${{ vars.SSH_PORT }}
           chmod +x ./setup_env.sh
           bash ./setup_env.sh
@@ -105,7 +106,7 @@ jobs:
         env:
           SSH_PORT: ${{ vars.SSH_PORT }}
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-          STAGING_PRIVATE_KEY: ${{ secrets.STAGING_PRIVATE_KEY }}
+          PRIVATE_KEY: ${{ secrets.STAGING_PRIVATE_KEY }}
         run: |
           # Trim whitespace
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
@@ -115,7 +116,7 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
-          echo "${STAGING_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          echo "${PRIVATE_KEY}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           chmod 700 ~/.ssh
           eval "$(ssh-agent -s)"
@@ -126,7 +127,8 @@ jobs:
         env:
           SSH_PORT: ${{ vars.SSH_PORT }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
+          DOMAIN: ${{ secrets.STAGING_DOMAIN }}
+          GUNICORN_WORKERS: ${{ secrets.STAGING_GUNICORN_WORKERS }}
         run: |
           # Trim whitespace
           SSH_PORT=$(echo "${SSH_PORT}" | xargs)
@@ -136,10 +138,11 @@ jobs:
             exit 1
           fi
           chmod +x ./deploy.sh
-          scp -P "${SSH_PORT}" -o StrictHostKeyChecking=no ./.env ./docker-compose.prod.yml ${DEPLOY_USER}@${STAGING_DOMAIN}:~/porfacan
+          scp -P "${SSH_PORT}" -o StrictHostKeyChecking=no ./.env ./docker-compose.prod.yml ${DEPLOY_USER}@${DOMAIN}:~/porfacan
           export PORT="${SSH_PORT}"
           export USER="${DEPLOY_USER}"
-          export DOMAIN="${STAGING_DOMAIN}"
+          export DOMAIN="${DOMAIN}"
+          export GUNICORN_WORKERS="${GUNICORN_WORKERS}"
           bash ./deploy.sh
 
       - name: Cleanup SSH keys
