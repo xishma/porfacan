@@ -2,12 +2,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa
 
-try:
-    from envs.settings import *  # noqa
-except ImportError:
-    pass
-
-# Cannot be overridden by envs.settings — keeps TLS/HSTS/cookies aligned with deployment.
 DEBUG = False
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
@@ -16,7 +10,6 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "same-origin"
-
 
 def _production_secret_key_valid(key: str) -> bool:
     if not key or len(key) < 50 or key.startswith("django-insecure-"):

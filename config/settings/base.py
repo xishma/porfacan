@@ -189,10 +189,45 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+AWS_STORAGE_BUCKET_NAME = ""
+AWS_S3_CUSTOM_DOMAIN = ""
+AWS_LOCATION = ""
+AWS_S3_REGION_NAME = ""
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_QUERYSTRING_AUTH = False
+AWS_DEFAULT_ACL = None
+
+try:
+    from envs.settings import *  # noqa
+except ImportError:
+    pass
+
+if AWS_STORAGE_BUCKET_NAME:
+    if AWS_S3_CUSTOM_DOMAIN:
+        _S3_PUBLIC_BASE = f"https://{AWS_S3_CUSTOM_DOMAIN}".rstrip("/")
+    else:
+        _S3_PUBLIC_BASE = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+        )
+    _s3_url_prefix = f"{AWS_LOCATION}/" if AWS_LOCATION else ""
+    MEDIA_URL = f"{_S3_PUBLIC_BASE}/{_s3_url_prefix}"
+    STATIC_URL = f"{_S3_PUBLIC_BASE}/{_s3_url_prefix}static/"
+    _default_storage_opts = {"location": AWS_LOCATION} if AWS_LOCATION else {}
+    _staticfiles_location = f"{AWS_LOCATION}/static" if AWS_LOCATION else "static"
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            **({"OPTIONS": _default_storage_opts} if _default_storage_opts else {}),
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "OPTIONS": {"location": _staticfiles_location},
+        },
+    }
