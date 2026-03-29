@@ -4,7 +4,7 @@ services:
     image: "${APP_IMAGE}"
     command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput"
     volumes:
-      - ./environments:/app/environments/
+      - ./envs:/app/envs/
     restart: "no"
 
   web:
@@ -14,7 +14,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./environments:/app/environments/
+      - ./envs:/app/envs/
     restart: unless-stopped
 
   celery-worker:
@@ -22,7 +22,7 @@ services:
     image: "${APP_IMAGE}"
     command: celery -A config worker -l info
     volumes:
-      - ./environments:/app/environments/
+      - ./envs:/app/envs/
     restart: unless-stopped
 
 networks:
