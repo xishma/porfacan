@@ -87,5 +87,22 @@ AWS_S3_REGION_NAME = "eu-central-1"
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
+AWS_S3_CUSTOM_DOMAIN = ""
 if AWS_STORAGE_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    if AWS_S3_CUSTOM_DOMAIN:
+        _S3_PUBLIC_BASE = f"https://{AWS_S3_CUSTOM_DOMAIN}".rstrip("/")
+    else:
+        _S3_PUBLIC_BASE = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+        )
+    MEDIA_URL = f"{_S3_PUBLIC_BASE}/"
+    STATIC_URL = f"{_S3_PUBLIC_BASE}/static/"
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "OPTIONS": {"location": "static"},
+        },
+    }
