@@ -24,3 +24,8 @@ services:
     volumes:
       - ./environments:/app/environments/
     restart: unless-stopped
+
+networks:
+  default:
+    name: porfacan-network
+    external: true
