@@ -4,6 +4,8 @@ from .base import *  # noqa
 
 # Terminate TLS at nginx/Cloudflare; Gunicorn sees HTTP. Trust X-Forwarded-Proto from the proxy.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Use the public Host from the edge proxy (must strip client-supplied X-Forwarded-Host at the proxy).
+USE_X_FORWARDED_HOST = True
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True

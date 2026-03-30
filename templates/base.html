@@ -13,12 +13,17 @@
     <meta property="og:site_name" content="{% trans "Porfacan" %}">
     <meta property="og:title" content="{% if share_meta_title %}{{ share_meta_title }}{% else %}{% block og_title %}{% trans "Porfacan" %}{% endblock og_title %}{% endif %}">
     <meta property="og:description" content="{% if share_meta_description %}{{ share_meta_description }}{% else %}{% block og_description %}{% trans "Crowdsourced lexicon of Iranian opposition slang and dissent." %}{% endblock og_description %}{% endif %}">
-    <meta property="og:image" content="{% if share_meta_image %}{{ share_meta_image }}{% else %}{{ share_default_og_image }}{% endif %}">
+    <meta property="og:image" content="{% firstof share_meta_image share_default_og_image %}">
+    {% if not share_meta_image %}
+    <meta property="og:image:width" content="527">
+    <meta property="og:image:height" content="527">
+    <meta property="og:image:type" content="image/png">
+    {% endif %}
     <meta property="og:image:alt" content="{% block og_image_alt %}{% trans "Porfacan" %}{% endblock og_image_alt %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% if share_meta_title %}{{ share_meta_title }}{% else %}{% block twitter_title %}{% trans "Porfacan" %}{% endblock twitter_title %}{% endif %}">
     <meta name="twitter:description" content="{% if share_meta_description %}{{ share_meta_description }}{% else %}{% block twitter_description %}{% trans "Crowdsourced lexicon of Iranian opposition slang and dissent." %}{% endblock twitter_description %}{% endif %}">
-    <meta name="twitter:image" content="{% if share_meta_image %}{{ share_meta_image }}{% else %}{{ share_default_og_image }}{% endif %}">
+    <meta name="twitter:image" content="{% firstof share_meta_image share_default_og_image %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'porfacan.png' %}">
     <link rel="icon" type="image/png" sizes="192x192" href="{% static 'porfacan.png' %}">
     <link rel="apple-touch-icon" href="{% static 'porfacan.png' %}">
