@@ -58,7 +58,7 @@ class EntryCategoryAdmin(admin.ModelAdmin):
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
     change_form_template = "admin/lexicon/entry/change_form.html"
-    list_display = ("headword", "category", "display_epochs", "is_verified", "entry_page_link", "created_at")
+    list_display = ("headword", "category", "display_epochs", "is_verified", "verify_action", "entry_page_link", "created_at")
     list_filter = ("is_verified", "category", "epochs")
     search_fields = ("headword", "slug", "aliases__headword")
     filter_horizontal = ("epochs",)
@@ -70,6 +70,11 @@ class EntryAdmin(admin.ModelAdmin):
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
         custom = [
+            path(
+                "<path:object_id>/verify/",
+                self.admin_site.admin_view(self.verify_entry_admin_view),
+                name="%s_%s_verify" % info,
+            ),
             path(
                 "<path:object_id>/merge/",
                 self.admin_site.admin_view(self.merge_entry_admin_view),
@@ -124,6 +129,18 @@ class EntryAdmin(admin.ModelAdmin):
         }
         return TemplateResponse(request, "admin/lexicon/merge_entry.html", context)
 
+    def verify_entry_admin_view(self, request, object_id):
+        entry = get_object_or_404(Entry, pk=object_id)
+        if not self.has_change_permission(request, entry):
+            messages.error(request, _("You do not have permission to verify entries."))
+            return redirect("admin:lexicon_entry_changelist")
+        if not entry.is_verified:
+            entry.is_verified = True
+            entry.save(update_fields=["is_verified"])
+            messages.success(request, _("Entry was verified."))
+        redirect_to = request.META.get("HTTP_REFERER") or reverse("admin:lexicon_entry_changelist")
+        return redirect(redirect_to)
+
     @admin.display(description="Epochs")
     def display_epochs(self, obj):
         return ", ".join(obj.epochs.values_list("name", flat=True))
@@ -132,6 +149,17 @@ class EntryAdmin(admin.ModelAdmin):
     def entry_page_link(self, obj):
         url = reverse("lexicon:entry-detail", kwargs={"slug": obj.slug})
         return format_html('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>', url, _("Open"))
+
+    @admin.display(description=_("Verify"))
+    def verify_action(self, obj):
+        if obj.is_verified:
+            return format_html('<span style="color: #15803d; font-weight: 600;">{}</span>', _("Verified"))
+        url = reverse("admin:lexicon_entry_verify", args=[obj.pk])
+        return format_html(
+            '<a class="button" style="background: #16a34a; border-color: #15803d; color: #ffffff;" href="{}">{}</a>',
+            url,
+            _("Verify"),
+        )
 
 
 @admin.register(EntrySlugRedirect)
@@ -183,6 +211,7 @@ class SuggestedHeadwordAdmin(admin.ModelAdmin):
         "entry_public_link",
         "submitted_by",
         "status",
+        "verify_action",
         "reviewed_by",
         "reviewed_at",
         "created_at",
@@ -203,6 +232,17 @@ class SuggestedHeadwordAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "reviewed_at", "reviewed_by", "entry_public_link")
     actions = (_approve_headword_suggestions, _reject_headword_suggestions)
 
+    def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
+        custom = [
+            path(
+                "<path:object_id>/verify/",
+                self.admin_site.admin_view(self.verify_suggestion_admin_view),
+                name="%s_%s_verify" % info,
+            ),
+        ]
+        return custom + super().get_urls()
+
     @admin.display(description=_("View entry"))
     def entry_public_link(self, obj):
         if obj is None or not getattr(obj, "entry_id", None):
@@ -212,6 +252,33 @@ class SuggestedHeadwordAdmin(admin.ModelAdmin):
             '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>',
             url,
             _("Open on site"),
+        )
+
+    def verify_suggestion_admin_view(self, request, object_id):
+        suggestion = get_object_or_404(SuggestedHeadword, pk=object_id)
+        if not self.has_change_permission(request, suggestion):
+            messages.error(request, _("You do not have permission to verify suggested headwords."))
+            return redirect("admin:lexicon_suggestedheadword_changelist")
+        if suggestion.status == SuggestedHeadword.Status.PENDING:
+            suggestion.status = SuggestedHeadword.Status.APPROVED
+            suggestion.reviewed_at = timezone.now()
+            suggestion.reviewed_by = request.user if request.user.is_authenticated else None
+            suggestion.save(update_fields=["status", "reviewed_at", "reviewed_by"])
+            messages.success(request, _("Suggested headword was verified."))
+        redirect_to = request.META.get("HTTP_REFERER") or reverse("admin:lexicon_suggestedheadword_changelist")
+        return redirect(redirect_to)
+
+    @admin.display(description=_("Verify"))
+    def verify_action(self, obj):
+        if obj.status != SuggestedHeadword.Status.PENDING:
+            if obj.status == SuggestedHeadword.Status.APPROVED:
+                return format_html('<span style="color: #15803d; font-weight: 600;">{}</span>', _("Verified"))
+            return "---"
+        url = reverse("admin:lexicon_suggestedheadword_verify", args=[obj.pk])
+        return format_html(
+            '<a class="button" style="background: #16a34a; border-color: #15803d; color: #ffffff;" href="{}">{}</a>',
+            url,
+            _("Verify"),
         )
 
     def save_model(self, request, obj, form, change):

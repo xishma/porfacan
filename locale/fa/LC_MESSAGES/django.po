@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: porfacan\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-31 23:19+0330\n"
+"POT-Creation-Date: 2026-03-31 23:40+0330\n"
 "PO-Revision-Date: 2026-03-15 00:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -65,8 +65,6 @@ msgid "Created at"
 msgstr "زمان ایجاد"
 
 #: apps/ai/models.py:32
-#, fuzzy
-#| msgid "Start date"
 msgid "Started at"
 msgstr "تاریخ شروع"
 
@@ -104,23 +102,23 @@ msgstr "مدخل مشابه"
 msgid "Similar entries"
 msgstr "مدخل‌های مشابه"
 
-#: apps/lexicon/admin.py:87
+#: apps/lexicon/admin.py:94
 msgid "You do not have permission to merge entries."
 msgstr "شما اجازه ادغام مدخل‌ها را ندارید."
 
-#: apps/lexicon/admin.py:95
+#: apps/lexicon/admin.py:102
 msgid "Enter a valid numeric id for the secondary entry."
 msgstr "یک شناسه عددی معتبر برای مدخل ثانویه وارد کنید."
 
-#: apps/lexicon/admin.py:98
+#: apps/lexicon/admin.py:105
 msgid "The secondary entry must differ from the primary entry."
 msgstr "مدخل ثانویه باید از مدخل اصلی متفاوت باشد."
 
-#: apps/lexicon/admin.py:102
+#: apps/lexicon/admin.py:109
 msgid "No entry with that id exists."
 msgstr "مدخلی با این شناسه وجود ندارد."
 
-#: apps/lexicon/admin.py:111
+#: apps/lexicon/admin.py:118
 #, python-format
 msgid ""
 "Merged “%(sec)s” into “%(pri)s”. Definitions and alternate headwords were "
@@ -129,48 +127,73 @@ msgstr ""
 "مدخل “%(sec)s” به “%(pri)s” ادغام شد. تعاریف و سرواژه‌های جایگزین به مدخل "
 "اصلی منتقل شدند."
 
-#: apps/lexicon/admin.py:118 templates/admin/lexicon/entry/change_form.html:8
+#: apps/lexicon/admin.py:125 templates/admin/lexicon/entry/change_form.html:8
 #: templates/admin/lexicon/merge_entry.html:15
 msgid "Merge another entry into this one"
 msgstr "مدخل دیگری را به این مدخل ادغام کنید"
 
-#: apps/lexicon/admin.py:129
+#: apps/lexicon/admin.py:135
+msgid "You do not have permission to verify entries."
+msgstr "شما اجازه تایید مدخل‌ها را ندارید."
+
+#: apps/lexicon/admin.py:140
+msgid "Entry was verified."
+msgstr "مدخل تایید شد."
+
+#: apps/lexicon/admin.py:148
 msgid "Entry page"
 msgstr "صفحه مدخل"
 
-#: apps/lexicon/admin.py:132
+#: apps/lexicon/admin.py:151
 msgid "Open"
 msgstr "باز کردن"
 
-#: apps/lexicon/admin.py:141
+#: apps/lexicon/admin.py:153 apps/lexicon/admin.py:161
+#: apps/lexicon/admin.py:271 apps/lexicon/admin.py:281
+msgid "Verify"
+msgstr "تایید"
+
+#: apps/lexicon/admin.py:156 apps/lexicon/admin.py:275 apps/lexicon/forms.py:21
+msgid "Verified"
+msgstr "تاییدشده"
+
+#: apps/lexicon/admin.py:171
 msgid "Canonical slug"
 msgstr "نامک عادی"
 
-#: apps/lexicon/admin.py:156
+#: apps/lexicon/admin.py:186
 #, python-format
 msgid "Approved %(n)d suggestion(s)."
 msgstr "تایید شده %(n)d پیشنهاد."
 
-#: apps/lexicon/admin.py:169
+#: apps/lexicon/admin.py:199
 #, python-format
 msgid "Rejected %(n)d suggestion(s)."
 msgstr "رد شده %(n)d پیشنهاد."
 
-#: apps/lexicon/admin.py:172
+#: apps/lexicon/admin.py:202
 msgid "Approve selected (creates aliases)"
 msgstr "تایید انتخاب شده (سرواژه‌های جایگزین ایجاد می‌کند)"
 
-#: apps/lexicon/admin.py:173
+#: apps/lexicon/admin.py:203
 msgid "Reject selected"
 msgstr "رد انتخاب شده"
 
-#: apps/lexicon/admin.py:204 apps/lexicon/forms.py:97 apps/lexicon/forms.py:276
+#: apps/lexicon/admin.py:246 apps/lexicon/forms.py:97 apps/lexicon/forms.py:276
 msgid "View entry"
 msgstr "مشاهدهٔ مدخل"
 
-#: apps/lexicon/admin.py:212
+#: apps/lexicon/admin.py:254
 msgid "Open on site"
 msgstr "باز کردن در سایت"
+
+#: apps/lexicon/admin.py:260
+msgid "You do not have permission to verify suggested headwords."
+msgstr "شما اجازه تایید پیشنهادهای سرواژه را ندارید."
+
+#: apps/lexicon/admin.py:267
+msgid "Suggested headword was verified."
+msgstr "پیشنهاد سرواژه تایید شد."
 
 #: apps/lexicon/forms.py:18 apps/lexicon/models.py:205
 msgid "Category"
@@ -186,10 +209,6 @@ msgstr "دوره‌ها"
 #: apps/lexicon/models.py:218
 msgid "Description"
 msgstr "توضیحات"
-
-#: apps/lexicon/forms.py:21
-msgid "Verified"
-msgstr "تاییدشده"
 
 #: apps/lexicon/forms.py:95
 msgid "This headword is already used (primary or alternate) on another entry."
@@ -226,13 +245,13 @@ msgstr "اختیاری."
 #: apps/lexicon/forms.py:176 templates/lexicon/_definition_card.html:51
 #: templates/lexicon/definition_form.html:43
 #: templates/lexicon/definition_form.html:62
-#: templates/lexicon/entry_form.html:109 templates/lexicon/entry_form.html:128
+#: templates/lexicon/entry_form.html:111 templates/lexicon/entry_form.html:130
 msgid "Example link"
 msgstr "لینک مثال"
 
 #: apps/lexicon/forms.py:177 templates/lexicon/definition_form.html:48
 #: templates/lexicon/definition_form.html:66
-#: templates/lexicon/entry_form.html:114 templates/lexicon/entry_form.html:132
+#: templates/lexicon/entry_form.html:116 templates/lexicon/entry_form.html:134
 msgid "Example image"
 msgstr "تصویر مثال"
 
@@ -527,7 +546,7 @@ msgstr "دسته‌بندی نامعتبر است."
 msgid "%(title)s | Porfacan"
 msgstr "%(title)s | پرفکان"
 
-#: apps/lexicon/views.py:452
+#: apps/lexicon/views.py:450
 msgid ""
 "This entry is not verified yet. Until it is published, it is only visible to "
 "administrators, the person who suggested the entry, and people who have "
@@ -536,32 +555,32 @@ msgstr ""
 "این مدخل هنوز تایید نشده است. تا زمان تایید، فقط برای مدیران و ایجادکننده "
 "مدخل قابل مشاهده است."
 
-#: apps/lexicon/views.py:456
+#: apps/lexicon/views.py:460
+msgid "Open in admin to verify it."
+msgstr "باز کردن در مدیریت برای تایید"
+
+#: apps/lexicon/views.py:465
 #, python-format
 msgid "%(headword)s | Porfacan"
 msgstr "%(headword)s | پرفکان"
 
-#: apps/lexicon/views.py:459
-#, fuzzy, python-format
-#| msgid "%(headword)s - %(text)s"
+#: apps/lexicon/views.py:468
 msgid "%(headword)s | %(text)s"
 msgstr "%(headword)s | %(text)s"
 
-#: apps/lexicon/views.py:464
-#, fuzzy, python-format
-#| msgid "%(headword)s - Lexicon entry on Porfacan."
+#: apps/lexicon/views.py:473
 msgid "%(headword)s | Lexicon entry on Porfacan."
 msgstr "%(headword)s | مدخل پرفکان."
 
-#: apps/lexicon/views.py:485
+#: apps/lexicon/views.py:494
 msgid "Your alternate headword was submitted for review."
 msgstr "سرواژه جایگزین شما برای بازبینی ارسال شد."
 
-#: apps/lexicon/views.py:578
+#: apps/lexicon/views.py:587
 msgid "Definition text is required when adding examples."
 msgstr "هنگام افزودن مثال، متن تعریف الزامی است."
 
-#: apps/lexicon/views.py:595
+#: apps/lexicon/views.py:604
 msgid ""
 "Your definition(s) were added to the existing entry. You will be able to see "
 "them on the site once the entry is published."
@@ -569,26 +588,26 @@ msgstr ""
 "تعریف‌های شما به مدخل موجود اضافه شد. هنگام تایید مدخل، به‌صورت عمومی قابل "
 "مشاهده خواهند شد."
 
-#: apps/lexicon/views.py:602
+#: apps/lexicon/views.py:611
 msgid ""
 "This headword already has an entry awaiting review. No new definition was "
 "added."
 msgstr ""
 "این سرواژه قبلا در انتظار تایید قرار گرفته است. هیچ تعریف جدیدی اضافه نشد."
 
-#: apps/lexicon/views.py:673
+#: apps/lexicon/views.py:682
 msgid "You have already submitted a definition for this entry."
 msgstr "شما قبلا برای این مدخل تعریف ثبت کرده‌اید."
 
-#: apps/lexicon/views.py:714
+#: apps/lexicon/views.py:723
 msgid "Authentication required."
 msgstr "احراز هویت لازم است."
 
-#: apps/lexicon/views.py:717 templates/base.html:63
+#: apps/lexicon/views.py:726 templates/base.html:63
 msgid "Please verify your email first in your profile page."
 msgstr "لطفا ابتدا در صفحه پروفایل، ایمیل خود را تایید کنید."
 
-#: apps/lexicon/views.py:727 apps/lexicon/views.py:729
+#: apps/lexicon/views.py:736 apps/lexicon/views.py:738
 msgid "Invalid vote value."
 msgstr "مقدار رای نامعتبر است."
 
@@ -824,7 +843,7 @@ msgstr ""
 "با لینک یا تصویر یا هر دو می‌توانید اضافه کنید."
 
 #: templates/lexicon/definition_form.html:34
-#: templates/lexicon/entry_form.html:100
+#: templates/lexicon/entry_form.html:102
 msgid "Examples (optional, maximum 5)"
 msgstr "مثال‌ها (اختیاری، حداکثر ۵ مورد)"
 
@@ -892,7 +911,7 @@ msgstr "ثبت/ویرایش مدخل"
 msgid "Entry form"
 msgstr "فرم مدخل"
 
-#: templates/lexicon/entry_form.html:12
+#: templates/lexicon/entry_form.html:13
 msgid ""
 "New entries must be verified by admins before they become publicly visible "
 "and before users can add definitions."
@@ -900,7 +919,7 @@ msgstr ""
 "مدخل‌های جدید باید ابتدا توسط مدیران تایید شوند تا به‌صورت عمومی قابل مشاهده "
 "باشند و کاربران بتوانند برای آن‌ها تعریف اضافه کنند."
 
-#: templates/lexicon/entry_form.html:20
+#: templates/lexicon/entry_form.html:22
 msgid ""
 "This word is currently under review by the moderation team. However, you can "
 "add your own definition, example, or sources (such as social media links) to "
@@ -910,19 +929,19 @@ msgstr ""
 "تعریف، مثال یا منابع (مانند پیوندهای شبکه‌های اجتماعی) را اضافه کنید تا به ما "
 "کمک کنید یک آرشیو کامل‌تر بسازیم."
 
-#: templates/lexicon/entry_form.html:52
+#: templates/lexicon/entry_form.html:54
 msgid "Similar existing headwords"
 msgstr "سرواژه‌های مشابه موجود"
 
-#: templates/lexicon/entry_form.html:63
+#: templates/lexicon/entry_form.html:65
 msgid "Fill in with AI"
 msgstr "پیشنهاد با AI"
 
-#: templates/lexicon/entry_form.html:77
+#: templates/lexicon/entry_form.html:79
 msgid "First definition (optional)"
 msgstr "تعریف اول (اختیاری)"
 
-#: templates/lexicon/entry_form.html:78
+#: templates/lexicon/entry_form.html:80
 msgid ""
 "Add the first definition now. You can also add it later once the entry is "
 "verified."
@@ -930,35 +949,35 @@ msgstr ""
 "تعریف اول را همین الان اضافه کنید. همچنین می‌توانید پس از تایید مدخل، بعدا آن "
 "را اضافه کنید."
 
-#: templates/lexicon/entry_form.html:143
+#: templates/lexicon/entry_form.html:145
 msgid "Save"
 msgstr "ذخیره"
 
-#: templates/lexicon/entry_form.html:537
+#: templates/lexicon/entry_form.html:539
 msgid "Could not fetch AI result status."
 msgstr "AI نتیجه وضعیت دریافت نشد."
 
-#: templates/lexicon/entry_form.html:545 templates/lexicon/entry_form.html:580
+#: templates/lexicon/entry_form.html:547 templates/lexicon/entry_form.html:582
 msgid "AI generation failed."
 msgstr "AI تولید شکست خورد."
 
-#: templates/lexicon/entry_form.html:549
+#: templates/lexicon/entry_form.html:551
 msgid "AI generation timed out. Please try again."
 msgstr "AI تولید موقتاً تمام شد. لطفا دوباره تلاش کنید."
 
-#: templates/lexicon/entry_form.html:556
+#: templates/lexicon/entry_form.html:558
 msgid "Please enter the entry title first."
 msgstr "لطفا سرواژه مدخل را ابتدا وارد کنید."
 
-#: templates/lexicon/entry_form.html:562
+#: templates/lexicon/entry_form.html:564
 msgid "Generating content with AI. This may take up to a few minutes…"
 msgstr "محتوای با AI تولید می‌شود. این ممکن است تا چند دقیقه طول بکشد…"
 
-#: templates/lexicon/entry_form.html:575
+#: templates/lexicon/entry_form.html:577
 msgid "Could not start AI generation."
 msgstr "AI تولید شروع نشد."
 
-#: templates/lexicon/entry_form.html:578
+#: templates/lexicon/entry_form.html:580
 msgid "AI draft filled. Review and edit before saving."
 msgstr "پیشنهاد AI تکمیل شد. بررسی و ویرایش قبل از ذخیره کنید."
 
