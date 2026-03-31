@@ -53,6 +53,11 @@ LEXICON_CACHE_MAX_RESULT_IDS = 1000
 
 CELERY_BROKER_URL = "amqp://porfacan:porfacan@porfacan-rabbitmq:5672/porfacan"
 CELERY_RESULT_BACKEND = "redis://porfacan-redis:6379/2"
+GROK_API_KEY = ""
+# GROK_API_BASE_URL = "https://api.x.ai/v1"
+# GROK_MODEL = "grok-3-mini"
+# GROK_TIMEOUT_SECONDS = 180
+# GROK_TEMPERATURE = 0.2
 
 GOOGLE_OAUTH_CLIENT_ID = ""
 GOOGLE_OAUTH_CLIENT_SECRET = ""

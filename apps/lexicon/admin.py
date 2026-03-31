@@ -204,7 +204,7 @@ class SuggestedHeadwordAdmin(admin.ModelAdmin):
     @admin.display(description=_("View entry"))
     def entry_public_link(self, obj):
         if obj is None or not getattr(obj, "entry_id", None):
-            return "—"
+            return "---"
         url = reverse("lexicon:entry-detail", kwargs={"slug": obj.entry.slug})
         return format_html(
             '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>',

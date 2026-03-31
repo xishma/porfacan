@@ -8,9 +8,11 @@
     <h1 class="mb-4 text-xl font-semibold">{% trans "Entry form" %}</h1>
     {% if is_create %}
         {% include "lexicon/_contribution_guide_notice.html" %}
-        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 ps-4 pe-4 py-3 text-sm text-amber-900">
-            {% trans "New entries must be verified by admins before they become publicly visible and before users can add definitions." %}
-        </div>
+        {% if not user.is_staff %}
+            <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 ps-4 pe-4 py-3 text-sm text-amber-900">
+                {% trans "New entries must be verified by admins before they become publicly visible and before users can add definitions." %}
+            </div>
+        {% endif %}
         <div
             id="pending-headword-notice"
             class="mb-4 hidden rounded-lg border border-sky-200 bg-sky-50 ps-4 pe-4 py-3 text-sm text-sky-950"
@@ -52,6 +54,19 @@
                             aria-label="{% trans 'Similar existing headwords' %}"
                         ></div>
                     </div>
+                    {% if is_create and entry_ai_fill_enabled %}
+                        <div class="mt-2">
+                            <button
+                                id="entry-ai-fill-btn"
+                                type="button"
+                                class="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white ps-3 pe-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {% icon "plus" %}
+                                <span>{% trans "Fill in with AI" %}</span>
+                            </button>
+                            <p id="entry-ai-fill-status" class="mt-1 text-xs text-slate-600" aria-live="polite"></p>
+                        </div>
+                    {% endif %}
                 {% else %}
                     {{ field.label_tag }}
                     {{ field }}
@@ -454,6 +469,121 @@
             lastRow.remove();
             totalFormsInput.value = String(currentCount - 1);
             updateControlsState();
+        });
+    }
+
+    const aiFillButton = document.getElementById("entry-ai-fill-btn");
+    const aiFillStatus = document.getElementById("entry-ai-fill-status");
+    const aiCreateUrl = "{% url 'ai:entry-draft-create' %}";
+    const aiStatusUrlTemplate = "{% url 'ai:entry-draft-status' job_id=0 %}";
+    const csrfInput = entryForm ? entryForm.querySelector('input[name="csrfmiddlewaretoken"]') : null;
+    const definitionContentField = entryForm ? entryForm.querySelector('[name="definition-content"]') : null;
+    const definitionContextField = entryForm ? entryForm.querySelector('[name="definition-context_annotation"]') : null;
+    const definitionUsageField = entryForm ? entryForm.querySelector('[name="definition-usage_example"]') : null;
+
+    const setAIFillStatus = (text, isError) => {
+        if (!aiFillStatus) return;
+        aiFillStatus.textContent = text || "";
+        aiFillStatus.classList.toggle("text-rose-700", Boolean(isError));
+        aiFillStatus.classList.toggle("text-slate-600", !isError);
+    };
+
+    const statusUrlForJob = (jobId) => aiStatusUrlTemplate.replace("/0/", `/${jobId}/`);
+
+    const applyEpochsFromResult = (result) => {
+        const epochIdSet = new Set((result.epoch_ids || []).map((x) => String(x)));
+        const epochNameSet = new Set((result.epochs || []).map((x) => String(x).trim()));
+        epochInputs.forEach((input) => {
+            const wrapperLabel = input.closest("label");
+            const labelText = wrapperLabel ? wrapperLabel.textContent.trim() : "";
+            const byId = epochIdSet.size > 0 && epochIdSet.has(String(input.value));
+            const byName = epochNameSet.size > 0 && epochNameSet.has(labelText);
+            input.checked = byId || byName;
+        });
+    };
+
+    const applyCategoryFromResult = (result) => {
+        if (!categoryField) return;
+        if (result.category_id != null) {
+            categoryField.value = String(result.category_id);
+            return;
+        }
+        const wanted = String(result.category || "").trim();
+        if (!wanted) return;
+        const options = Array.from(categoryField.options || []);
+        const match = options.find((opt) => String(opt.textContent || "").trim() === wanted);
+        if (match) categoryField.value = match.value;
+    };
+
+    const applyAIDraft = (result) => {
+        applyCategoryFromResult(result || {});
+        applyEpochsFromResult(result || {});
+        if (definitionContentField && typeof result.definition === "string") {
+            definitionContentField.value = result.definition;
+        }
+        if (definitionContextField && typeof result.history_context === "string") {
+            definitionContextField.value = result.history_context;
+        }
+        if (definitionUsageField && typeof result.usage_example === "string") {
+            definitionUsageField.value = result.usage_example;
+        }
+    };
+
+    const pollAIDraft = async (jobId) => {
+        const maxAttempts = 120;
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            const response = await fetch(statusUrlForJob(jobId), {
+                credentials: "same-origin",
+            });
+            if (!response.ok) {
+                throw new Error("{% trans 'Could not fetch AI result status.' %}");
+            }
+            const payload = await response.json();
+            if (payload.status === "succeeded") {
+                applyAIDraft(payload.result || {});
+                return;
+            }
+            if (payload.status === "failed") {
+                throw new Error(payload.error || "{% trans 'AI generation failed.' %}");
+            }
+            await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        }
+        throw new Error("{% trans 'AI generation timed out. Please try again.' %}");
+    };
+
+    if (aiFillButton && headwordField && csrfInput) {
+        aiFillButton.addEventListener("click", async () => {
+            const headword = headwordField.value.trim();
+            if (!headword.length) {
+                setAIFillStatus("{% trans 'Please enter the entry title first.' %}", true);
+                headwordField.focus();
+                return;
+            }
+
+            aiFillButton.disabled = true;
+            setAIFillStatus("{% trans 'Generating content with AI. This may take up to a few minutes…' %}", false);
+            try {
+                const createResponse = await fetch(aiCreateUrl, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfInput.value,
+                    },
+                    body: JSON.stringify({ headword }),
+                });
+                const createPayload = await createResponse.json();
+                if (!createResponse.ok) {
+                    throw new Error(createPayload.error || "{% trans 'Could not start AI generation.' %}");
+                }
+                await pollAIDraft(createPayload.job_id);
+                setAIFillStatus("{% trans 'AI draft filled. Review and edit before saving.' %}", false);
+            } catch (error) {
+                const message = error && error.message ? error.message : "{% trans 'AI generation failed.' %}";
+                setAIFillStatus(message, true);
+            } finally {
+                aiFillButton.disabled = false;
+            }
         });
     }
 </script>

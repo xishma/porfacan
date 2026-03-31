@@ -19,7 +19,7 @@ _MULTI_SPACES = re.compile(r"\s+")
 # space or NBSP inside words like «میمون» (e.g. paste/PDF) becomes «می‌مون». Glue the
 # verbal prefix to the following Persian letters before Hazm; real verbs still normalize
 # (e.g. «می روم» → «میروم» → «می‌روم»). Do not match «می»/«نمی» when preceded by a Persian
-# letter (e.g. «قدیمی فارسی» or «برنمی گردد» — suffix / infix, not the prefix alone).
+# letter (e.g. «قدیمی فارسی» or «برنمی گردد» | suffix / infix, not the prefix alone).
 _PERSIAN_LETTERS = "آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی"
 _MI_PREFIX_GLUE = re.compile(
     rf"(?<![{_PERSIAN_LETTERS}])(نمی|می)\s+(?=[{_PERSIAN_LETTERS}])",

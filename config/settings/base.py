@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "hcaptcha_field",
     "apps.users",
     "apps.lexicon",
+    "apps.ai",
     "apps.api",
 ]
 
@@ -186,7 +187,7 @@ LEXICON_CACHE_MAX_RESULT_IDS = int(os.getenv("LEXICON_CACHE_MAX_RESULT_IDS", "10
 # Slug for the CMS Page that explains how to contribute (path: /lexicon/pages/<address>/).
 LEXICON_CONTRIBUTION_GUIDE_PAGE_ADDRESS = "contribute"
 
-# e.g. https://porfacan.org — used for Open Graph absolute URLs when set (recommended in production).
+# e.g. https://porfacan.org | used for Open Graph absolute URLs when set (recommended in production).
 SITE_CANONICAL_URL = os.getenv("DJANGO_SITE_URL", "").strip().rstrip("/")
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://porfacan:porfacan@localhost:5672/porfacan")
@@ -195,6 +196,33 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+GROK_API_KEY = os.getenv("GROK_API_KEY", "")
+GROK_API_BASE_URL = os.getenv("GROK_API_BASE_URL", "https://api.x.ai/v1")
+GROK_MODEL = os.getenv("GROK_MODEL", "grok-4.20-reasoning-latest")
+GROK_TIMEOUT_SECONDS = int(os.getenv("GROK_TIMEOUT_SECONDS", "180"))
+GROK_TEMPERATURE = float(os.getenv("GROK_TEMPERATURE", "0.8"))
+
+AI_ENTRY_ALLOWED_EPOCHS = [
+    "عمومی",
+    "جنبش سبز",
+    "دوران برجام",
+    "اعتراضات دی ماه ۹۶",
+    "آبان خونین",
+    "زمستان ۹۸",
+    "دوران کرونا",
+    "اعتراضات زن زندگی آزادی",
+    "جنگ ۱۲ روزه",
+    "انقلاب شیر و خورشید",
+]
+
+AI_ENTRY_ALLOWED_CATEGORIES = [
+    "اصطلاحات",
+    "القاب افراد",
+    "شعارها",
+    "عمومی",
+    "میم‌ها",
+]
 
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

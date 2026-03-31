@@ -20,6 +20,7 @@ from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from django.utils.translation import gettext as _
 
+from apps.ai.permissions import user_in_ai_group
 from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 
 from .cache import build_versioned_cache_key
@@ -230,7 +231,7 @@ class PageDetailView(DetailView):
         context["share_meta_title"] = _("%(title)s | Porfacan") % {"title": page.title}
         plain = strip_tags(page.content or "").strip()
         context["share_meta_description"] = (
-            Truncator(plain).chars(300) if plain else _("%(title)s — Porfacan") % {"title": page.title}
+            Truncator(plain).chars(300) if plain else _("%(title)s | Porfacan") % {"title": page.title}
         )
         return context
 
@@ -455,12 +456,12 @@ class EntryDetailView(DetailView):
         context["share_meta_title"] = _("%(headword)s | Porfacan") % {"headword": entry.headword}
         if definitions_visible:
             snippet = Truncator(definitions_visible[0].content).chars(200)
-            context["share_meta_description"] = _("%(headword)s — %(text)s") % {
+            context["share_meta_description"] = _("%(headword)s | %(text)s") % {
                 "headword": entry.headword,
                 "text": snippet,
             }
         else:
-            context["share_meta_description"] = _("%(headword)s — Lexicon entry on Porfacan.") % {
+            context["share_meta_description"] = _("%(headword)s | Lexicon entry on Porfacan.") % {
                 "headword": entry.headword,
             }
         return context
@@ -561,6 +562,7 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
         context.setdefault("definition_form", self.get_definition_form())
         context.setdefault("attachment_formset", self.get_attachment_formset())
         context["is_create"] = True
+        context["entry_ai_fill_enabled"] = user_in_ai_group(self.request.user)
         context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
         return context
 
