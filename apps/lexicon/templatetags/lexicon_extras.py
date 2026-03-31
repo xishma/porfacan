@@ -1,5 +1,7 @@
 from django import template
 
+from apps.lexicon.headwords import alternate_headwords_for_display
+
 register = template.Library()
 
 
@@ -19,3 +21,10 @@ def definition_first_line_preview(text, max_chars=127):
                 return stripped[:limit].rstrip() + "…"
             return stripped
     return ""
+
+
+@register.filter
+def alternate_headwords_display(entry):
+    if entry is None:
+        return []
+    return alternate_headwords_for_display(entry)

@@ -1,9 +1,10 @@
+from django.apps import apps
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, SearchVectorField, TrigramSimilarity
 from django.core.exceptions import ValidationError
-from django.db.models import Case, Count, Exists, F, FloatField, IntegerField, Max, OuterRef, Q, QuerySet, Value, When
-from django.db.models.functions import Coalesce
+from django.db.models import Case, Count, Exists, F, FloatField, IntegerField, Max, OuterRef, Q, QuerySet, Subquery, Value, When
+from django.db.models.functions import Coalesce, Greatest
 from django.db import models
 from django.utils.text import slugify
 from django.utils import timezone
@@ -21,6 +22,8 @@ class EntryQuerySet(QuerySet):
         return self.annotate(hot_rank=Coalesce(Max("definitions__hot_score_value"), Value(0.0), output_field=FloatField()))
 
     def search(self, query: str):
+        EntryAlias = apps.get_model("lexicon", "EntryAlias")
+
         normalized_query = normalize_persian(query or "").strip()
         if not normalized_query:
             return self
@@ -35,49 +38,99 @@ class EntryQuerySet(QuerySet):
             )
             .filter(definition_vector=query_expr)
         )
+        alias_trigram_subq = Subquery(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk"))
+            .annotate(t=TrigramSimilarity("headword", normalized_query))
+            .order_by("-t")
+            .values("t")[:1],
+            output_field=FloatField(),
+        )
+        alias_icontains = Exists(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk"), headword__icontains=normalized_query)
+        )
+        alias_starts_with = Exists(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk"), headword__istartswith=normalized_query)
+        )
         return (
-            self.annotate(
+            self.annotate(_alias_head_starts=alias_starts_with)
+            .annotate(
                 search_rank=Coalesce(SearchRank(F("search_vector"), query_expr), Value(0.0), output_field=FloatField()),
                 has_definition_match=Exists(definition_match_subquery),
                 trigram_similarity=TrigramSimilarity("headword", normalized_query),
+                _alias_trg=Coalesce(alias_trigram_subq, Value(0.0), output_field=FloatField()),
                 starts_with=Case(
-                    When(headword__istartswith=normalized_query, then=Value(1)),
+                    When(
+                        Q(headword__istartswith=normalized_query) | Q(_alias_head_starts=True),
+                        then=Value(1),
+                    ),
                     default=Value(0),
                     output_field=IntegerField(),
                 ),
             )
+            .annotate(combined_trigram=Greatest(F("trigram_similarity"), F("_alias_trg")))
             .filter(
                 Q(search_rank__gt=0)
                 | Q(has_definition_match=True)
                 | Q(headword__icontains=normalized_query)
-                | Q(trigram_similarity__gte=self.SEARCH_TRIGRAM_THRESHOLD)
+                | Q(alias_icontains=True)
+                | Q(combined_trigram__gte=self.SEARCH_TRIGRAM_THRESHOLD)
             )
-            .order_by("-starts_with", "-has_definition_match", "-search_rank", "-trigram_similarity", "-created_at")
+            .order_by(
+                "-starts_with",
+                "-has_definition_match",
+                "-search_rank",
+                "-combined_trigram",
+                "-created_at",
+            )
         )
 
     def suggestions(self, query: str, limit: int = 8):
+        EntryAlias = apps.get_model("lexicon", "EntryAlias")
+
         normalized_query = normalize_persian(query or "").strip()
         if not normalized_query:
             return self.none()
 
+        alias_overlap = Exists(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk")).filter(
+                Q(headword__istartswith=normalized_query) | Q(headword__trigram_similar=normalized_query)
+            )
+        )
+        alias_starts = Exists(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk"), headword__istartswith=normalized_query)
+        )
+        alias_trigram_subq = Subquery(
+            EntryAlias.objects.filter(entry_id=OuterRef("pk"))
+            .annotate(t=TrigramSimilarity("headword", normalized_query))
+            .order_by("-t")
+            .values("t")[:1],
+            output_field=FloatField(),
+        )
         return (
             self.filter(
                 Q(headword__istartswith=normalized_query)
                 | Q(headword__trigram_similar=normalized_query)
+                | alias_overlap
             )
+            .annotate(_alias_starts=alias_starts)
             .annotate(
                 trigram_similarity=TrigramSimilarity("headword", normalized_query),
+                _alias_trg=Coalesce(alias_trigram_subq, Value(0.0), output_field=FloatField()),
                 starts_with=Case(
-                    When(headword__istartswith=normalized_query, then=Value(1)),
+                    When(
+                        Q(headword__istartswith=normalized_query) | Q(_alias_starts=True),
+                        then=Value(1),
+                    ),
                     default=Value(0),
                     output_field=IntegerField(),
                 ),
             )
+            .annotate(combined_trigram=Greatest(F("trigram_similarity"), F("_alias_trg")))
             .filter(
                 Q(starts_with=1)
-                | Q(trigram_similarity__gte=self.SUGGESTION_TRIGRAM_THRESHOLD)
+                | Q(combined_trigram__gte=self.SUGGESTION_TRIGRAM_THRESHOLD)
             )
-            .order_by("-starts_with", "-trigram_similarity", "-created_at")
+            .order_by("-starts_with", "-combined_trigram", "-created_at")
             .values("headword", "slug")[:limit]
         )
 
@@ -192,11 +245,151 @@ class Entry(models.Model):
         if not self.slug:
             self.slug = slugify(self.headword, allow_unicode=True)
         super().save(*args, **kwargs)
-        # Persist a dedicated tsvector so search avoids runtime vector computation.
-        Entry.objects.filter(pk=self.pk).update(search_vector=SearchVector(Value(self.headword), weight="A", config="simple"))
+        from .headwords import refresh_entry_search_vector
+
+        refresh_entry_search_vector(self.pk)
 
     def __str__(self) -> str:
         return self.headword
+
+
+class EntryAlias(models.Model):
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="aliases",
+        verbose_name=_("Entry"),
+    )
+    headword = models.CharField(max_length=255, verbose_name=_("Headword"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entry_aliases_created",
+        verbose_name=_("Created by"),
+    )
+
+    class Meta:
+        ordering = ["headword"]
+        verbose_name = _("Entry headword alias")
+        verbose_name_plural = _("Entry headword aliases")
+        constraints = [
+            models.UniqueConstraint(fields=["headword"], name="lexicon_entryalias_headword_uniq"),
+        ]
+        indexes = [
+            models.Index(fields=["entry"], name="lexicon_entryalias_entry_idx"),
+            GinIndex(fields=["headword"], opclasses=["gin_trgm_ops"], name="lexicon_alias_headword_trgm"),
+        ]
+
+    def clean(self):
+        super().clean()
+        self.headword = normalize_persian(self.headword or "").strip()
+        if not self.headword:
+            raise ValidationError({"headword": _("Headword is required.")})
+        if self.entry_id:
+            entry = self.entry
+            if self.headword == normalize_persian(entry.headword or ""):
+                raise ValidationError({"headword": _("Alias must differ from the primary headword.")})
+        qs_entry = Entry.objects.filter(headword=self.headword)
+        qs_alias = EntryAlias.objects.filter(headword=self.headword)
+        if self.pk:
+            qs_alias = qs_alias.exclude(pk=self.pk)
+        if qs_entry.exists():
+            raise ValidationError({"headword": _("This headword is already a primary entry title.")})
+        if qs_alias.exists():
+            raise ValidationError({"headword": _("This headword is already used as an alias elsewhere.")})
+
+    def save(self, *args, **kwargs):
+        self.headword = normalize_persian(self.headword or "").strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.headword
+
+
+class EntrySlugRedirect(models.Model):
+    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Slug"))
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="slug_redirects",
+        verbose_name=_("Entry"),
+    )
+
+    class Meta:
+        verbose_name = _("Entry slug redirect")
+        verbose_name_plural = _("Entry slug redirects")
+
+    def __str__(self) -> str:
+        return f"{self.slug} → {self.entry_id}"
+
+
+class SuggestedHeadword(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
+
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="headword_suggestions",
+        verbose_name=_("Entry"),
+    )
+    headword = models.CharField(max_length=255, verbose_name=_("Suggested headword"))
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="headword_suggestions_submitted",
+        verbose_name=_("Submitted by"),
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+        verbose_name=_("Status"),
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="headword_suggestions_reviewed",
+        verbose_name=_("Reviewed by"),
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Reviewed at"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Suggested headword")
+        verbose_name_plural = _("Suggested headwords")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["entry", "headword"],
+                condition=Q(status="pending"),
+                name="lexicon_suggested_hw_pending_uniq",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["entry", "status"], name="lexicon_sugg_ent_stat_idx"),
+        ]
+
+    def clean(self):
+        super().clean()
+        self.headword = normalize_persian(self.headword or "").strip()
+        if not self.headword:
+            raise ValidationError({"headword": _("Headword is required.")})
+
+    def save(self, *args, **kwargs):
+        self.headword = normalize_persian(self.headword or "").strip()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.headword} ({self.get_status_display()})"
 
 
 class SimilarEntryLink(models.Model):

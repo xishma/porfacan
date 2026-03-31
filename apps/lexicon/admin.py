@@ -1,18 +1,25 @@
-from django.contrib import admin
 from django import forms
-from django.urls import reverse
+from django.contrib import admin, messages
+from django.shortcuts import get_object_or_404, redirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from .headwords import merge_entries
 from .models import (
     Definition,
     DefinitionAttachment,
     DefinitionVote,
     Entry,
+    EntryAlias,
     EntryCategory,
+    EntrySlugRedirect,
     Epoch,
     Page,
     SimilarEntryLink,
+    SuggestedHeadword,
 )
 
 
@@ -25,6 +32,14 @@ class SimilarEntryLinkInline(admin.TabularInline):
     autocomplete_fields = ("similar_entry",)
     verbose_name = _("Similar entry")
     verbose_name_plural = _("Similar entries")
+
+
+class EntryAliasInline(admin.TabularInline):
+    model = EntryAlias
+    extra = 0
+    fields = ("headword", "created_at", "created_by")
+    readonly_fields = ("created_at", "created_by")
+    autocomplete_fields = ()
 
 
 @admin.register(Epoch)
@@ -42,12 +57,70 @@ class EntryCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
+    change_form_template = "admin/lexicon/entry/change_form.html"
     list_display = ("headword", "category", "display_epochs", "is_verified", "entry_page_link", "created_at")
     list_filter = ("is_verified", "category", "epochs")
-    search_fields = ("headword", "slug")
+    search_fields = ("headword", "slug", "aliases__headword")
     filter_horizontal = ("epochs",)
     list_editable = ("is_verified",)
-    inlines = (SimilarEntryLinkInline,)
+    inlines = (EntryAliasInline, SimilarEntryLinkInline)
+
+    def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
+        custom = [
+            path(
+                "<path:object_id>/merge/",
+                self.admin_site.admin_view(self.merge_entry_admin_view),
+                name="%s_%s_merge" % info,
+            ),
+        ]
+        return custom + super().get_urls()
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["merge_entry_url"] = reverse("admin:lexicon_entry_merge", args=[str(object_id)])
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    def merge_entry_admin_view(self, request, object_id):
+        primary = get_object_or_404(Entry, pk=object_id)
+        if not self.has_change_permission(request, primary):
+            messages.error(request, _("You do not have permission to merge entries."))
+            return redirect("admin:lexicon_entry_changelist")
+
+        if request.method == "POST":
+            raw = (request.POST.get("secondary_id") or "").strip()
+            try:
+                secondary_id = int(raw)
+            except ValueError:
+                messages.error(request, _("Enter a valid numeric id for the secondary entry."))
+                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
+            if secondary_id == primary.pk:
+                messages.error(request, _("The secondary entry must differ from the primary entry."))
+                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
+            secondary = Entry.objects.filter(pk=secondary_id).first()
+            if secondary is None:
+                messages.error(request, _("No entry with that id exists."))
+                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
+            try:
+                merge_entries(primary_id=primary.pk, secondary_id=secondary_id)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
+            messages.success(
+                request,
+                _("Merged “%(sec)s” into “%(pri)s”. Definitions and alternate headwords were moved.")
+                % {"sec": secondary.headword, "pri": primary.headword},
+            )
+            return redirect("admin:lexicon_entry_change", object_id=primary.pk)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": _("Merge another entry into this one"),
+            "primary": primary,
+            "opts": self.model._meta,
+            "has_view_permission": self.has_view_permission(request, primary),
+        }
+        return TemplateResponse(request, "admin/lexicon/merge_entry.html", context)
 
     @admin.display(description="Epochs")
     def display_epochs(self, obj):
@@ -57,6 +130,104 @@ class EntryAdmin(admin.ModelAdmin):
     def entry_page_link(self, obj):
         url = reverse("lexicon:entry-detail", kwargs={"slug": obj.slug})
         return format_html('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>', url, _("Open"))
+
+
+@admin.register(EntrySlugRedirect)
+class EntrySlugRedirectAdmin(admin.ModelAdmin):
+    list_display = ("slug", "entry", "entry_slug")
+    search_fields = ("slug", "entry__headword")
+    autocomplete_fields = ("entry",)
+
+    @admin.display(description=_("Canonical slug"))
+    def entry_slug(self, obj):
+        return obj.entry.slug
+
+
+def _approve_headword_suggestions(modeladmin, request, queryset):
+    approved = 0
+    now = timezone.now()
+    for suggestion in queryset.filter(status=SuggestedHeadword.Status.PENDING):
+        suggestion.status = SuggestedHeadword.Status.APPROVED
+        suggestion.reviewed_by = request.user
+        suggestion.reviewed_at = now
+        suggestion.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+        approved += 1
+    if approved:
+        messages.success(request, _("Approved %(n)d suggestion(s).") % {"n": approved})
+
+
+def _reject_headword_suggestions(modeladmin, request, queryset):
+    n = 0
+    now = timezone.now()
+    for suggestion in queryset.filter(status=SuggestedHeadword.Status.PENDING):
+        suggestion.status = SuggestedHeadword.Status.REJECTED
+        suggestion.reviewed_by = request.user
+        suggestion.reviewed_at = now
+        suggestion.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+        n += 1
+    if n:
+        messages.success(request, _("Rejected %(n)d suggestion(s).") % {"n": n})
+
+
+_approve_headword_suggestions.short_description = _("Approve selected (creates aliases)")
+_reject_headword_suggestions.short_description = _("Reject selected")
+
+
+@admin.register(SuggestedHeadword)
+class SuggestedHeadwordAdmin(admin.ModelAdmin):
+    list_display = (
+        "headword",
+        "entry",
+        "entry_public_link",
+        "submitted_by",
+        "status",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+    )
+    list_filter = ("status", "created_at")
+    search_fields = ("headword", "entry__headword", "submitted_by__email")
+    autocomplete_fields = ("entry", "submitted_by")
+    fields = (
+        "entry",
+        "entry_public_link",
+        "headword",
+        "submitted_by",
+        "status",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+    )
+    readonly_fields = ("created_at", "reviewed_at", "reviewed_by", "entry_public_link")
+    actions = (_approve_headword_suggestions, _reject_headword_suggestions)
+
+    @admin.display(description=_("View entry"))
+    def entry_public_link(self, obj):
+        if obj is None or not getattr(obj, "entry_id", None):
+            return "—"
+        url = reverse("lexicon:entry-detail", kwargs={"slug": obj.entry.slug})
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>',
+            url,
+            _("Open on site"),
+        )
+
+    def save_model(self, request, obj, form, change):
+        if obj.status == SuggestedHeadword.Status.PENDING:
+            obj.reviewed_at = None
+            obj.reviewed_by = None
+        else:
+            old_status = form.initial.get("status") if change else None
+            needs_stamp = (
+                not change
+                or old_status == SuggestedHeadword.Status.PENDING
+                or (old_status is not None and old_status != obj.status)
+            )
+            if needs_stamp or obj.reviewed_at is None:
+                obj.reviewed_at = timezone.now()
+            if request.user.is_authenticated and (needs_stamp or obj.reviewed_by_id is None):
+                obj.reviewed_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Definition)

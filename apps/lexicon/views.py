@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.db.models import Exists, OuterRef, Prefetch, Q
 from django.contrib.postgres.search import TrigramSimilarity
 from django.http import Http404
+from django.http import HttpResponsePermanentRedirect
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -12,6 +13,9 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from datetime import timedelta
+
+from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from django.utils.translation import gettext as _
@@ -21,10 +25,54 @@ from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 from .cache import build_versioned_cache_key
 from .contribution_guide import get_contribution_guide_page_url
 from .definition_page import definition_first_page_prefetch_queryset, fetch_definition_page, initial_definition_infinite_scroll_state
-from .entry_list_page import fetch_entry_list_page
-from .forms import DefinitionAttachmentFormSet, DefinitionForm, EntryForm, EntryInitialDefinitionForm
-from .models import Definition, DefinitionVote, Entry, EntryCategory, EntryQuerySet, Epoch, Page, SimilarEntryLink
+from .entry_list_page import ENTRY_CARD_PREFETCHES, fetch_entry_list_page
+from .forms import (
+    DefinitionAttachmentFormSet,
+    DefinitionForm,
+    EntryForm,
+    EntryInitialDefinitionForm,
+    SuggestedHeadwordForm,
+)
+from .headwords import pending_entry_matching_headword
+from .models import (
+    Definition,
+    DefinitionVote,
+    Entry,
+    EntryAlias,
+    EntryCategory,
+    EntryQuerySet,
+    EntrySlugRedirect,
+    Epoch,
+    Page,
+    SimilarEntryLink,
+    SuggestedHeadword,
+)
 from .normalization import normalize_persian
+
+
+_SLUG_REDIRECT_PUBLIC_VIEWS = frozenset(
+    {
+        "lexicon:entry-detail",
+        "lexicon:definition-create",
+        "lexicon:entry-definitions-more",
+        "lexicon:suggest-headword",
+    }
+)
+
+
+def entry_slug_redirect_response(request, slug: str, *, view_name: str) -> HttpResponsePermanentRedirect | None:
+    if Entry.objects.filter(slug=slug).exists():
+        return None
+    row = EntrySlugRedirect.objects.filter(slug=slug).select_related("entry").first()
+    if row is None:
+        return None
+    target = row.entry
+    if view_name in _SLUG_REDIRECT_PUBLIC_VIEWS:
+        if not entry_visible_queryset(request).filter(pk=target.pk).exists():
+            return None
+    elif not Entry.objects.filter(pk=target.pk).exists():
+        return None
+    return HttpResponsePermanentRedirect(reverse(view_name, kwargs={"slug": target.slug}))
 
 
 def _entry_admin_visibility(user) -> bool:
@@ -195,11 +243,7 @@ class PendingHeadwordCheckView(ContributorRequiredMixin, View):
         normalized = normalize_persian(query).strip()
         if not normalized:
             return JsonResponse({"matches_pending": False})
-        entry = (
-            Entry.objects.filter(headword=normalized, is_verified=False)
-            .order_by("created_at")
-            .first()
-        )
+        entry = pending_entry_matching_headword(normalized)
         if entry is None:
             return JsonResponse({"matches_pending": False})
         epoch_ids = list(entry.epochs.order_by("id").values_list("id", flat=True))
@@ -211,6 +255,12 @@ class PendingHeadwordCheckView(ContributorRequiredMixin, View):
                 "description": entry.description or "",
             }
         )
+
+
+def _entry_headword_or_alias_startswith_q(normalized_query: str) -> Q:
+    return Q(headword__startswith=normalized_query) | Exists(
+        EntryAlias.objects.filter(entry_id=OuterRef("pk"), headword__startswith=normalized_query)
+    )
 
 
 class EntrySuggestionView(View):
@@ -242,7 +292,8 @@ class EntrySuggestionView(View):
                     used_slugs.add(item["slug"])
 
             add_rows(
-                Entry.objects.filter(is_verified=True, headword__startswith=normalized_query)
+                Entry.objects.filter(is_verified=True)
+                .filter(_entry_headword_or_alias_startswith_q(normalized_query))
                 .order_by("-created_at")
                 .values("headword", "slug")[:limit]
             )
@@ -258,12 +309,26 @@ class EntrySuggestionView(View):
                     .order_by("-trigram_similarity", "-created_at")
                     .values("headword", "slug")[:remaining]
                 )
+                alias_trigram_ids = (
+                    EntryAlias.objects.filter(headword__trigram_similar=normalized_query)
+                    .annotate(trigram_similarity=TrigramSimilarity("headword", normalized_query))
+                    .filter(trigram_similarity__gte=EntryQuerySet.SUGGESTION_TRIGRAM_THRESHOLD)
+                    .values("entry_id")
+                )
+                add_rows(
+                    Entry.objects.filter(is_verified=True)
+                    .exclude(slug__in=used_slugs)
+                    .filter(pk__in=alias_trigram_ids)
+                    .order_by("-created_at")
+                    .values("headword", "slug")[:remaining]
+                )
 
             if for_form:
                 remaining = limit - len(suggestions)
                 if remaining > 0:
                     add_rows(
-                        Entry.objects.filter(is_verified=False, headword__startswith=normalized_query)
+                        Entry.objects.filter(is_verified=False)
+                        .filter(_entry_headword_or_alias_startswith_q(normalized_query))
                         .exclude(slug__in=used_slugs)
                         .order_by("-created_at")
                         .values("headword", "slug")[:remaining]
@@ -279,6 +344,20 @@ class EntrySuggestionView(View):
                         .order_by("-trigram_similarity", "-created_at")
                         .values("headword", "slug")[:remaining]
                     )
+                    add_rows(
+                        Entry.objects.filter(is_verified=False)
+                        .exclude(slug__in=used_slugs)
+                        .filter(
+                            pk__in=(
+                                EntryAlias.objects.filter(headword__trigram_similar=normalized_query)
+                                .annotate(trigram_similarity=TrigramSimilarity("headword", normalized_query))
+                                .filter(trigram_similarity__gte=EntryQuerySet.SUGGESTION_TRIGRAM_THRESHOLD)
+                                .values("entry_id")
+                            )
+                        )
+                        .order_by("-created_at")
+                        .values("headword", "slug")[:remaining]
+                    )
 
             cache.set(cache_key, suggestions, timeout=settings.LEXICON_CACHE_TIMEOUT_SUGGESTIONS)
         return JsonResponse({"results": suggestions})
@@ -291,6 +370,14 @@ class EntryDetailView(DetailView):
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
+    def dispatch(self, request, *args, **kwargs):
+        slug = kwargs.get(self.slug_url_kwarg)
+        if slug:
+            redir = entry_slug_redirect_response(request, slug, view_name="lexicon:entry-detail")
+            if redir:
+                return redir
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = entry_visible_queryset(self.request)
         similar_qs = (
@@ -300,7 +387,7 @@ class EntryDetailView(DetailView):
         )
         defs_qs = definition_first_page_prefetch_queryset()
         return queryset.select_related("category").prefetch_related(
-            "epochs",
+            *ENTRY_CARD_PREFETCHES,
             Prefetch("similar_links", queryset=similar_qs),
             Prefetch("definitions", queryset=defs_qs, to_attr="definitions_visible"),
         )
@@ -326,6 +413,23 @@ class EntryDetailView(DetailView):
         context["similar_entry_links"] = similar_links
         flags = _entry_detail_lexicon_flags(self.request, entry)
         context.update(flags)
+        user = self.request.user
+        if getattr(user, "is_authenticated", False):
+            rejected_cutoff = timezone.now() - timedelta(days=2)
+            suggestion_qs = SuggestedHeadword.objects.filter(entry=entry, submitted_by=user).filter(
+                Q(status=SuggestedHeadword.Status.PENDING)
+                | Q(status=SuggestedHeadword.Status.REJECTED, reviewed_at__gte=rejected_cutoff)
+            )
+            suggestions_list = list(suggestion_qs.order_by("-created_at")[:20])
+            context["my_headword_suggestions"] = suggestions_list
+            context["headword_suggestions_include_rejected"] = any(
+                s.status == SuggestedHeadword.Status.REJECTED for s in suggestions_list
+            )
+        else:
+            context["my_headword_suggestions"] = []
+            context["headword_suggestions_include_rejected"] = False
+        if flags["can_contribute"]:
+            context["suggest_headword_form"] = SuggestedHeadwordForm(entry=entry, user=user)
         if flags["can_contribute"] and flags["can_add_definition"]:
             context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
         definitions_visible = list(entry.definitions_visible)
@@ -362,9 +466,35 @@ class EntryDetailView(DetailView):
         return context
 
 
+class SuggestedHeadwordCreateView(ContributorRequiredMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        slug = kwargs.get("slug")
+        if slug:
+            redir = entry_slug_redirect_response(request, slug, view_name="lexicon:suggest-headword")
+            if redir:
+                return redir
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        slug = kwargs["slug"]
+        entry = get_object_or_404(entry_visible_queryset(request), slug=slug)
+        form = SuggestedHeadwordForm(request.POST, entry=entry, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Your alternate headword was submitted for review."))
+        else:
+            for errs in form.errors.values():
+                for err in errs:
+                    messages.error(request, err)
+        return HttpResponseRedirect(reverse("lexicon:entry-detail", kwargs={"slug": entry.slug}))
+
+
 class EntryDefinitionsMoreView(View):
     def get(self, request, *args, **kwargs):
         slug = kwargs["slug"]
+        redir = entry_slug_redirect_response(request, slug, view_name="lexicon:entry-definitions-more")
+        if redir:
+            return redir
         entry = get_object_or_404(entry_visible_queryset(request), slug=slug)
         after = (request.GET.get("after") or "").strip()
         page = fetch_definition_page(entry_id=entry.pk, after_token=after or None)
@@ -450,9 +580,7 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
             return self.form_invalid(form, definition_form=definition_form, attachment_formset=attachment_formset)
 
         headword = form.cleaned_data["headword"]
-        pending_entry = (
-            Entry.objects.filter(headword=headword, is_verified=False).order_by("created_at").first()
-        )
+        pending_entry = pending_entry_matching_headword(headword)
         if pending_entry:
             self.object = pending_entry
             if definition_content:
@@ -505,6 +633,14 @@ class EntryUpdateView(EditorRequiredMixin, UpdateView):
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
+    def dispatch(self, request, *args, **kwargs):
+        slug = kwargs.get(self.slug_url_kwarg)
+        if slug:
+            redir = entry_slug_redirect_response(request, slug, view_name="lexicon:entry-update")
+            if redir:
+                return redir
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
@@ -525,7 +661,12 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
     template_name = "lexicon/definition_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.entry = get_object_or_404(Entry, slug=kwargs["slug"])
+        slug = kwargs.get("slug")
+        if slug:
+            redir = entry_slug_redirect_response(request, slug, view_name="lexicon:definition-create")
+            if redir:
+                return redir
+        self.entry = get_object_or_404(entry_visible_queryset(request), slug=slug)
         if request.user.is_authenticated and Definition.objects.filter(entry=self.entry, author=request.user).exists():
             messages.error(request, _("You have already submitted a definition for this entry."))
             return HttpResponseRedirect(reverse("lexicon:entry-detail", kwargs={"slug": self.entry.slug}))

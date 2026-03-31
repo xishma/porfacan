@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+{{ block.super }}
+{% if merge_entry_url %}
+<li>
+    <a href="{{ merge_entry_url }}" class="historylink">{% trans "Merge another entry into this one" %}</a>
+</li>
+{% endif %}
+{% endblock %}

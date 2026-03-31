@@ -1,11 +1,48 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .cache import bump_cache_version
-from .models import Definition, DefinitionVote, Entry, EntryCategory, Epoch, Page
+from .headwords import refresh_entry_search_vector
+from .models import Definition, DefinitionVote, Entry, EntryAlias, EntryCategory, Epoch, Page, SuggestedHeadword
+from .normalization import normalize_persian
 from .tasks import recompute_auto_similar_entries
+
+
+@receiver(post_save, sender=SuggestedHeadword)
+def ensure_entry_alias_when_suggestion_approved(sender, instance: SuggestedHeadword, **kwargs):
+    if instance.status != SuggestedHeadword.Status.APPROVED:
+        return
+    norm = normalize_persian(instance.headword or "").strip()
+    if not norm:
+        return
+    existing = EntryAlias.objects.filter(headword=norm).first()
+    if existing is not None:
+        if existing.entry_id == instance.entry_id:
+            return
+        return
+    alias = EntryAlias(entry_id=instance.entry_id, headword=norm, created_by=None)
+    try:
+        alias.full_clean()
+        alias.save()
+    except ValidationError:
+        pass
+
+
+@receiver(post_save, sender=EntryAlias)
+def refresh_search_vector_on_alias_save(sender, instance: EntryAlias, **kwargs):
+    refresh_entry_search_vector(instance.entry_id)
+    bump_cache_version("entry_search_results")
+    bump_cache_version("entry_suggestions")
+
+
+@receiver(post_delete, sender=EntryAlias)
+def refresh_search_vector_on_alias_delete(sender, instance: EntryAlias, **kwargs):
+    refresh_entry_search_vector(instance.entry_id)
+    bump_cache_version("entry_search_results")
+    bump_cache_version("entry_suggestions")
 
 
 @receiver(post_save, sender=Entry)

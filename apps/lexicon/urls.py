@@ -12,6 +12,7 @@ from .views import (
     EntryUpdateView,
     PageDetailView,
     PendingHeadwordCheckView,
+    SuggestedHeadwordCreateView,
 )
 
 app_name = "lexicon"
@@ -25,6 +26,7 @@ urlpatterns = [
     path("entries/new/", EntryCreateView.as_view(), name="entry-create"),
     path("entries/<str:slug>/definitions/feed/", EntryDefinitionsMoreView.as_view(), name="entry-definitions-more"),
     path("entries/<str:slug>/definitions/new/", DefinitionCreateView.as_view(), name="definition-create"),
+    path("entries/<str:slug>/suggest-headword/", SuggestedHeadwordCreateView.as_view(), name="suggest-headword"),
     path("entries/<str:slug>/", EntryDetailView.as_view(), name="entry-detail"),
     path("entries/<str:slug>/edit/", EntryUpdateView.as_view(), name="entry-update"),
     path("definitions/<int:pk>/vote/", DefinitionVoteView.as_view(), name="definition-vote"),

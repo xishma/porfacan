@@ -5,12 +5,27 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
+from django.db.models import Case, IntegerField, OuterRef, Prefetch, Q, Subquery, Value, When
 
 from .cache import build_versioned_cache_key, get_cache_version
-from .models import Definition, Entry, EntryCategory, Epoch
+from .models import Definition, Entry, EntryAlias, EntryCategory, Epoch, SuggestedHeadword
 from .normalization import normalize_persian
 from .pagination import LIST_PAGE_SIZE, decode_cursor, encode_cursor
+
+ENTRY_CARD_PREFETCHES = (
+    Prefetch(
+        "aliases",
+        queryset=EntryAlias.objects.order_by("headword").only("id", "headword", "entry_id"),
+    ),
+    Prefetch(
+        "headword_suggestions",
+        queryset=SuggestedHeadword.objects.filter(status=SuggestedHeadword.Status.APPROVED)
+        .order_by("headword")
+        .only("id", "headword", "entry_id"),
+        to_attr="approved_suggestion_headwords",
+    ),
+    "epochs",
+)
 
 
 @dataclass
@@ -64,7 +79,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
                 "category__name",
                 "category__slug",
             )
-            .prefetch_related("epochs")
+            .prefetch_related(*ENTRY_CARD_PREFETCHES)
             .none()
         )
 
@@ -86,7 +101,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
             "category__name",
             "category__slug",
         )
-        .prefetch_related("epochs")
+        .prefetch_related(*ENTRY_CARD_PREFETCHES)
         .annotate(_cached_order=order_by_id)
         .order_by("_cached_order")
     )
@@ -107,7 +122,7 @@ def _base_verified_entries():
             "category__name",
             "category__slug",
         )
-        .prefetch_related("epochs")
+        .prefetch_related(*ENTRY_CARD_PREFETCHES)
     )
 
 

@@ -4,7 +4,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Definition, DefinitionAttachment, Entry, EntryCategory, Epoch
+from .headwords import headword_reserved_for_other_entry
+from .models import Definition, DefinitionAttachment, Entry, EntryAlias, EntryCategory, Epoch, SuggestedHeadword
 from .normalization import normalize_persian
 
 
@@ -78,31 +79,33 @@ class EntryForm(forms.ModelForm):
             cleaned_data["description"] = normalize_persian(cleaned_data.get("description", ""))
 
         if headword:
-            qs = Entry.objects.filter(headword=headword)
-            if getattr(self.instance, "pk", None):
-                qs = qs.exclude(pk=self.instance.pk)
-            other = qs.first()
-            if other:
-                if other.is_verified:
-                    url = reverse("lexicon:entry-detail", kwargs={"slug": other.slug})
-                    raise ValidationError(
-                        {
-                            "headword": format_html(
-                                '{} <a href="{}" class="font-medium text-blue-700 underline hover:text-blue-900">{}</a>',
-                                _("An entry with this headword already exists."),
-                                url,
-                                _("View entry"),
-                            ),
-                        }
-                    )
-                if not self._is_create_form():
-                    raise ValidationError(
-                        {
-                            "headword": _(
-                                "An entry with this headword already exists and is pending verification."
-                            ),
-                        }
-                    )
+            exclude_pk = getattr(self.instance, "pk", None)
+            if headword_reserved_for_other_entry(headword, exclude_entry_id=exclude_pk):
+                other = Entry.objects.filter(headword=headword).exclude(pk=exclude_pk).first()
+                if not other:
+                    alias = EntryAlias.objects.filter(headword=headword).select_related("entry").first()
+                    other = alias.entry if alias else None
+                if other:
+                    if other.is_verified:
+                        url = reverse("lexicon:entry-detail", kwargs={"slug": other.slug})
+                        raise ValidationError(
+                            {
+                                "headword": format_html(
+                                    '{} <a href="{}" class="font-medium text-blue-700 underline hover:text-blue-900">{}</a>',
+                                    _("This headword is already used (primary or alternate) on another entry."),
+                                    url,
+                                    _("View entry"),
+                                ),
+                            }
+                        )
+                    if not self._is_create_form():
+                        raise ValidationError(
+                            {
+                                "headword": _(
+                                    "This headword is already used on another entry that is pending verification."
+                                ),
+                            },
+                        )
 
         return cleaned_data
 
@@ -224,3 +227,69 @@ DefinitionAttachmentFormSet = forms.formset_factory(
     max_num=5,
     validate_max=True,
 )
+
+
+class SuggestedHeadwordForm(forms.ModelForm):
+    class Meta:
+        model = SuggestedHeadword
+        fields = ("headword",)
+        labels = {"headword": _("Alternate headword")}
+        widgets = {
+            "headword": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2",
+                    "autocomplete": "off",
+                    "autocorrect": "off",
+                    "autocapitalize": "off",
+                    "spellcheck": "false",
+                    "placeholder": _("Also known as…"),
+                }
+            ),
+        }
+
+    def __init__(self, *args, entry: Entry, user, **kwargs):
+        self.entry = entry
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_headword(self):
+        text = normalize_persian(self.cleaned_data.get("headword", "")).strip()
+        if not text:
+            raise ValidationError(_("Headword is required."))
+        primary = normalize_persian(self.entry.headword or "")
+        if text == primary:
+            raise ValidationError(_("This matches the primary headword."))
+        if EntryAlias.objects.filter(entry=self.entry, headword=text).exists():
+            raise ValidationError(_("This alternate headword is already listed for this entry."))
+        if headword_reserved_for_other_entry(text, exclude_entry_id=self.entry.pk):
+            other = Entry.objects.filter(headword=text).first()
+            if not other:
+                alias = EntryAlias.objects.filter(headword=text).select_related("entry").first()
+                other = alias.entry if alias else None
+            if other:
+                url = reverse("lexicon:entry-detail", kwargs={"slug": other.slug})
+                raise ValidationError(
+                    format_html(
+                        '{} <a href="{}" class="font-medium text-blue-700 underline hover:text-blue-900">{}</a>',
+                        _("This headword is already used elsewhere."),
+                        url,
+                        _("View entry"),
+                    )
+                )
+            raise ValidationError(_("This headword is already used elsewhere."))
+        if SuggestedHeadword.objects.filter(
+            entry=self.entry,
+            headword=text,
+            status=SuggestedHeadword.Status.PENDING,
+        ).exists():
+            raise ValidationError(_("A pending suggestion already exists for this headword."))
+        return text
+
+    def save(self, commit=True):
+        suggestion = super().save(commit=False)
+        suggestion.entry = self.entry
+        suggestion.submitted_by = self.user
+        suggestion.status = SuggestedHeadword.Status.PENDING
+        if commit:
+            suggestion.save()
+        return suggestion
