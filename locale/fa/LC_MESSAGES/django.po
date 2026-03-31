@@ -758,6 +758,7 @@ msgstr "برای رای‌دادن، ابتدا در صفحه پروفایل ا�
 #: templates/lexicon/entry_detail.html:15
 msgid "This entry may also appear under these names:"
 msgstr ""
+"این مدخل همچنین ممکن است با این سرواژه‌ها شناخته شود:"
 
 #: templates/lexicon/definition_form.html:4
 msgid "New definition"
@@ -791,27 +792,27 @@ msgstr "یادداشت داخلی"
 
 #: templates/lexicon/entry_detail.html:51
 msgid "Suggest another title for this entry"
-msgstr ""
+msgstr "پیشنهاد یک سرواژه دیگر برای این مدخل"
 
 #: templates/lexicon/entry_detail.html:54
 msgid ""
 "If this entry is also known by another title, suggest it here. A moderator "
 "will review it."
 msgstr ""
+"اگر این مدخل همچنین با سرواژه دیگری شناخته شود، آن را اینجا پیشنهاد دهید. یک "
+"ناظر بررسی خواهد کرد."
 
 #: templates/lexicon/entry_detail.html:63
 msgid "Submit"
-msgstr ""
+msgstr "ثبت"
 
 #: templates/lexicon/entry_detail.html:72
-#, fuzzy
-#| msgid "From automatic suggestions"
 msgid "Your headword suggestions"
-msgstr "از پیشنهادهای خودکار"
+msgstr "پیشنهادهای سرواژه شما"
 
 #: templates/lexicon/entry_detail.html:74
 msgid "Rejected titles are shown here for about two days after review."
-msgstr ""
+msgstr "سرواژه‌های رد شده تقریبا دو روز بعد از بررسی نشان داده می‌شوند."
 
 #: templates/lexicon/entry_detail.html:109
 msgid "Read the contribution guide before adding a definition."
