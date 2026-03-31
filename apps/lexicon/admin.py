@@ -63,6 +63,8 @@ class EntryAdmin(admin.ModelAdmin):
     search_fields = ("headword", "slug", "aliases__headword")
     filter_horizontal = ("epochs",)
     list_editable = ("is_verified",)
+    readonly_fields = ("entry_page_link", "created_at", )
+    exclude = ("search_vector",)
     inlines = (EntryAliasInline, SimilarEntryLinkInline)
 
     def get_urls(self):

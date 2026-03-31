@@ -16,7 +16,7 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 from datetime import timedelta
 
 from django.utils import timezone
-from django.utils.html import strip_tags
+from django.utils.html import format_html, strip_tags
 from django.utils.text import Truncator
 from django.utils.translation import gettext as _
 
@@ -446,13 +446,22 @@ class EntryDetailView(DetailView):
             or entry.created_by_id == uid
             or Definition.objects.filter(entry=entry, author_id=uid).exists()
         ):
-            messages.warning(
-                self.request,
-                _(
-                    "This entry is not verified yet. Until it is published, it is only visible to "
-                    "administrators, the person who suggested the entry, and people who have added definitions."
-                ),
+            warning_text = _(
+                "This entry is not verified yet. Until it is published, it is only visible to "
+                "administrators, the person who suggested the entry, and people who have added definitions."
             )
+            if _entry_admin_visibility(self.request.user):
+                messages.warning(
+                    self.request,
+                    format_html(
+                        '{} <a href="{}" class="font-semibold underline">{}</a>',
+                        warning_text,
+                        reverse("admin:lexicon_entry_change", args=[entry.pk]),
+                        _("Open in admin to verify it."),
+                    ),
+                )
+            else:
+                messages.warning(self.request, warning_text)
         context["share_meta_title"] = _("%(headword)s | Porfacan") % {"headword": entry.headword}
         if definitions_visible:
             snippet = Truncator(definitions_visible[0].content).chars(200)

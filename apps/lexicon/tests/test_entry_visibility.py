@@ -148,6 +148,7 @@ def test_admin_can_view_unverified_entry_detail_with_warning(client, unverified_
     content = response.content.decode()
     assert unverified_entry.headword in content
     assert "not verified yet" in content
+    assert reverse("admin:lexicon_entry_change", args=[unverified_entry.pk]) in content
 
 
 @pytest.mark.django_db
