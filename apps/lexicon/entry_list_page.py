@@ -132,7 +132,7 @@ def _filtered_queryset_for_search_epoch_category(query: str, selected_epoch: str
     has_query = bool(normalized_query)
     invalid_epoch = False
     invalid_category = False
-    if query:
+    if has_query:
         queryset = queryset.search(query)
     if selected_epoch:
         epochs = Epoch.objects.filter(name__iexact=selected_epoch)
@@ -199,7 +199,7 @@ def _cursor_from_id_list(after_id: int) -> str:
 
 
 def _search_result_order():
-    return ("-starts_with", "-has_definition_match", "-search_rank", "-trigram_similarity", "-created_at", "-id")
+    return ("-starts_with", "-has_definition_match", "-search_rank", "-combined_trigram", "-created_at", "-id")
 
 
 def _cursor_search_offset(offset: int) -> str:

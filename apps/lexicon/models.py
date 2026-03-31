@@ -72,7 +72,7 @@ class EntryQuerySet(QuerySet):
                 Q(search_rank__gt=0)
                 | Q(has_definition_match=True)
                 | Q(headword__icontains=normalized_query)
-                | Q(alias_icontains=True)
+                | alias_icontains
                 | Q(combined_trigram__gte=self.SEARCH_TRIGRAM_THRESHOLD)
             )
             .order_by(
