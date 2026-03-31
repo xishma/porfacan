@@ -890,9 +890,8 @@ msgstr "آرشیو اصطلاحات اعتراضی"
 
 #: templates/lexicon/entry_list.html:10
 msgid ""
-"Crowdsourced dictionary of protest vocabulary against the Islamic Republic "
-"of Iran"
-msgstr "فرهنگ جمع‌سپاری‌شده اصطلاحات اعتراضی علیه جمهوری اسلامی ایران"
+"Crowdsourced dictionary of protest vocabulary against the Islamic Republic"
+msgstr "فرهنگ جمع‌سپاری‌شده اصطلاحات اعتراضی علیه جمهوری اسلامی"
 
 #: templates/lexicon/entry_list.html:16
 msgid "Quick search"
