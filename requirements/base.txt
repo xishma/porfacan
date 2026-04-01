@@ -1,6 +1,7 @@
 django>=5.0,<6.0
 django-allauth>=65.0
 django-hcaptcha-field>=1.4
+requests>=2.32
 PyJWT>=2.8
 cryptography>=42.0
 oauthlib>=3.2
