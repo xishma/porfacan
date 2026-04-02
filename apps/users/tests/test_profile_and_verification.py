@@ -25,6 +25,9 @@ def test_register_sends_verification_email(client):
     user = User.objects.get(email="new-user@example.com")
     email_address = EmailAddress.objects.get(user=user, email=user.email, verified=False, primary=True)
     mocked_delay.assert_called_once_with(email_address.pk, signup=True)
+    assert response.url == reverse("lexicon:entry-list")
+    assert response.wsgi_request.user.is_authenticated
+    assert response.wsgi_request.user.pk == user.pk
 
 
 @pytest.mark.django_db

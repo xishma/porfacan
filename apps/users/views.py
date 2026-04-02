@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.contrib import messages
@@ -61,7 +61,7 @@ class UserRegisterView(CreateView):
     model = User
     form_class = UserRegistrationForm
     template_name = "users/register.html"
-    success_url = reverse_lazy("users:login")
+    success_url = reverse_lazy("lexicon:entry-list")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -72,6 +72,7 @@ class UserRegisterView(CreateView):
         self.object = form.save(commit=False)
         self.object.role = User.Roles.CONTRIBUTOR
         self.object.save()
+        login(self.request, self.object, backend="django.contrib.auth.backends.ModelBackend")
         email_address = _sync_primary_email_address(self.object, verified=False)
         send_verification_email_task.delay(email_address.pk, signup=True)
         messages.success(
