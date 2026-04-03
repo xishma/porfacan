@@ -1,0 +1,9 @@
+{% load i18n %}
+{% trans "Dear user" as default_user_name %}{% blocktrans with name=user.first_name|default:default_user_name %}Hi {{ name }},{% endblocktrans %}
+
+{% trans "Your Porfacan account was created. Verify your email to complete signup:" %}
+{{ activate_url }}
+
+{% trans "This link is valid for 3 days." %}
+
+{% trans "If you did not request this, you can safely ignore this email." %}

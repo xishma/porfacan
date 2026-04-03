@@ -1,5 +1,20 @@
+from django.conf import settings
+from django.urls import reverse
+
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.models import EmailAddress
+
+
+class UserAccountAdapter(DefaultAccountAdapter):
+    """Customize account behavior for app-level defaults."""
+
+    def get_email_confirmation_url(self, request, emailconfirmation):
+        canonical = (getattr(settings, "SITE_CANONICAL_URL", "") or "").strip().rstrip("/")
+        if canonical:
+            path = reverse("account_confirm_email", args=[emailconfirmation.key])
+            return f"{canonical}{path}"
+        return super().get_email_confirmation_url(request, emailconfirmation)
 
 
 class UserSocialAccountAdapter(DefaultSocialAccountAdapter):

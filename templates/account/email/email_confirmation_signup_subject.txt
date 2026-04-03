@@ -1,0 +1,1 @@
+{% load i18n %}{% trans "Complete signup and verify your Porfacan email" %}
