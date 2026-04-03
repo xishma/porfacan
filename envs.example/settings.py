@@ -67,6 +67,14 @@ X_OAUTH_CLIENT_SECRET = ""
 HCAPTCHA_SITEKEY = ""
 HCAPTCHA_SECRET = ""
 
+# Outbound mail (django.core.mail defaults: SMTP backend, localhost:25, no TLS).
+EMAIL_HOST = ""
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+DEFAULT_FROM_EMAIL = ""
+
 # If you replace this dict, include every provider you use (e.g. twitter_oauth2 for X).
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
