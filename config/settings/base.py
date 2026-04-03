@@ -24,7 +24,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.twitter_oauth2",
     "storages",
-    "anymail",
     "hcaptcha_field",
     "apps.users",
     "apps.lexicon",
@@ -238,8 +237,6 @@ AWS_LOCATION = ""
 AWS_S3_REGION_NAME = ""
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_QUERYSTRING_AUTH = True
-
-EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
 
 try:
     from envs.settings import *  # noqa
