@@ -2,22 +2,23 @@
 <!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'fa' }}" dir="rtl">
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% trans "Complete signup and verify your Porfacan email" %}</title>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:Tahoma,Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 12px;">
+<body dir="rtl" style="margin:0;padding:0;background:#f1f5f9;font-family:Tahoma,Arial,sans-serif;color:#0f172a;direction:rtl;text-align:right;unicode-bidi:embed;">
+  <table role="presentation" dir="rtl" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 12px;direction:rtl;text-align:right;unicode-bidi:embed;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+      <td align="center" dir="rtl" style="direction:rtl;text-align:center;">
+        <table role="presentation" dir="rtl" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;direction:rtl;text-align:right;">
           <tr>
-            <td style="background:#0f172a;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:700;">
+            <td dir="rtl" align="right" style="background:#0f172a;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:700;direction:rtl;text-align:right;">
               {% trans "Porfacan" %}
             </td>
           </tr>
           <tr>
-            <td style="padding:24px;line-height:1.9;font-size:15px;">
+            <td dir="rtl" align="right" style="padding:24px;line-height:1.9;font-size:15px;direction:rtl;text-align:right;unicode-bidi:embed;">
               {% trans "Dear user" as default_user_name %}
               <p style="margin:0 0 12px;">{% blocktrans with name=user.first_name|default:default_user_name %}Hi {{ name }},{% endblocktrans %}</p>
               <p style="margin:0 0 16px;">{% trans "Your Porfacan account was created. Verify your email to complete signup." %}</p>
