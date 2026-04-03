@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    EmailUnsubscribeNotificationsView,
     ResendVerificationEmailView,
     UserLoginView,
     UserLogoutView,
@@ -19,5 +20,10 @@ urlpatterns = [
         "profile/resend-verification/",
         ResendVerificationEmailView.as_view(),
         name="resend-verification",
+    ),
+    path(
+        "email/unsubscribe/notifications/<str:token>/",
+        EmailUnsubscribeNotificationsView.as_view(),
+        name="email-unsubscribe-notifications",
     ),
 ]

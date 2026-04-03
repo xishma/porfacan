@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
 from django.views import View
@@ -127,3 +127,16 @@ class ResendVerificationEmailView(LoginRequiredMixin, View):
         send_verification_email_task.delay(email_address.pk, signup=False)
         messages.success(request, _("Verification email sent. Check your inbox."))
         return redirect("users:profile")
+
+
+class EmailUnsubscribeNotificationsView(View):
+    def get(self, request, token, *args, **kwargs):
+        from .email_unsubscribe import unsign_email_notifications_unsubscribe
+
+        uid = unsign_email_notifications_unsubscribe(token)
+        if uid is None:
+            return render(request, "users/email_unsubscribe_invalid.html", status=400)
+        updated = User.objects.filter(pk=uid).update(receive_email_notifications=False)
+        if not updated:
+            return render(request, "users/email_unsubscribe_invalid.html", status=400)
+        return render(request, "users/email_unsubscribe_notifications_done.html")

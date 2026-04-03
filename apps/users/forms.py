@@ -2,10 +2,24 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from hcaptcha_field import hCaptchaField
 
 User = get_user_model()
+
+
+class _PostedBooleanCheckbox(forms.CheckboxInput):
+    """Checkbox + hidden 0 so unchecked state is still posted (avoids silent opt-out)."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        hidden = format_html('<input type="hidden" name="{}" value="0">', name)
+        cb = super().render(name, value, attrs, renderer)
+        return mark_safe(hidden + cb)
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(name) == "1"
 
 
 class TailwindAuthenticationForm(AuthenticationForm):
@@ -73,7 +87,7 @@ class UserRegistrationForm(UserCreationForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("first_name", "email")
+        fields = ("first_name", "email", "receive_email_notifications")
 
     def __init__(self, *args, can_change_email: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,6 +97,10 @@ class UserProfileForm(forms.ModelForm):
         )
         self.fields["email"].widget = forms.EmailInput(
             attrs={"class": f"{base_class} text-left", "autocomplete": "email", "dir": "ltr"}
+        )
+        self.fields["receive_email_notifications"].required = False
+        self.fields["receive_email_notifications"].widget = _PostedBooleanCheckbox(
+            attrs={"class": "h-4 w-4 rounded border-slate-300 text-slate-900"}
         )
         self.can_change_email = can_change_email
         if not can_change_email:

@@ -1,0 +1,9 @@
+{% load i18n %}
+{% trans "Dear user" as default_user_name %}
+{% blocktrans with name=user.first_name|default:default_user_name %}Hi {{ name }},{% endblocktrans %}
+
+{% blocktrans with word=entry.headword %}The entry you contributed to, "{{ word }}", is now published on Porfacan.{% endblocktrans %}
+
+{% trans "View entry:" %} {{ entry_url }}
+
+{% trans "Unsubscribe from these emails:" %} {{ unsubscribe_url }}

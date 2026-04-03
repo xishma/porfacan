@@ -31,6 +31,13 @@ class User(AbstractUser):
         verbose_name=_("Role"),
         db_index=True,
     )
+    receive_email_notifications = models.BooleanField(
+        default=True,
+        verbose_name=_("Receive email notifications from Porfacan"),
+        help_text=_(
+            "Entry updates, announcements, and other non-account messages we send by email."
+        ),
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

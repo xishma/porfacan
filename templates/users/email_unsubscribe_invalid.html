@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Link not valid" %} | {% trans "Porfacan" %}{% endblock title %}
+
+{% block content %}
+<section class="mx-auto max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-2 text-xl font-semibold">{% trans "This link is not valid" %}</h1>
+  <p class="text-sm text-slate-600">{% trans "The unsubscribe link may have expired or been copied incorrectly." %}</p>
+</section>
+{% endblock content %}

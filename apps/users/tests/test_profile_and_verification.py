@@ -88,6 +88,7 @@ def test_profile_email_change_requires_reverification(client):
             data={
                 "first_name": "Updated",
                 "email": "local-user-updated@example.com",
+                "receive_email_notifications": "1",
             },
             follow=True,
         )
@@ -121,6 +122,7 @@ def test_social_user_cannot_change_email_from_profile(client):
         data={
             "first_name": "Changed",
             "email": "cannot-change@example.com",
+            "receive_email_notifications": "1",
         },
         follow=True,
     )

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Email preferences updated" %} | {% trans "Porfacan" %}{% endblock title %}
+
+{% block content %}
+<section class="mx-auto max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-2 text-xl font-semibold">{% trans "You are unsubscribed" %}</h1>
+  <p class="text-sm text-slate-600">{% trans "You will no longer receive optional email notifications from Porfacan." %}</p>
+  <p class="mt-4 text-sm text-slate-600">{% trans "You can turn these emails back on anytime from your profile settings." %}</p>
+</section>
+{% endblock content %}

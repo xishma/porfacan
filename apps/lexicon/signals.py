@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from .cache import bump_cache_version
 from .headwords import refresh_entry_search_vector
 from .models import Definition, DefinitionVote, Entry, EntryAlias, EntryCategory, Epoch, Page, SuggestedHeadword
 from .normalization import normalize_persian
-from .tasks import recompute_auto_similar_entries
+from .tasks import recompute_auto_similar_entries, send_entry_published_notification_emails
 
 
 @receiver(post_save, sender=SuggestedHeadword)
@@ -45,10 +45,41 @@ def refresh_search_vector_on_alias_delete(sender, instance: EntryAlias, **kwargs
     bump_cache_version("entry_suggestions")
 
 
+@receiver(pre_save, sender=Entry)
+def stash_entry_is_verified_before_save(sender, instance: Entry, **kwargs):
+    if not instance.pk:
+        instance._previous_is_verified = None
+        return
+    try:
+        prior = Entry.objects.only("is_verified").get(pk=instance.pk)
+        instance._previous_is_verified = prior.is_verified
+    except Entry.DoesNotExist:
+        instance._previous_is_verified = None
+
+
 @receiver(post_save, sender=Entry)
 def invalidate_entry_search_cache_on_entry_save(sender, instance: Entry, **kwargs):
     bump_cache_version("entry_search_results")
     bump_cache_version("entry_suggestions")
+
+
+@receiver(post_save, sender=Entry)
+def notify_contributors_when_entry_verified(sender, instance: Entry, **kwargs):
+    if kwargs.get("raw"):
+        return
+    if not instance.is_verified:
+        return
+    prev = getattr(instance, "_previous_is_verified", True)
+    if prev is True:
+        return
+
+    def enqueue():
+        send_entry_published_notification_emails.delay(instance.pk)
+
+    if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+        enqueue()
+    else:
+        transaction.on_commit(enqueue)
 
 
 @receiver(post_save, sender=Entry)
