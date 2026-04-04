@@ -488,6 +488,7 @@
     const definitionContentField = entryForm ? entryForm.querySelector('[name="definition-content"]') : null;
     const definitionContextField = entryForm ? entryForm.querySelector('[name="definition-context_annotation"]') : null;
     const definitionUsageField = entryForm ? entryForm.querySelector('[name="definition-usage_example"]') : null;
+    const definitionAiGeneratedField = entryForm ? entryForm.querySelector('[name="definition-is_ai_generated"]') : null;
 
     const setAIFillStatus = (text, isError) => {
         if (!aiFillStatus) return;
@@ -534,6 +535,9 @@
         }
         if (definitionUsageField && typeof result.usage_example === "string") {
             definitionUsageField.value = result.usage_example;
+        }
+        if (definitionAiGeneratedField) {
+            definitionAiGeneratedField.checked = true;
         }
     };
 

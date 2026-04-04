@@ -728,6 +728,7 @@ class DefinitionCreateView(ContributorRequiredMixin, CreateView):
         context["entry"] = self.entry
         context.setdefault("attachment_formset", self.get_attachment_formset())
         context["lexicon_contribution_guide_url"] = get_contribution_guide_page_url()
+        context["definition_ai_fill_enabled"] = user_in_ai_group(self.request.user)
         return context
 
 
