@@ -453,6 +453,7 @@ class Definition(models.Model):
         verbose_name=_("Author"),
     )
     is_featured = models.BooleanField(default=False, db_index=True, verbose_name=_("Featured"))
+    is_ai_generated = models.BooleanField(default=False, db_index=True, verbose_name=_("AI-generated"))
     reputation_score = models.IntegerField(default=0, verbose_name=_("Reputation score"))
     upvotes = models.PositiveIntegerField(default=0, verbose_name=_("Upvotes"))
     downvotes = models.PositiveIntegerField(default=0, verbose_name=_("Downvotes"))

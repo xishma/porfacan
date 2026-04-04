@@ -123,15 +123,17 @@ class EntryForm(forms.ModelForm):
 class DefinitionForm(forms.ModelForm):
     class Meta:
         model = Definition
-        fields = ("content", "context_annotation", "usage_example")
+        fields = ("content", "context_annotation", "usage_example", "is_ai_generated")
         labels = {
             "content": _("Meaning"),
             "context_annotation": _("Background and context"),
             "usage_example": _("Example of usage"),
+            "is_ai_generated": _("AI-generated"),
         }
         help_texts = {
             "context_annotation": _("Optional."),
             "usage_example": _("Optional."),
+            "is_ai_generated": _("Check if this definition was produced or heavily assisted by an AI tool."),
         }
         widgets = {
             "content": forms.Textarea(
@@ -142,6 +144,9 @@ class DefinitionForm(forms.ModelForm):
             ),
             "usage_example": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border border-slate-300 ps-3 pe-3 py-2", "rows": 3}
+            ),
+            "is_ai_generated": forms.CheckboxInput(
+                attrs={"class": "mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900"}
             ),
         }
 

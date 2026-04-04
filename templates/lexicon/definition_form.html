@@ -28,6 +28,14 @@
             {{ form.usage_example }}
             {{ form.usage_example.errors }}
         </div>
+        <div class="flex gap-3 rounded-lg border border-slate-200 bg-slate-50/80 ps-3 pe-3 py-3">
+            {{ form.is_ai_generated }}
+            <div class="min-w-0">
+                <label class="block text-sm font-medium text-slate-800" for="{{ form.is_ai_generated.id_for_label }}">{{ form.is_ai_generated.label }}</label>
+                {% if form.is_ai_generated.help_text %}<p class="mt-0.5 text-xs text-slate-500">{{ form.is_ai_generated.help_text }}</p>{% endif %}
+                {{ form.is_ai_generated.errors }}
+            </div>
+        </div>
 
         <div class="space-y-3 rounded-lg border border-slate-200 p-4">
             <div class="flex items-center justify-between">

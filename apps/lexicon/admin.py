@@ -305,14 +305,15 @@ class DefinitionAdmin(admin.ModelAdmin):
         "entry",
         "author",
         "is_featured",
+        "is_ai_generated",
         "upvotes",
         "downvotes",
         "reputation_score",
         "hot_score_value",
         "created_at",
     )
-    list_filter = ("is_featured", "created_at")
-    list_editable = ("is_featured",)
+    list_filter = ("is_featured", "is_ai_generated", "created_at")
+    list_editable = ("is_featured", "is_ai_generated")
     search_fields = ("entry__headword", "content", "context_annotation", "usage_example")
 
 
