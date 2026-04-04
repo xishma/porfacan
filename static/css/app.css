@@ -16,3 +16,140 @@ body {
     background-color: #fff;
     color: #0f172a;
 }
+
+/* CMS page body: Tailwind CDN has no typography plugin; preflight strips default margins on semantic HTML. */
+.lexicon-page-content {
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+.lexicon-page-content > *:first-child {
+    margin-top: 0;
+}
+
+.lexicon-page-content p {
+    margin-top: 1em;
+    margin-bottom: 0;
+}
+
+.lexicon-page-content p:first-child {
+    margin-top: 0;
+}
+
+.lexicon-page-content h1,
+.lexicon-page-content h2,
+.lexicon-page-content h3,
+.lexicon-page-content h4 {
+    font-weight: 700;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+    color: #0f172a;
+}
+
+.lexicon-page-content h1 {
+    font-size: 1.875rem;
+}
+
+.lexicon-page-content h2 {
+    font-size: 1.5rem;
+}
+
+.lexicon-page-content h3 {
+    font-size: 1.25rem;
+}
+
+.lexicon-page-content h4 {
+    font-size: 1.125rem;
+}
+
+.lexicon-page-content ul,
+.lexicon-page-content ol {
+    margin-top: 1em;
+    margin-bottom: 0;
+    padding-inline-start: 1.5rem;
+}
+
+.lexicon-page-content li {
+    margin-top: 0.25em;
+}
+
+.lexicon-page-content li > p {
+    margin-top: 0.5em;
+}
+
+.lexicon-page-content a {
+    color: #4f46e5;
+    text-decoration: underline;
+}
+
+.lexicon-page-content a:hover {
+    color: #4338ca;
+}
+
+.lexicon-page-content blockquote {
+    margin-top: 1em;
+    margin-bottom: 0;
+    padding-inline-start: 1rem;
+    border-inline-start: 4px solid #e2e8f0;
+    color: #475569;
+}
+
+.lexicon-page-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.lexicon-page-content figure {
+    margin-top: 1em;
+    margin-bottom: 0;
+}
+
+.lexicon-page-content figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.lexicon-page-content table {
+    width: 100%;
+    margin-top: 1em;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.lexicon-page-content th,
+.lexicon-page-content td {
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.75rem;
+}
+
+.lexicon-page-content code {
+    font-size: 0.875em;
+    background: #f1f5f9;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.lexicon-page-content pre {
+    margin-top: 1em;
+    margin-bottom: 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+}
+
+.lexicon-page-content pre code {
+    padding: 0;
+    background: transparent;
+}
+
+.lexicon-page-content hr {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
