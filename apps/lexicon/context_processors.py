@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -52,12 +53,24 @@ def share_meta(request):
 
 
 def published_pages(request):
-    cache_key = build_versioned_cache_key("published_pages", {"published": True}, version_scope="pages")
-    pages = cache.get(cache_key)
-    if pages is None:
-        pages = list(Page.objects.filter(is_published=True).only("title", "address"))
-        cache.set(cache_key, pages, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
-    return {"site_pages": pages}
+    cache_key = build_versioned_cache_key("published_pages_nav", {"published": True}, version_scope="pages")
+    rows = cache.get(cache_key)
+    if rows is None:
+        rows = []
+        qs = Page.objects.filter(is_published=True).prefetch_related("visible_to_groups").only("title", "address")
+        for p in qs:
+            gids = frozenset(p.visible_to_groups.values_list("id", flat=True))
+            rows.append((p.title, p.address, gids))
+        cache.set(cache_key, rows, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
+
+    user = request.user
+    staff_like = user.is_authenticated and (user.is_staff or user.is_superuser)
+    user_group_ids = set(user.groups.values_list("id", flat=True)) if user.is_authenticated else set()
+    nav = []
+    for title, address, required_groups in rows:
+        if staff_like or not required_groups or (user_group_ids & required_groups):
+            nav.append(SimpleNamespace(title=title, address=address))
+    return {"site_pages": nav}
 
 
 def lexicon_site_flags(request):

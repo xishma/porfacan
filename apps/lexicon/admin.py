@@ -393,7 +393,8 @@ class PageAdminForm(forms.ModelForm):
 @admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
     form = PageAdminForm
+    filter_horizontal = ("visible_to_groups",)
     list_display = ("title", "address", "display_order", "is_published", "updated_at")
-    list_filter = ("is_published",)
+    list_filter = ("is_published", "visible_to_groups")
     search_fields = ("title", "address", "content")
     prepopulated_fields = {"address": ("title",)}

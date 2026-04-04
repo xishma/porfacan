@@ -184,6 +184,16 @@ class Page(models.Model):
     address = models.SlugField(max_length=255, unique=True, allow_unicode=True, verbose_name=_("Address"))
     title = models.CharField(max_length=255, verbose_name=_("Title"))
     content = models.TextField(verbose_name=_("Content"))
+    visible_to_groups = models.ManyToManyField(
+        "auth.Group",
+        blank=True,
+        related_name="lexicon_pages",
+        verbose_name=_("Visible only to groups"),
+        help_text=_(
+            "Leave empty for all visitors. If you select groups, only logged-in users "
+            "in at least one of those groups (plus staff) see this page in the menu and can open it."
+        ),
+    )
     display_order = models.PositiveSmallIntegerField(default=0, verbose_name=_("Display order"))
     is_published = models.BooleanField(default=True, verbose_name=_("Is published"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))

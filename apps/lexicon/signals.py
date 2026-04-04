@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from .cache import bump_cache_version
@@ -138,6 +138,11 @@ def invalidate_pages_cache_on_page_save(sender, instance: Page, **kwargs):
 
 @receiver(post_delete, sender=Page)
 def invalidate_pages_cache_on_page_delete(sender, instance: Page, **kwargs):
+    bump_cache_version("pages")
+
+
+@receiver(m2m_changed, sender=Page.visible_to_groups.through)
+def invalidate_pages_cache_on_page_visible_groups_change(sender, **kwargs):
     bump_cache_version("pages")
 
 

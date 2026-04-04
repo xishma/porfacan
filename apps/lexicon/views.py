@@ -49,6 +49,7 @@ from .models import (
     SuggestedHeadword,
 )
 from .normalization import normalize_persian
+from .page_visibility import filter_pages_visible_to_user
 
 
 _SLUG_REDIRECT_PUBLIC_VIEWS = frozenset(
@@ -214,14 +215,21 @@ class PageDetailView(DetailView):
         )
         cached_page = cache.get(cache_key)
         if cached_page is not None:
-            return cached_page
+            if cached_page.visible_to_groups.exists():
+                cache.delete(cache_key)
+            else:
+                return cached_page
 
-        page = queryset.only("id", "address", "title", "content", "is_published", "created_at", "updated_at").filter(
-            address=address
-        ).first()
+        page = (
+            queryset.filter(address=address)
+            .prefetch_related("visible_to_groups")
+            .only("id", "address", "title", "content", "is_published", "created_at", "updated_at")
+            .first()
+        )
         if page is None:
             raise Http404
-        cache.set(cache_key, page, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
+        if not page.visible_to_groups.exists():
+            cache.set(cache_key, page, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
         return page
 
     def get_queryset(self):
@@ -229,7 +237,8 @@ class PageDetailView(DetailView):
         user = self.request.user
         if user.is_authenticated and user.is_staff:
             return queryset
-        return queryset.filter(is_published=True)
+        qs = queryset.filter(is_published=True)
+        return filter_pages_visible_to_user(qs, user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
