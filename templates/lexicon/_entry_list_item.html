@@ -1,15 +1,22 @@
 {% load i18n lexicon_extras %}
-<article class="flex flex-row items-stretch gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <div class="min-w-0 flex-1">
+<article class="relative flex flex-row items-stretch gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    {% if entry.is_featured %}
+        <div class="absolute right-5 top-5 z-10 flex max-w-[min(100%,calc(100%-2.5rem))] flex-wrap items-center justify-end gap-2">
+            <span class="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 ps-2 pe-2 py-1 text-xs font-semibold text-amber-800">
+                <span aria-hidden="true">★</span>
+                <span>{% trans "Featured" %}</span>
+            </span>
+        </div>
+    {% endif %}
+    <div class="min-w-0 flex-1{% if entry.is_featured %} pt-10{% endif %}">
         <h2 class="text-lg font-semibold">
             <a href="{% url 'lexicon:entry-detail' entry.slug %}" class="hover:underline">{{ entry.headword }}</a>
         </h2>
         {% with alts=entry|alternate_headwords_display %}
         {% if alts %}
             <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                {% trans "This entry may also appear under these names:" %}
                 <span class="mt-0.5 block text-sm font-medium text-slate-800">
-                    {% for name in alts %}
+                    {% trans "Or :" %} {% for name in alts %}
                         {{ name }}{% if not forloop.last %}<span class="mx-1.5 font-normal text-slate-400" aria-hidden="true">·</span>{% endif %}
                     {% endfor %}
                 </span>

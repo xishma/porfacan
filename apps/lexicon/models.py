@@ -21,6 +21,9 @@ class EntryQuerySet(QuerySet):
     def with_hot_rank(self):
         return self.annotate(hot_rank=Coalesce(Max("definitions__hot_score_value"), Value(0.0), output_field=FloatField()))
 
+    def with_entry_list_sort_annotations(self):
+        return self.with_hot_rank()
+
     def search(self, query: str):
         EntryAlias = apps.get_model("lexicon", "EntryAlias")
 
@@ -227,6 +230,12 @@ class Entry(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     is_verified = models.BooleanField(default=False, verbose_name=_("Is verified"))
+    is_featured = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name=_("Featured"),
+        help_text=_("Highlight this entry on the public list. Only editable in the admin site."),
+    )
     search_vector = SearchVectorField(blank=True, null=True, verbose_name=_("Search vector"))
 
     objects = EntryManager()

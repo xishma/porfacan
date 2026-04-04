@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
@@ -79,6 +78,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int], *, epochs_enabled: bo
                 "slug",
                 "created_at",
                 "is_verified",
+                "is_featured",
                 "category_id",
                 "category__id",
                 "category__name",
@@ -101,6 +101,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int], *, epochs_enabled: bo
             "slug",
             "created_at",
             "is_verified",
+            "is_featured",
             "category_id",
             "category__id",
             "category__name",
@@ -122,6 +123,7 @@ def _base_verified_entries(*, epochs_enabled: bool):
             "slug",
             "created_at",
             "is_verified",
+            "is_featured",
             "category_id",
             "category__id",
             "category__name",
@@ -178,26 +180,38 @@ def _resolve_id_sequence(
     return None
 
 
+def _default_list_order():
+    return ("-is_featured", "-hot_rank", "headword", "id")
+
+
 def _hot_queryset(*, epochs_enabled: bool):
-    return _base_verified_entries(epochs_enabled=epochs_enabled).with_hot_rank().order_by(
-        "-hot_rank", "-created_at", "-id"
+    return _base_verified_entries(epochs_enabled=epochs_enabled).with_entry_list_sort_annotations().order_by(
+        *_default_list_order()
     )
 
 
-def _q_after_hot(hot_rank: float, created_at: datetime, pk: int) -> Q:
+def _q_after_list(is_featured: bool, hot_rank: float, headword: str, pk: int) -> Q:
     return (
-        Q(hot_rank__lt=hot_rank)
-        | Q(hot_rank=hot_rank, created_at__lt=created_at)
-        | Q(hot_rank=hot_rank, created_at=created_at, id__lt=pk)
+        Q(is_featured__lt=is_featured)
+        | Q(is_featured=is_featured, hot_rank__lt=hot_rank)
+        | Q(is_featured=is_featured, hot_rank=hot_rank, headword__gt=headword)
+        | Q(is_featured=is_featured, hot_rank=hot_rank, headword=headword, id__gt=pk)
     )
 
 
-def _cursor_from_entry_hot(entry: Entry) -> str:
+def _decode_cursor_featured(raw) -> bool:
+    if isinstance(raw, bool):
+        return raw
+    return bool(int(raw))
+
+
+def _cursor_from_entry_list(entry: Entry) -> str:
     return encode_cursor(
         {
-            "k": "hot",
+            "k": "lst",
+            "ft": bool(entry.is_featured),
             "hr": float(entry.hot_rank),
-            "ca": entry.created_at.isoformat(),
+            "hw": entry.headword,
             "id": entry.id,
         }
     )
@@ -208,7 +222,16 @@ def _cursor_from_id_list(after_id: int) -> str:
 
 
 def _search_result_order():
-    return ("-starts_with", "-has_definition_match", "-search_rank", "-combined_trigram", "-created_at", "-id")
+    return (
+        "-starts_with",
+        "-has_definition_match",
+        "-search_rank",
+        "-combined_trigram",
+        "-is_featured",
+        "-hot_rank",
+        "headword",
+        "id",
+    )
 
 
 def _cursor_search_offset(offset: int) -> str:
@@ -249,13 +272,13 @@ def fetch_entry_list_page(
     if not cacheable:
         qs = _hot_queryset(epochs_enabled=epochs_enabled)
         cur = parsed_after
-        if cur and cur.get("k") == "hot":
+        if cur and cur.get("k") == "lst":
             try:
-                ca = datetime.fromisoformat(cur["ca"])
                 qs = qs.filter(
-                    _q_after_hot(
+                    _q_after_list(
+                        _decode_cursor_featured(cur["ft"]),
                         float(cur["hr"]),
-                        ca,
+                        str(cur["hw"]),
                         int(cur["id"]),
                     )
                 )
@@ -267,11 +290,17 @@ def fetch_entry_list_page(
         rows = list(qs[: limit + 1])
         has_more = len(rows) > limit
         page = rows[:limit]
-        next_c = _cursor_from_entry_hot(page[-1]) if has_more else None
+        next_c = _cursor_from_entry_list(page[-1]) if has_more else None
         return EntryListPageResult(entries=page, next_cursor=next_c, has_more=has_more, reset=False)
 
+    queryset_for_ids = queryset.with_entry_list_sort_annotations()
+    if has_query:
+        queryset_for_ids = queryset_for_ids.order_by(*_search_result_order())
+    else:
+        queryset_for_ids = queryset_for_ids.order_by(*_default_list_order())
+
     id_sequence = _resolve_id_sequence(
-        queryset,
+        queryset_for_ids,
         normalized_query=normalized_query,
         selected_epoch=effective_epoch,
         selected_category=(selected_category or "").strip(),
@@ -301,7 +330,7 @@ def fetch_entry_list_page(
         return EntryListPageResult(entries=page, next_cursor=next_c, has_more=has_more, reset=False)
 
     if has_query:
-        qs = queryset.order_by(*_search_result_order())
+        qs = queryset.with_entry_list_sort_annotations().order_by(*_search_result_order())
         cur = parsed_after
         offset = 0
         if cur:
@@ -321,15 +350,15 @@ def fetch_entry_list_page(
         next_c = _cursor_search_offset(offset + limit) if has_more else None
         return EntryListPageResult(entries=page, next_cursor=next_c, has_more=has_more, reset=False)
 
-    qs = queryset.with_hot_rank().order_by("-hot_rank", "-created_at", "-id")
+    qs = queryset.with_entry_list_sort_annotations().order_by(*_default_list_order())
     cur = parsed_after
-    if cur and cur.get("k") == "hot":
+    if cur and cur.get("k") == "lst":
         try:
-            ca = datetime.fromisoformat(cur["ca"])
             qs = qs.filter(
-                _q_after_hot(
+                _q_after_list(
+                    _decode_cursor_featured(cur["ft"]),
                     float(cur["hr"]),
-                    ca,
+                    str(cur["hw"]),
                     int(cur["id"]),
                 )
             )
@@ -341,5 +370,5 @@ def fetch_entry_list_page(
     rows = list(qs[: limit + 1])
     has_more = len(rows) > limit
     page = rows[:limit]
-    next_c = _cursor_from_entry_hot(page[-1]) if has_more else None
+    next_c = _cursor_from_entry_list(page[-1]) if has_more else None
     return EntryListPageResult(entries=page, next_cursor=next_c, has_more=has_more, reset=False)

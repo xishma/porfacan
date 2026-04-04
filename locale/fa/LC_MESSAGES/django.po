@@ -971,8 +971,8 @@ msgstr "برای رای‌دادن، ابتدا در صفحه پروفایل ا�
 
 #: templates/lexicon/_entry_list_item.html:10
 #: templates/lexicon/entry_detail.html:15
-msgid "This entry may also appear under these names:"
-msgstr "این مدخل همچنین ممکن است با این سرواژه‌ها شناخته شود:"
+msgid "Or :"
+msgstr "یا :"
 
 #: templates/lexicon/definition_form.html:4
 msgid "New definition"

@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from apps.users.models import User
+
 from .headwords import merge_entries
 from .models import (
     Definition,
@@ -76,14 +78,38 @@ class EntryCategoryAdmin(admin.ModelAdmin):
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
     change_form_template = "admin/lexicon/entry/change_form.html"
-    list_display = ("headword", "category", "display_epochs", "is_verified", "verify_action", "entry_page_link", "created_at")
-    list_filter = ("is_verified", "category", "epochs")
+    list_display = (
+        "headword",
+        "category",
+        "display_epochs",
+        "is_verified",
+        "is_featured",
+        "verify_action",
+        "entry_page_link",
+        "created_at",
+    )
+    list_filter = ("is_verified", "is_featured", "category", "epochs")
     search_fields = ("headword", "slug", "aliases__headword")
     filter_horizontal = ("epochs",)
     list_editable = ("is_verified",)
     readonly_fields = ("entry_page_link", "created_at", )
     exclude = ("search_vector",)
     inlines = (EntryAliasInline, SimilarEntryLinkInline)
+
+    @staticmethod
+    def _is_lexicon_admin(request) -> bool:
+        u = request.user
+        if not u.is_authenticated:
+            return False
+        if u.is_superuser:
+            return True
+        return getattr(u, "role", None) == User.Roles.ADMIN
+
+    def get_readonly_fields(self, request, obj=None):
+        ro = list(super().get_readonly_fields(request, obj))
+        if not self._is_lexicon_admin(request):
+            ro.append("is_featured")
+        return ro
 
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name

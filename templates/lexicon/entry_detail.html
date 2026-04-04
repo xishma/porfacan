@@ -10,10 +10,9 @@
             <div class="min-w-0 flex-1">
                 <h1 class="text-3xl font-bold">{{ entry.headword }}</h1>
                 {% with alts=entry|alternate_headwords_display %}
-                {% if alts %}
-                    <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
-                        {% trans "This entry may also appear under these names:" %}
+                {% if alts %}                    <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
                         <span class="mt-0.5 block text-sm font-medium text-slate-800">
+                            {% trans "Or :" %}
                             {% for name in alts %}
                                 {{ name }}{% if not forloop.last %}<span class="mx-1.5 font-normal text-slate-400" aria-hidden="true">·</span>{% endif %}
                             {% endfor %}
