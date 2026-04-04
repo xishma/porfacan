@@ -1,6 +1,8 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
+{% block extrahead %}{{ block.super }}{{ form.media }}{% endblock %}
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
@@ -20,11 +22,16 @@
 <form method="post">
     {% csrf_token %}
     <fieldset class="module aligned">
+        {% for field in form %}
         <div class="form-row">
-            <label for="id_secondary_id">{% trans "Secondary entry id" %}:</label>
-            <input type="number" name="secondary_id" id="id_secondary_id" required min="1" class="vIntegerField">
-            <p class="help">{% trans "The numeric id from the secondary entry’s admin change URL." %}</p>
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+            <p class="help">{{ field.help_text }}</p>
+            {% endif %}
         </div>
+        {% endfor %}
     </fieldset>
     <div class="submit-row">
         <input type="submit" value="{% trans "Merge" %}" class="default">

@@ -212,7 +212,13 @@ class Entry(models.Model):
         related_name="entries",
         verbose_name=_("Created by"),
     )
-    epochs = models.ManyToManyField(Epoch, related_name="entries", verbose_name=_("Epochs"))
+    epochs = models.ManyToManyField(
+        Epoch,
+        related_name="entries",
+        verbose_name=_("Epochs"),
+        blank=True,
+        help_text=_("Epochs that the entry belongs to. This is only visible to admins."),
+    )
     description = models.TextField(
         blank=True,
         verbose_name=_("Description"),

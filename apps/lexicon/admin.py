@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import AutocompleteSelect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -40,6 +41,23 @@ class EntryAliasInline(admin.TabularInline):
     fields = ("headword", "created_at", "created_by")
     readonly_fields = ("created_at", "created_by")
     autocomplete_fields = ()
+
+
+class MergeEntryForm(forms.Form):
+    secondary = forms.ModelChoiceField(
+        label=_("Secondary entry"),
+        queryset=Entry.objects.none(),
+        required=True,
+        help_text=_(
+            "Search by headword or slug. That entry will be merged into the primary and removed."
+        ),
+    )
+
+    def __init__(self, *args, admin_site, primary_pk, **kwargs):
+        super().__init__(*args, **kwargs)
+        fk = SimilarEntryLink._meta.get_field("similar_entry")
+        self.fields["secondary"].widget = AutocompleteSelect(fk, admin_site, attrs={})
+        self.fields["secondary"].queryset = Entry.objects.exclude(pk=primary_pk)
 
 
 @admin.register(Epoch)
@@ -95,35 +113,32 @@ class EntryAdmin(admin.ModelAdmin):
             return redirect("admin:lexicon_entry_changelist")
 
         if request.method == "POST":
-            raw = (request.POST.get("secondary_id") or "").strip()
-            try:
-                secondary_id = int(raw)
-            except ValueError:
-                messages.error(request, _("Enter a valid numeric id for the secondary entry."))
-                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
-            if secondary_id == primary.pk:
-                messages.error(request, _("The secondary entry must differ from the primary entry."))
-                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
-            secondary = Entry.objects.filter(pk=secondary_id).first()
-            if secondary is None:
-                messages.error(request, _("No entry with that id exists."))
-                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
-            try:
-                merge_entries(primary_id=primary.pk, secondary_id=secondary_id)
-            except ValueError as exc:
-                messages.error(request, str(exc))
-                return redirect(reverse("admin:lexicon_entry_merge", args=[str(object_id)]))
-            messages.success(
-                request,
-                _("Merged “%(sec)s” into “%(pri)s”. Definitions and alternate headwords were moved.")
-                % {"sec": secondary.headword, "pri": primary.headword},
+            form = MergeEntryForm(
+                request.POST,
+                admin_site=self.admin_site,
+                primary_pk=primary.pk,
             )
-            return redirect("admin:lexicon_entry_change", object_id=primary.pk)
+            if form.is_valid():
+                secondary = form.cleaned_data["secondary"]
+                try:
+                    merge_entries(primary_id=primary.pk, secondary_id=secondary.pk)
+                except ValueError as exc:
+                    messages.error(request, str(exc))
+                else:
+                    messages.success(
+                        request,
+                        _("Merged “%(sec)s” into “%(pri)s”. Definitions and alternate headwords were moved.")
+                        % {"sec": secondary.headword, "pri": primary.headword},
+                    )
+                    return redirect("admin:lexicon_entry_change", object_id=primary.pk)
+        else:
+            form = MergeEntryForm(admin_site=self.admin_site, primary_pk=primary.pk)
 
         context = {
             **self.admin_site.each_context(request),
             "title": _("Merge another entry into this one"),
             "primary": primary,
+            "form": form,
             "opts": self.model._meta,
             "has_view_permission": self.has_view_permission(request, primary),
         }
