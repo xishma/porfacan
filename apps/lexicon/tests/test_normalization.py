@@ -17,3 +17,8 @@ def test_normalize_persian_does_not_glue_mi_inside_words():
     out = normalize_persian("قدیمی فارسی.")
     assert "فارسی" in out
     assert "قدیمیفارسی" not in out
+
+
+def test_normalize_persian_preserves_line_breaks():
+    assert normalize_persian("پاراگراف اول.\n\nپاراگراف دوم.") == "پاراگراف اول.\n\nپاراگراف دوم."
+    assert normalize_persian("الف  ب\nج\tد") == "الف ب\nج د"

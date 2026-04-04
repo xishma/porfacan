@@ -14,7 +14,8 @@ _ARABIC_TO_PERSIAN = str.maketrans(
         "ة": "ه",
     }
 )
-_MULTI_SPACES = re.compile(r"\s+")
+# Collapse horizontal whitespace only; newlines are preserved (split/process/join).
+_HORIZONTAL_SPACE_RUN = re.compile(r"[^\S\n]+")
 # Hazm joins "می" + space + stem with ZWNJ when the pair is in its lexicon. A stray
 # space or NBSP inside words like «میمون» (e.g. paste/PDF) becomes «می‌مون». Glue the
 # verbal prefix to the following Persian letters before Hazm; real verbs still normalize
@@ -31,10 +32,15 @@ def normalize_persian(text: str) -> str:
     if not text:
         return text
 
-    normalized = text.translate(_ARABIC_TO_PERSIAN).strip()
-    normalized = _MI_PREFIX_GLUE.sub(r"\1", normalized)
-    normalized = _MULTI_SPACES.sub(" ", normalized)
+    normalized = text.translate(_ARABIC_TO_PERSIAN).replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not normalized:
+        return ""
 
-    if _HAZM_NORMALIZER:
-        normalized = _HAZM_NORMALIZER.normalize(normalized)
-    return normalized
+    lines_out: list[str] = []
+    for line in normalized.split("\n"):
+        line = _MI_PREFIX_GLUE.sub(r"\1", line)
+        line = _HORIZONTAL_SPACE_RUN.sub(" ", line)
+        if _HAZM_NORMALIZER and line:
+            line = _HAZM_NORMALIZER.normalize(line)
+        lines_out.append(line)
+    return "\n".join(lines_out)
