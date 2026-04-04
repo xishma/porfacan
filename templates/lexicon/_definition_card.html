@@ -18,18 +18,18 @@
     {% endif %}
     <div class="space-y-5 {% if definition.is_featured or definition.is_ai_generated %}pt-10{% endif %}">
         <section>
-            <p class="mt-1.5 leading-7 text-slate-900">{{ definition.content }}</p>
+            <p class="mt-1.5 whitespace-pre-line leading-7 text-slate-900">{{ definition.content }}</p>
         </section>
         {% if definition.context_annotation %}
             <section class="rounded-lg border border-slate-100 bg-slate-50/80 p-4">
                 <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">{% trans "Background and context" %}</h2>
-                <p class="mt-1.5 text-sm leading-relaxed text-slate-700">{{ definition.context_annotation }}</p>
+                <p class="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ definition.context_annotation }}</p>
             </section>
         {% endif %}
         {% if definition.usage_example %}
             <section class="border-s-4 border-slate-200 ps-4">
                 <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">{% trans "Example of usage" %}</h2>
-                <p class="mt-1.5 text-sm leading-relaxed text-slate-800">{{ definition.usage_example }}</p>
+                <p class="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-800">{{ definition.usage_example }}</p>
             </section>
         {% endif %}
         {% if definition.attachments.all %}
