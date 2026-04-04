@@ -26,7 +26,7 @@ from apps.users.permissions import ContributorRequiredMixin, EditorRequiredMixin
 from .cache import build_versioned_cache_key
 from .contribution_guide import get_contribution_guide_page_url
 from .definition_page import definition_first_page_prefetch_queryset, fetch_definition_page, initial_definition_infinite_scroll_state
-from .entry_list_page import ENTRY_CARD_PREFETCHES, fetch_entry_list_page
+from .entry_list_page import entry_card_prefetches, fetch_entry_list_page
 from .forms import (
     DefinitionAttachmentFormSet,
     DefinitionForm,
@@ -134,16 +134,18 @@ class EntryListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        epochs_enabled = settings.LEXICON_EPOCHS_ENABLED
         query = self.request.GET.get("q", "")
-        selected_epoch = self.request.GET.get("epoch", "").strip()
+        selected_epoch = self.request.GET.get("epoch", "").strip() if epochs_enabled else ""
         selected_category = self.request.GET.get("category", "").strip()
         page = fetch_entry_list_page(
             query=query,
             selected_epoch=selected_epoch,
             selected_category=selected_category,
             after_token=None,
+            epochs_enabled=epochs_enabled,
         )
-        if page.invalid_epoch:
+        if page.invalid_epoch and epochs_enabled:
             messages.error(self.request, _("Invalid epoch."))
         if page.invalid_category:
             messages.error(self.request, _("Invalid category."))
@@ -151,7 +153,9 @@ class EntryListView(TemplateView):
         context["entry_list_has_more"] = page.has_more
         context["entry_list_next_cursor"] = page.next_cursor or ""
         context["query"] = query
-        context["epochs"] = Epoch.objects.only("id", "name").order_by("start_date")
+        context["epochs"] = (
+            Epoch.objects.only("id", "name").order_by("start_date") if epochs_enabled else []
+        )
         context["entry_categories"] = EntryCategory.objects.only("id", "name", "slug").order_by("name")
         context["selected_epoch"] = selected_epoch
         context["selected_category"] = selected_category
@@ -160,8 +164,9 @@ class EntryListView(TemplateView):
 
 class EntryListMoreView(View):
     def get(self, request, *args, **kwargs):
+        epochs_enabled = settings.LEXICON_EPOCHS_ENABLED
         query = request.GET.get("q", "")
-        selected_epoch = request.GET.get("epoch", "").strip()
+        selected_epoch = request.GET.get("epoch", "").strip() if epochs_enabled else ""
         selected_category = request.GET.get("category", "").strip()
         after = (request.GET.get("after") or "").strip()
         page = fetch_entry_list_page(
@@ -169,6 +174,7 @@ class EntryListMoreView(View):
             selected_epoch=selected_epoch,
             selected_category=selected_category,
             after_token=after or None,
+            epochs_enabled=epochs_enabled,
         )
         if page.reset or page.invalid_epoch or page.invalid_category:
             return JsonResponse({"html": "", "has_more": False, "next_cursor": "", "reset": True})
@@ -247,7 +253,10 @@ class PendingHeadwordCheckView(ContributorRequiredMixin, View):
         entry = pending_entry_matching_headword(normalized)
         if entry is None:
             return JsonResponse({"matches_pending": False})
-        epoch_ids = list(entry.epochs.order_by("id").values_list("id", flat=True))
+        epochs_enabled = settings.LEXICON_EPOCHS_ENABLED
+        epoch_ids = (
+            list(entry.epochs.order_by("id").values_list("id", flat=True)) if epochs_enabled else []
+        )
         return JsonResponse(
             {
                 "matches_pending": True,
@@ -387,8 +396,9 @@ class EntryDetailView(DetailView):
             .order_by("sort_order", "id")
         )
         defs_qs = definition_first_page_prefetch_queryset()
+        epochs_enabled = settings.LEXICON_EPOCHS_ENABLED
         return queryset.select_related("category").prefetch_related(
-            *ENTRY_CARD_PREFETCHES,
+            *entry_card_prefetches(epochs_enabled),
             Prefetch("similar_links", queryset=similar_qs),
             Prefetch("definitions", queryset=defs_qs, to_attr="definitions_visible"),
         )
@@ -540,6 +550,7 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
+        kwargs["epochs_enabled"] = settings.LEXICON_EPOCHS_ENABLED
         return kwargs
 
     def get_definition_form(self):
@@ -616,6 +627,10 @@ class EntryCreateView(ContributorRequiredMixin, CreateView):
         self.object.created_by = self.request.user
         self.object.save()
         form.save_m2m()
+        if "epochs" not in form.fields:
+            epoch_ids = list(Epoch.objects.order_by("start_date").values_list("pk", flat=True))
+            if epoch_ids:
+                self.object.epochs.set(epoch_ids)
         if definition_content:
             definition_form.save(author=self.request.user, entry=self.object, attachment_formset=attachment_formset)
         return HttpResponseRedirect(self.get_success_url())
@@ -655,6 +670,7 @@ class EntryUpdateView(EditorRequiredMixin, UpdateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
+        kwargs["epochs_enabled"] = settings.LEXICON_EPOCHS_ENABLED
         return kwargs
 
     def get_context_data(self, **kwargs):

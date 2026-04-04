@@ -21,6 +21,7 @@
                     </p>
                 {% endif %}
                 {% endwith %}
+                {% if lexicon_epochs_enabled %}
                 <p class="mt-2 text-sm text-slate-500">
                     {% trans "Epochs" %}:
                     {% for epoch in entry.epochs.all %}
@@ -29,6 +30,7 @@
                         -
                     {% endfor %}
                 </p>
+                {% endif %}
             </div>
             {% if entry.category_id %}
                 <a

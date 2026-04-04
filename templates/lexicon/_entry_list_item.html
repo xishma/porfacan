@@ -16,6 +16,7 @@
             </p>
         {% endif %}
         {% endwith %}
+        {% if lexicon_epochs_enabled %}
         <p class="mt-1.5 text-sm text-slate-500">
             {% trans "Epochs" %}:
             {% for epoch in entry.epochs.all %}
@@ -24,6 +25,7 @@
                 -
             {% endfor %}
         </p>
+        {% endif %}
         {% if entry.top_definition_content %}
             <p class="mt-1.5 text-sm leading-relaxed text-slate-700">{{ entry.top_definition_content|definition_first_line_preview:127 }}</p>
         {% endif %}

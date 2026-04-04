@@ -58,6 +58,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.lexicon.context_processors.share_meta",
                 "apps.lexicon.context_processors.published_pages",
+                "apps.lexicon.context_processors.lexicon_site_flags",
             ],
         },
     }
@@ -191,6 +192,8 @@ LEXICON_CACHE_MAX_RESULT_IDS = int(os.getenv("LEXICON_CACHE_MAX_RESULT_IDS", "10
 
 # Slug for the CMS Page that explains how to contribute (path: /lexicon/pages/<address>/).
 LEXICON_CONTRIBUTION_GUIDE_PAGE_ADDRESS = "contribute"
+
+LEXICON_EPOCHS_ENABLED = True
 
 # e.g. https://porfacan.org | used for Open Graph absolute URLs when set (recommended in production).
 SITE_CANONICAL_URL = os.getenv("DJANGO_SITE_URL", "").strip().rstrip("/")

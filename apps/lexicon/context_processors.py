@@ -58,3 +58,7 @@ def published_pages(request):
         pages = list(Page.objects.filter(is_published=True).only("title", "address"))
         cache.set(cache_key, pages, timeout=settings.LEXICON_CACHE_TIMEOUT_PAGES)
     return {"site_pages": pages}
+
+
+def lexicon_site_flags(request):
+    return {"lexicon_epochs_enabled": settings.LEXICON_EPOCHS_ENABLED}

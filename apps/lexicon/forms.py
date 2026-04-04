@@ -50,9 +50,13 @@ class EntryForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
+        epochs_enabled = kwargs.pop("epochs_enabled", True)
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = EntryCategory.objects.all()
-        self.fields["epochs"].queryset = Epoch.objects.all()
+        if epochs_enabled:
+            self.fields["epochs"].queryset = Epoch.objects.all()
+        else:
+            self.fields.pop("epochs", None)
         if self._is_create_form() or not self._can_manage_verification():
             self.fields.pop("is_verified", None)
         if not self._can_manage_entry_description():

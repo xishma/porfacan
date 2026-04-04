@@ -39,6 +39,7 @@
                 </button>
             </div>
         </div>
+        {% if lexicon_epochs_enabled %}
         <div class="mt-3 flex flex-wrap gap-2">
             <button
                 type="submit"
@@ -59,6 +60,7 @@
                 </button>
             {% endfor %}
         </div>
+        {% endif %}
         <div class="mt-2 flex flex-wrap gap-2">
             <button
                 type="submit"
@@ -146,6 +148,7 @@
     const suggestionBox = document.getElementById("search-suggestions");
     const activeEpoch = "{{ selected_epoch|escapejs }}";
     const activeCategory = "{{ selected_category|escapejs }}";
+    const lexiconEpochsEnabled = {{ lexicon_epochs_enabled|yesno:"true,false" }};
 
     if (filterForm) {
         filterForm.addEventListener("submit", (event) => {
@@ -153,15 +156,16 @@
             const submitter = event.submitter || null;
             const formData = new FormData(filterForm, submitter);
 
-            // Keep the active epoch for search submits, and let epoch chips override it.
-            if (submitter && submitter.name === "epoch") {
-                if (submitter.value) {
-                    formData.set("epoch", submitter.value);
-                } else {
-                    formData.delete("epoch");
+            if (lexiconEpochsEnabled) {
+                if (submitter && submitter.name === "epoch") {
+                    if (submitter.value) {
+                        formData.set("epoch", submitter.value);
+                    } else {
+                        formData.delete("epoch");
+                    }
+                } else if (activeEpoch) {
+                    formData.set("epoch", activeEpoch);
                 }
-            } else if (activeEpoch) {
-                formData.set("epoch", activeEpoch);
             }
 
             if (submitter && submitter.name === "category") {

@@ -12,7 +12,7 @@ from .models import Definition, Entry, EntryAlias, EntryCategory, Epoch, Suggest
 from .normalization import normalize_persian
 from .pagination import LIST_PAGE_SIZE, decode_cursor, encode_cursor
 
-ENTRY_CARD_PREFETCHES = (
+ENTRY_CARD_PREFETCHES_BASE = (
     Prefetch(
         "aliases",
         queryset=EntryAlias.objects.order_by("headword").only("id", "headword", "entry_id"),
@@ -24,8 +24,13 @@ ENTRY_CARD_PREFETCHES = (
         .only("id", "headword", "entry_id"),
         to_attr="approved_suggestion_headwords",
     ),
-    "epochs",
 )
+
+
+def entry_card_prefetches(epochs_enabled: bool):
+    if epochs_enabled:
+        return (*ENTRY_CARD_PREFETCHES_BASE, "epochs")
+    return ENTRY_CARD_PREFETCHES_BASE
 
 
 @dataclass
@@ -63,7 +68,7 @@ def _annotate_top_definition_for_list(queryset):
     return queryset.annotate(top_definition_content=_top_definition_content_subquery())
 
 
-def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
+def _ordered_entry_queryset_from_ids(entry_ids: list[int], *, epochs_enabled: bool):
     if not entry_ids:
         return _annotate_top_definition_for_list(
             Entry.objects.filter(is_verified=True)
@@ -79,7 +84,7 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
                 "category__name",
                 "category__slug",
             )
-            .prefetch_related(*ENTRY_CARD_PREFETCHES)
+            .prefetch_related(*entry_card_prefetches(epochs_enabled))
             .none()
         )
 
@@ -101,13 +106,13 @@ def _ordered_entry_queryset_from_ids(entry_ids: list[int]):
             "category__name",
             "category__slug",
         )
-        .prefetch_related(*ENTRY_CARD_PREFETCHES)
+        .prefetch_related(*entry_card_prefetches(epochs_enabled))
         .annotate(_cached_order=order_by_id)
         .order_by("_cached_order")
     )
 
 
-def _base_verified_entries():
+def _base_verified_entries(*, epochs_enabled: bool):
     return _annotate_top_definition_for_list(
         Entry.objects.filter(is_verified=True)
         .select_related("category")
@@ -122,19 +127,21 @@ def _base_verified_entries():
             "category__name",
             "category__slug",
         )
-        .prefetch_related(*ENTRY_CARD_PREFETCHES)
+        .prefetch_related(*entry_card_prefetches(epochs_enabled))
     )
 
 
-def _filtered_queryset_for_search_epoch_category(query: str, selected_epoch: str, selected_category: str):
-    queryset = _base_verified_entries()
+def _filtered_queryset_for_search_epoch_category(
+    query: str, selected_epoch: str, selected_category: str, *, epochs_enabled: bool
+):
+    queryset = _base_verified_entries(epochs_enabled=epochs_enabled)
     normalized_query = normalize_persian(query or "").strip()
     has_query = bool(normalized_query)
     invalid_epoch = False
     invalid_category = False
     if has_query:
         queryset = queryset.search(query)
-    if selected_epoch:
+    if epochs_enabled and selected_epoch:
         epochs = Epoch.objects.filter(name__iexact=selected_epoch)
         if not epochs.exists():
             invalid_epoch = True
@@ -171,8 +178,10 @@ def _resolve_id_sequence(
     return None
 
 
-def _hot_queryset():
-    return _base_verified_entries().with_hot_rank().order_by("-hot_rank", "-created_at", "-id")
+def _hot_queryset(*, epochs_enabled: bool):
+    return _base_verified_entries(epochs_enabled=epochs_enabled).with_hot_rank().order_by(
+        "-hot_rank", "-created_at", "-id"
+    )
 
 
 def _q_after_hot(hot_rank: float, created_at: datetime, pk: int) -> Q:
@@ -219,9 +228,11 @@ def fetch_entry_list_page(
     selected_category: str,
     after_token: str | None,
     limit: int = LIST_PAGE_SIZE,
+    epochs_enabled: bool = True,
 ) -> EntryListPageResult:
+    effective_epoch = (selected_epoch or "").strip() if epochs_enabled else ""
     queryset, normalized_query, has_query, invalid_epoch, invalid_category = _filtered_queryset_for_search_epoch_category(
-        query, selected_epoch, (selected_category or "").strip()
+        query, effective_epoch, (selected_category or "").strip(), epochs_enabled=epochs_enabled
     )
     if invalid_epoch:
         return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=False, invalid_epoch=True)
@@ -233,10 +244,10 @@ def fetch_entry_list_page(
     if after and parsed_after is None:
         return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=True)
 
-    cacheable = _cacheable_entry_query(normalized_query, selected_epoch, (selected_category or "").strip())
+    cacheable = _cacheable_entry_query(normalized_query, effective_epoch, (selected_category or "").strip())
 
     if not cacheable:
-        qs = _hot_queryset()
+        qs = _hot_queryset(epochs_enabled=epochs_enabled)
         cur = parsed_after
         if cur and cur.get("k") == "hot":
             try:
@@ -262,7 +273,7 @@ def fetch_entry_list_page(
     id_sequence = _resolve_id_sequence(
         queryset,
         normalized_query=normalized_query,
-        selected_epoch=selected_epoch,
+        selected_epoch=effective_epoch,
         selected_category=(selected_category or "").strip(),
     )
     if id_sequence is not None:
@@ -285,7 +296,7 @@ def fetch_entry_list_page(
         slice_ids = window[:limit]
         if not slice_ids:
             return EntryListPageResult(entries=[], next_cursor=None, has_more=False, reset=False)
-        page = list(_ordered_entry_queryset_from_ids(slice_ids))
+        page = list(_ordered_entry_queryset_from_ids(slice_ids, epochs_enabled=epochs_enabled))
         next_c = _cursor_from_id_list(page[-1].id) if has_more else None
         return EntryListPageResult(entries=page, next_cursor=next_c, has_more=has_more, reset=False)
 

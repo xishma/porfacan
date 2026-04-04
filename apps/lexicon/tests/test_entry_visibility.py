@@ -208,6 +208,21 @@ def test_definition_author_can_view_unverified_entry_detail(client, epoch, entry
 
 
 @pytest.mark.django_db
+@override_settings(LEXICON_EPOCHS_ENABLED=False)
+def test_epoch_filter_ignored_when_ui_disabled(
+    client,
+    epoch,
+    verified_entry,
+    verified_entry_other_epoch,
+):
+    response = client.get(reverse("lexicon:entry-list"), data={"epoch": epoch.name})
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert verified_entry.headword in content
+    assert verified_entry_other_epoch.headword in content
+
+
+@pytest.mark.django_db
 def test_entry_epoch_filter_hides_other_epochs(
     client,
     epoch,
