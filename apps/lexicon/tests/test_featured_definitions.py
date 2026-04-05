@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 
 from apps.lexicon.models import Definition, Entry, Epoch
@@ -48,6 +49,7 @@ def test_featured_definitions_are_ordered_first_and_badged(client, entry_categor
 
 
 @pytest.mark.django_db
+@override_settings(LANGUAGE_CODE="en")
 def test_ai_generated_definitions_show_badge(client, entry_category):
     epoch = Epoch.objects.create(
         name="AI epoch",
